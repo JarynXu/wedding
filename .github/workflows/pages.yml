@@ -24,6 +24,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare replaceable welcome photos
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, pathlib, re
+          src = pathlib.Path('assets/welcome-photo.b64').read_text(encoding='utf-8')
+          data = re.sub(r'[^A-Za-z0-9+/=]', '', src)
+          data += '=' * ((4 - len(data) % 4) % 4)
+          raw = base64.b64decode(data, validate=False)
+          pathlib.Path('assets/welcome-1.jpg').write_bytes(raw)
+          pathlib.Path('assets/welcome-2.jpg').write_bytes(raw)
+          for p in ('assets/welcome-1.jpg','assets/welcome-2.jpg'):
+              b = pathlib.Path(p).read_bytes()
+              assert len(b) > 1000 and b[:2] == b'\xff\xd8', p
+          PY
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
