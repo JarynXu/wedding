@@ -1,0 +1,53 @@
+name: Deploy wedding invitation to Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare replaceable welcome photos
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          if [[ ! -f assets/welcome-1.jpg ]]; then
+            base64 -d assets/welcome-photo.b64 > assets/welcome-1.jpg
+          fi
+          if [[ ! -f assets/welcome-2.jpg ]]; then
+            base64 -d assets/welcome-photo.b64 > assets/welcome-2.jpg
+          fi
+          test -s assets/welcome-1.jpg
+          test -s assets/welcome-2.jpg
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
