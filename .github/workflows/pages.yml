@@ -1,8 +1,8 @@
-name: Deploy sixth-version wedding invitation
+name: Deploy wedding invitation to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
@@ -14,6 +14,9 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     environment:
@@ -22,62 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build static invitation
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf _site
-          mkdir -p _site/assets
-          cp index.html styles.css script.js .nojekyll _site/
-          cp assets/*.svg _site/assets/
-
-          python - <<'PY'
-          import base64
-          import pathlib
-          import re
-          import shutil
-
-          source = pathlib.Path('assets/welcome-photo.b64')
-          output = pathlib.Path('_site/assets')
-
-          def decode_fallback(destination: pathlib.Path) -> None:
-              text = source.read_text(encoding='utf-8')
-              data = re.sub(r'[^A-Za-z0-9+/=]', '', text).rstrip('=')
-              while len(data) % 4 == 1:
-                  data = data[:-1]
-              data += '=' * ((4 - len(data) % 4) % 4)
-              raw = base64.b64decode(data, validate=False)
-              if len(raw) < 1000 or raw[:2] != b'\xff\xd8':
-                  raise RuntimeError('Fallback welcome photo is not a JPEG')
-              destination.write_bytes(raw)
-
-          for name in ('welcome-1.jpg', 'welcome-2.jpg'):
-              custom = pathlib.Path('assets') / name
-              destination = output / name
-              if custom.is_file() and custom.stat().st_size > 1000:
-                  shutil.copy2(custom, destination)
-              else:
-                  decode_fallback(destination)
-
-          music = pathlib.Path('assets/music.mp3')
-          if music.is_file():
-              shutil.copy2(music, output / music.name)
-          PY
-
-          test -s _site/index.html
-          test -s _site/assets/welcome-1.jpg
-          test -s _site/assets/welcome-2.jpg
+        uses: actions/checkout@v6
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v5
         with:
-          path: _site
+          path: .
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

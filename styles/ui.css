@@ -1,0 +1,192 @@
+/* Petals, global controls and responsive behavior */
+.petal-field {
+  position: absolute;
+  z-index: 18;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.petal {
+  position: absolute;
+  top: -10%;
+  left: var(--x);
+  width: var(--size);
+  height: calc(var(--size) * .72);
+  border-radius: 75% 25% 70% 30%;
+  background: var(--petal-color);
+  opacity: var(--opacity);
+  filter: blur(var(--blur));
+  box-shadow: 0 2px 3px rgb(76 29 22 / 14%);
+  animation: petal-fall var(--duration) linear var(--delay) infinite;
+}
+.petal-field.sparse .petal { opacity: calc(var(--opacity) * .64); }
+
+.music-button {
+  position: absolute;
+  z-index: 80;
+  top: var(--safe-top);
+  right: max(15px, env(safe-area-inset-right));
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 1px solid rgb(164 111 48 / 75%);
+  border-radius: 50%;
+  color: #855727;
+  background: rgb(255 248 236 / 80%);
+  box-shadow: 0 6px 20px rgb(48 23 12 / 13%), inset 0 0 0 3px rgb(255 255 255 / 36%);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+  cursor: pointer;
+  transition: transform 160ms ease, background 250ms ease, color 250ms ease, opacity 220ms ease;
+}
+.music-button:active { transform: scale(.94); }
+.music-button svg { width: 20px; height: 20px; fill: currentColor; }
+.music-button.is-playing { background: rgb(54 28 18 / 86%); color: var(--gold-light); animation: record 5.5s linear infinite; }
+.experience[data-kind="raster"] .music-button { opacity: 0; }
+
+.scene-nav {
+  position: absolute;
+  z-index: 76;
+  right: 8px;
+  top: 50%;
+  display: grid;
+  gap: 7px;
+  transform: translateY(-50%);
+}
+.scene-nav button {
+  width: 18px;
+  height: 13px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.scene-nav button::before {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 5px;
+  margin-left: auto;
+  border-radius: 99px;
+  background: rgb(103 66 37 / 34%);
+  transition: width 240ms ease, background 240ms ease;
+}
+.scene-nav button[aria-current="true"]::before {
+  width: 17px;
+  background: linear-gradient(90deg, #9a6228, #f0d18c);
+  box-shadow: 0 0 8px rgb(226 183 102 / 36%);
+}
+.experience[data-kind="custom-dark"] .scene-nav button::before { background: rgb(244 213 150 / 42%); }
+.experience[data-kind="custom-dark"] .scene-nav button[aria-current="true"]::before { background: linear-gradient(90deg, #f1d18c, #aa6e2c); }
+
+.progress {
+  position: absolute;
+  z-index: 77;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgb(124 79 31 / 8%);
+}
+.progress span {
+  display: block;
+  width: 12.5%;
+  height: 100%;
+  background: linear-gradient(90deg, #8d5724, #f1d18a, #9d652a);
+  box-shadow: 0 0 10px rgb(225 184 112 / 68%);
+  transition: width 720ms var(--ease-scene);
+}
+.transition-glow {
+  position: absolute;
+  z-index: 74;
+  inset: -35%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(111deg, transparent 43%, rgb(255 244 184 / 0%) 46%, rgb(255 244 184 / 80%) 50%, rgb(185 121 44 / 32%) 52%, transparent 57%);
+  mix-blend-mode: screen;
+  transform: translateX(-58%);
+}
+.transition-glow.run { animation: transition-sheen 1.35s var(--ease-scene); }
+.toast {
+  position: absolute;
+  z-index: 90;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 55px);
+  max-width: 84%;
+  padding: 9px 14px;
+  color: #fff5e7;
+  background: rgb(44 25 17 / 92%);
+  border: 1px solid rgb(224 190 125 / 18%);
+  border-radius: 999px;
+  box-shadow: 0 9px 28px rgb(0 0 0 / 24%);
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 10px);
+  transition: opacity 230ms ease, transform 280ms var(--ease-soft);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.orientation-note {
+  position: fixed;
+  z-index: 300;
+  inset: 0;
+  display: none;
+  place-content: center;
+  justify-items: center;
+  gap: 16px;
+  color: var(--gold-light);
+  background: radial-gradient(circle at 50% 44%, #4b291c, #1a0e0a 72%);
+}
+.orientation-note span {
+  width: 42px;
+  height: 70px;
+  border: 2px solid currentColor;
+  border-radius: 8px;
+  animation: phone-rotate 2.4s ease-in-out infinite;
+}
+.orientation-note p { margin: 0; font-size: 13px; letter-spacing: .15em; }
+.noscript { position: fixed; z-index: 400; left: 12px; right: 12px; bottom: 12px; padding: 12px; color: #fff; background: #421e17; text-align: center; }
+
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+@media (hover: hover) and (pointer: fine) { .music-button:hover { transform: translateY(-1px); } }
+@media (min-width: 431px) {
+  body { padding: 18px; }
+  .experience { height: min(900px, calc(100vh - 36px)); border: 1px solid rgb(255 255 255 / 11%); border-radius: 26px; }
+}
+@media (max-height: 720px) {
+  .cover-copy { top: 5.8%; }
+  .monogram { font-size: 65px; }
+  .monogram-rule { margin: 4px auto; }
+  .location-copy { transform: translateY(-50%) scale(.91); }
+  .arrival-copy { top: 44%; }
+  .couple-copy { top: 13%; }
+  .invitation-copy { padding-top: 5%; padding-bottom: 7%; }
+  .invitation-names { margin: 12px 0; font-size: 35px; }
+  .invitation-lines { font-size: 10.5px; line-height: 1.45; }
+  .invitation-divider { margin: 9px 0; }
+  .invitation-meta { gap: 8px; }
+  .invitation-meta dd { font-size: 14px; }
+  .wax-seal { width: 58px; }
+}
+@media (orientation: landscape) and (max-height: 560px) and (pointer: coarse) { .orientation-note { display: grid; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .petal-field { display: none; }
+  .scene [data-reveal] { opacity: 1; transform: none; }
+}
+
+@keyframes petal-fall { to { transform: translate3d(var(--drift), 116svh, 0) rotate(510deg); opacity: .08; } }
+@keyframes transition-sheen {
+  0% { opacity: 0; transform: translateX(-58%); }
+  18% { opacity: .78; }
+  100% { opacity: 0; transform: translateX(58%); }
+}
+@keyframes record { to { transform: rotate(360deg); } }
+@keyframes phone-rotate {
+  0%, 25% { transform: rotate(90deg); }
+  55%, 100% { transform: rotate(0deg); }
+}
