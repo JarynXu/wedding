@@ -1,6 +1,4 @@
 .DS_Store
 Thumbs.db
+*.log
 .tmp/
-node_modules/
-playwright-report/
-test-results/

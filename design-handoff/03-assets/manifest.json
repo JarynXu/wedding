@@ -1,0 +1,89 @@
+{
+  "version": "6-rebuild",
+  "baselineViewport": {
+    "width": 390,
+    "height": 844
+  },
+  "assets": [
+    {
+      "path": "../../assets/photos/welcome.webp",
+      "role": "Supplied couple portrait; identity anchor for scenes 01 and 07",
+      "width": 900,
+      "height": 1600,
+      "mode": "RGB",
+      "bytes": 65020
+    },
+    {
+      "path": "../../assets/common/curtain-left.webp",
+      "role": "Real venue velvet cutout, deep-brown grade, left",
+      "width": 500,
+      "height": 1800,
+      "mode": "RGBA",
+      "bytes": 17744
+    },
+    {
+      "path": "../../assets/common/curtain-right.webp",
+      "role": "Mirrored deep-brown real velvet cutout, right",
+      "width": 500,
+      "height": 1800,
+      "mode": "RGBA",
+      "bytes": 18854
+    },
+    {
+      "path": "../../assets/common/floral-side.webp",
+      "role": "Real red/white/pink transparent side floral cutout",
+      "width": 205,
+      "height": 1800,
+      "mode": "RGBA",
+      "bytes": 27718
+    },
+    {
+      "path": "../../assets/common/floral-bottom.webp",
+      "role": "Real transparent floral source cutout",
+      "width": 225,
+      "height": 1240,
+      "mode": "RGBA",
+      "bytes": 18698
+    },
+    {
+      "path": "../../assets/common/floral-garland.webp",
+      "role": "Horizontal real-floral composite for edge framing",
+      "width": 1400,
+      "height": 183,
+      "mode": "RGBA",
+      "bytes": 38242
+    },
+    {
+      "path": "../../assets/common/paper.webp",
+      "role": "Warm paper texture",
+      "width": 860,
+      "height": 1800,
+      "mode": "RGB",
+      "bytes": 9280
+    },
+    {
+      "path": "../../assets/common/gold-foil.webp",
+      "role": "Warm foil material texture used by live text masks",
+      "width": 700,
+      "height": 700,
+      "mode": "RGB",
+      "bytes": 89012
+    },
+    {
+      "path": "../../assets/scene-05/venue.webp",
+      "role": "Real wedding-stage image, softened for location scene",
+      "width": 860,
+      "height": 1800,
+      "mode": "RGB",
+      "bytes": 106828
+    },
+    {
+      "path": "../../assets/scene-06/reveal.webp",
+      "role": "Real wedding-stage reveal; deep-brown curtain grade with flower colors preserved",
+      "width": 860,
+      "height": 1800,
+      "mode": "RGB",
+      "bytes": 117986
+    }
+  ]
+}

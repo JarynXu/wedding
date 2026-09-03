@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "name": "Wedding Invitation — Version 6 Rebuild",
+    "baseViewport": { "width": 390, "height": 844 },
+    "unit": "px"
+  },
+  "color": {
+    "canvas": "#F4ECDF",
+    "paper": "#F7EFE4",
+    "ink": "#372821",
+    "inkSoft": "#6F5A4F",
+    "curtainDeepBrown": "#301B17",
+    "curtainBrown": "#472820",
+    "floralRed": "#812631",
+    "floralRose": "#B34D5B",
+    "floralPink": "#DCA2A2",
+    "floralIvory": "#FFF9EF",
+    "leaf": "#4D594C",
+    "goldDark": "#956D37",
+    "gold": "#B88C4D",
+    "goldLight": "#D7BD83",
+    "goldHighlight": "#F2E6C7"
+  },
+  "typography": {
+    "display": { "family": "Songti SC / STSong / Noto Serif CJK SC / Georgia", "weight": 500 },
+    "latinDisplay": { "family": "Georgia / Times New Roman", "weight": 400 },
+    "body": { "family": "Songti SC / STSong / Noto Serif CJK SC", "weight": 400 },
+    "utility": { "family": "system-ui", "weight": 400 }
+  },
+  "layout": {
+    "contentWidth": 320,
+    "safeHorizontal": 24,
+    "safeTop": 20,
+    "safeBottom": 20,
+    "sceneCount": 8,
+    "scrollLengthVh": 800
+  },
+  "motion": {
+    "sceneCrossfade": "scroll-driven",
+    "stage": "fixed/sticky 100dvh",
+    "primaryEasing": "cubic-bezier(.22,.61,.36,1)",
+    "reducedMotion": true
+  }
+}
