@@ -195,7 +195,7 @@ function initSceneTransitionEngine() {
 
   let currentIndex = 0;
   let isTransitioning = false;
-  const TRANSITION_DURATION = 720; // 毫秒
+  const TRANSITION_DURATION = 820; // 毫秒
 
   // 初始化照片级风吹花瓣物理粒子引擎
   const phoneFrame = document.querySelector('.mobile-phone-frame');
@@ -239,9 +239,9 @@ function initSceneTransitionEngine() {
 
     isTransitioning = true;
 
-    // 触发照片级真花花瓣随风爆散飞舞转场
+    // 触发照片级真花花瓣自当前页面花簇徐徐剥离、渐进式漫天撒落转场
     if (petalEngine) {
-      petalEngine.triggerWindGust(direction === 'up' ? 'up' : 'down', 54);
+      petalEngine.triggerWindGust(direction === 'up' ? 'up' : 'down', currentIndex, 52);
     }
 
     // 清空两张卡片上的临时类与内联样式

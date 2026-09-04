@@ -125,7 +125,7 @@ html, body {
   opacity: 0;
   transform: scale(1) translate3d(0, 0, 0);
   filter: brightness(1);
-  transition: opacity 0.65s var(--ease-luxury), transform 0.65s var(--ease-luxury), filter 0.65s ease;
+  transition: opacity 0.8s var(--ease-luxury), transform 0.8s var(--ease-luxury), filter 0.8s ease;
 }
 
 /* 场景激活常态（当前全屏展示的场景） */
