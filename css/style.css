@@ -305,7 +305,7 @@ html, body {
    Screen 02: 过渡 1 - 我们要结婚了
    ========================================================= */
 .card-02 {
-  background-image: url('../assets/images/card02_bg.jpg');
+  background-image: url('../assets/images/card02_bg.jpg?v=20260904');
   background-size: contain;
   background-position: center center;
   background-repeat: no-repeat;
