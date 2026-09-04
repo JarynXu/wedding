@@ -1493,21 +1493,21 @@ html, body {
   transform: translateY(0) scale(1);
 }
 
-/* 红宝石火漆印泥质感开启按钮 - 完美呼应末页火漆印章 */
+/* 法式典雅鎏金浮雕开启按钮 (French Gilded Foil Button) */
 .btn-enter-invitation {
-  background: linear-gradient(135deg, #8e1c25 0%, #6e141a 100%);
-  border: 1.5px solid #d4af6d;
-  color: #fff4dc;
+  background: linear-gradient(135deg, #edd298 0%, #caa15a 28%, #ebd092 48%, #b58941 74%, #8e6224 100%);
+  border: 1.5px solid #f6e2b5;
+  color: #382413;
   padding: 13px 34px;
   border-radius: 30px;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(110, 20, 26, 0.28), inset 0 1px 2px rgba(255, 200, 150, 0.4), 0 0 14px rgba(212, 175, 109, 0.25);
+  box-shadow: 0 8px 24px rgba(150, 108, 59, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.75), inset 0 -1px 2px rgba(90, 60, 20, 0.4), 0 0 16px rgba(212, 175, 109, 0.35);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   outline: none;
-  animation: btnWaxGlowPulse 2.4s ease-in-out infinite;
+  animation: btnGiltPulse 2.4s ease-in-out infinite;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -1515,15 +1515,15 @@ html, body {
   transform: scale(0.96);
 }
 
-@keyframes btnWaxGlowPulse {
+@keyframes btnGiltPulse {
   0%, 100% {
-    box-shadow: 0 8px 22px rgba(110, 20, 26, 0.28), inset 0 1px 2px rgba(255, 210, 160, 0.4), 0 0 12px rgba(212, 175, 109, 0.25);
-    border-color: #d4af6d;
+    box-shadow: 0 8px 22px rgba(150, 108, 59, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.75), inset 0 -1px 2px rgba(90, 60, 20, 0.4), 0 0 14px rgba(212, 175, 109, 0.35);
+    border-color: #f6e2b5;
     transform: scale(1);
   }
   50% {
-    box-shadow: 0 10px 28px rgba(110, 20, 26, 0.38), inset 0 1px 3px rgba(255, 235, 190, 0.6), 0 0 22px rgba(220, 180, 110, 0.55);
-    border-color: #f1cf88;
+    box-shadow: 0 10px 28px rgba(150, 108, 59, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(90, 60, 20, 0.5), 0 0 24px rgba(235, 195, 115, 0.65);
+    border-color: #fff2cf;
     transform: scale(1.02);
   }
 }
@@ -1531,18 +1531,19 @@ html, body {
 .btn-enter-text {
   font-family: var(--font-serif-en);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.24em;
-  color: #fff6e5;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  color: #382413;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .btn-enter-sub {
   font-family: var(--font-serif-zh);
   font-size: 0.65rem;
   letter-spacing: 0.16em;
-  color: rgba(255, 235, 205, 0.9);
-  font-weight: 300;
+  color: #583a1c;
+  font-weight: 400;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 @media (max-width: 360px) {
