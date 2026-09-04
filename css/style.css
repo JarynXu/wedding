@@ -305,16 +305,15 @@ html, body {
    Screen 02: 过渡 1 - 我们要结婚了
    ========================================================= */
 .card-02 {
-  background-image: url('../assets/images/card02_bg.jpg?v=20260904');
-  background-size: contain;
+  background-image: url('../assets/images/card02_bg.jpg?v=20260904_3');
+  background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
-  background-color: #f8efe7;
 }
 
 .card-02 .ring-content {
   position: absolute;
-  top: 41%;
+  top: 48%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 68%;
