@@ -33,7 +33,7 @@ class WeddingPreloader {
       { type: 'image', url: 'assets/images/card03_bg.jpg?v=20260904_photoreal', weight: 10 },
       { type: 'image', url: 'assets/images/card04_bg.jpg?v=20260904_photoreal', weight: 10 },
       { type: 'image', url: 'assets/images/card05_bg.jpg?v=20260904_photoreal', weight: 10 },
-      { type: 'image', url: 'assets/images/card06_bg.jpg?v=20260904_photoreal', weight: 12 },
+      // { type: 'image', url: 'assets/images/card06_bg.jpg?v=20260904_photoreal', weight: 12 }, // 暂时隐藏Screen 06，无需加载
       { type: 'image', url: 'assets/images/welcome-photo.jpg', weight: 12 },
       { type: 'image', url: 'assets/images/card08_bg.jpg?v=20260905_redseal', weight: 10 },
       { type: 'audio', url: 'assets/audio/wedding-bgm.mp3', weight: 8 },
