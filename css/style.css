@@ -591,40 +591,19 @@ html, body {
 
 .card-06 .see-you-content {
   position: absolute;
-  top: 42%;
+  top: 58%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  pointer-events: none;
+  width: 80%;
 }
 
 .card-06 .see-you-title {
-  font-family: var(--font-serif-zh);
-  font-size: 2.15rem;
+  font-size: 1.55rem;
   letter-spacing: 0.28em;
-  font-weight: 600;
-  background: linear-gradient(180deg, #fff5dc 0%, #e8c481 35%, #b58544 70%, #6b431c 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 4px rgba(45, 25, 12, 0.65)) drop-shadow(0 6px 18px rgba(0, 0, 0, 0.3));
-  margin-left: 0.28em;
-  line-height: 1.25;
-}
-
-.card-06 .see-you-sub {
-  font-family: var(--font-serif-en);
-  font-size: 0.72rem;
-  letter-spacing: 0.26em;
-  color: #e5c382;
-  font-weight: 600;
-  text-shadow: 0 1px 3px rgba(35, 18, 10, 0.8), 0 2px 8px rgba(0, 0, 0, 0.35);
-  opacity: 0.95;
-  margin-left: 0.26em;
+  color: var(--color-gold-deep);
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.8);
+  font-weight: 500;
 }
 
 /* =========================================================

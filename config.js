@@ -64,7 +64,6 @@ const WEDDING_CONFIG = {
 
     // Screen 06 过渡 3
     page06Text: "期待与您相见",
-    page06Sub: "LOOKING FORWARD TO SEEING YOU",
 
     // Screen 08 邀请函全文
     invitationHeader: "诚挚邀请",
