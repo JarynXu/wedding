@@ -195,16 +195,7 @@ function initSceneTransitionEngine() {
 
   let currentIndex = 0;
   let isTransitioning = false;
-  const TRANSITION_DURATION = 820; // 毫秒
-
-  // 初始化照片级风吹花瓣物理粒子引擎
-  const phoneFrame = document.querySelector('.mobile-phone-frame');
-  let petalEngine = null;
-  if (typeof window.PetalWindEngine !== 'undefined') {
-    petalEngine = new window.PetalWindEngine();
-    petalEngine.init(phoneFrame);
-    window.petalEngine = petalEngine;
-  }
+  const TRANSITION_DURATION = 680; // 毫秒
 
   // 1. 初始化场景状态：仅当前页展示，其余完全隐藏
   function initSceneStates(initialIndex = 0) {
@@ -238,11 +229,6 @@ function initSceneTransitionEngine() {
     }
 
     isTransitioning = true;
-
-    // 触发照片级真花花瓣自当前页面花簇徐徐剥离、渐进式漫天撒落转场
-    if (petalEngine) {
-      petalEngine.triggerWindGust(direction === 'up' ? 'up' : 'down', currentIndex, 52);
-    }
 
     // 清空两张卡片上的临时类与内联样式
     currentCard.className = currentCard.className.replace(/scene-[a-z0-9-]+|prep-[a-z0-9-]+/g, '').trim();
