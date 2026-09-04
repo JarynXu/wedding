@@ -343,15 +343,18 @@ html, body {
    Screen 03: 时间 Time
    ========================================================= */
 .card-03 {
-  background-image: url('../assets/images/card03_bg.jpg');
+  background-image: url('../assets/images/card03_bg.jpg?v=20260904_3');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .card-03 .time-content {
   position: absolute;
-  top: 13%;
-  bottom: 9%;
-  left: 17%;
-  right: 17%;
+  top: 12%;
+  bottom: 18%;
+  left: 20%;
+  right: 20%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -449,15 +452,18 @@ html, body {
    Screen 04: 过渡 2 - 幸福见证
    ========================================================= */
 .card-04 {
-  background-image: url('../assets/images/card04_bg.jpg');
+  background-image: url('../assets/images/card04_bg.jpg?v=20260904_3');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .card-04 .quote-content {
   position: absolute;
   top: 48%;
-  left: 50%;
+  left: 54%;
   transform: translate(-50%, -50%);
-  width: 75%;
+  width: 70%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -477,15 +483,18 @@ html, body {
    Screen 05: 地点 Location
    ========================================================= */
 .card-05 {
-  background-image: url('../assets/images/card05_bg.jpg');
+  background-image: url('../assets/images/card05_bg.jpg?v=20260904_3');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .card-05 .location-content {
   position: absolute;
-  top: 13%;
-  bottom: 9%;
-  left: 14%;
-  right: 14%;
+  top: 17%;
+  bottom: 13%;
+  left: 20%;
+  right: 20%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -574,12 +583,15 @@ html, body {
    Screen 06: 过渡 3 - 期待相见
    ========================================================= */
 .card-06 {
-  background-image: url('../assets/images/card06_bg.jpg');
+  background-image: url('../assets/images/card06_bg.jpg?v=20260904_3');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .card-06 .see-you-content {
   position: absolute;
-  top: 50%;
+  top: 58%;
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
@@ -587,11 +599,11 @@ html, body {
 }
 
 .card-06 .see-you-title {
-  font-size: 1.4rem;
-  letter-spacing: 0.25em;
-  color: #5d3f24;
+  font-size: 1.55rem;
+  letter-spacing: 0.28em;
+  color: var(--color-gold-deep);
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9), 0 0 12px rgba(255, 255, 255, 0.8);
   font-weight: 500;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
 }
 
 /* =========================================================
@@ -660,13 +672,16 @@ html, body {
    Screen 08: 邀请函全文 Full Invitation
    ========================================================= */
 .card-08 {
-  background-image: url('../assets/images/card08_bg.jpg');
+  background-image: url('../assets/images/card08_bg.jpg?v=20260904_3');
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
 }
 
 .card-08 .letter-content {
   position: absolute;
-  top: 21%;
-  bottom: 20%;
+  top: 22%;
+  bottom: 25%;
   left: 14%;
   right: 14%;
   display: flex;
