@@ -17,6 +17,9 @@
   --color-burgundy: #6e1c24;
   --color-cream-bg: #f9f5ef;
   --color-text-dark: #3a2b20;
+
+  --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-silk: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 * {
@@ -83,7 +86,7 @@ html, body {
 }
 
 /* =========================================================
-   滑动容器与全屏吸附 (CSS Scroll Snap)
+   滑动容器与全屏立体层叠 (3D Perspective & Card Stacking)
    ========================================================= */
 .scroll-container {
   display: flex;
@@ -95,6 +98,8 @@ html, body {
   scroll-snap-type: y mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  perspective: 1200px;
+  perspective-origin: center center;
 }
 
 .scroll-container::-webkit-scrollbar {
@@ -118,6 +123,42 @@ html, body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  transform-origin: center bottom;
+  will-change: transform, opacity, filter;
+  transition: transform 0.45s var(--ease-luxury), opacity 0.45s ease, filter 0.45s ease;
+}
+
+/* 各卡片层叠物理次序与定制厚磅请柬顶边柔和漫射投影 (后一页覆盖前一页) */
+.card-01 { z-index: 10; }
+.card-02 { z-index: 20; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-03 { z-index: 30; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-04 { z-index: 40; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-05 { z-index: 50; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-06 { z-index: 60; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-07 { z-index: 70; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card-08 { z-index: 80; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+
+/* 原生 CSS Scroll-Driven 动画支持 (Chrome 115+, Edge 115+, Safari 18+) */
+@supports ((animation-timeline: view()) and (animation-range: exit)) {
+  .card {
+    animation: cardStackExit linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+    transition: none;
+  }
+
+  @keyframes cardStackExit {
+    0% {
+      transform: translate3d(0, 0, 0) scale(1);
+      filter: brightness(1);
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(0, 28%, 0) scale(0.93);
+      filter: brightness(0.68);
+      opacity: 0.35;
+    }
+  }
 }
 
 /* =========================================================
@@ -930,3 +971,261 @@ html, body {
 .copy-addr-btn:active {
   opacity: 0.9;
 }
+
+/* =========================================================
+   页面联动转场与仪式感盛放动效 (Choreographed Staggered Bloom)
+   ========================================================= */
+@keyframes bloomFadeUp {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes bloomFadeDown {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes bloomScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.91);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes dividerExpand {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes monogramBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.85) rotate(-3deg);
+  }
+  100% {
+    opacity: 0.95;
+    transform: scale(1) rotate(-3deg);
+  }
+}
+
+@keyframes watermarkBloom {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) rotate(-2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(-2deg);
+  }
+}
+
+@keyframes photoGentleZoom {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.04); }
+}
+
+@keyframes seeYouBloom {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes arrowFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+  100% {
+    opacity: 0.85;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* 未激活状态元素隐藏（等待进场） */
+.card:not(.active) .monogram-cover,
+.card:not(.active) .cover-names,
+.card:not(.active) .cover-date,
+.card:not(.active) .scroll-hint,
+.card:not(.active) .page02-title,
+.card:not(.active) .page02-sub,
+.card:not(.active) .section-title-wrap,
+.card:not(.active) .date-block,
+.card:not(.active) .schedule-item,
+.card:not(.active) .quote-line,
+.card:not(.active) .church-icon-box,
+.card:not(.active) .venue-info,
+.card:not(.active) .nav-map-btn,
+.card:not(.active) .see-you-title,
+.card:not(.active) .corner-gold-lines,
+.card:not(.active) .photo-watermark,
+.card:not(.active) .inv-header-box,
+.card:not(.active) .script-couple-names,
+.card:not(.active) .inv-paragraphs,
+.card:not(.active) .inv-detail-box,
+.card:not(.active) .scroll-circle-arrow {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Card 01 封面入场序列 */
+.card-01.active .monogram-cover {
+  animation: monogramBloom 1.2s var(--ease-luxury) both 0.15s;
+}
+.card-01.active .cover-names {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.3s;
+}
+.card-01.active .cover-date {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.45s;
+}
+.card-01.active .scroll-hint {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.65s;
+}
+.card-01.active .cover-bg-photo {
+  animation: photoGentleZoom 14s ease-in-out infinite alternate;
+}
+
+/* Card 02 序章入场序列 */
+.card-02.active .page02-title {
+  animation: bloomScale 1.1s var(--ease-luxury) both 0.2s;
+}
+.card-02.active .page02-sub {
+  animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.38s;
+}
+
+/* Card 03 时间入场序列 */
+.card-03.active .section-title-wrap {
+  animation: bloomFadeDown 0.8s var(--ease-luxury) both 0.12s;
+}
+.card-03.active .gold-divider {
+  animation: dividerExpand 0.8s var(--ease-luxury) both 0.25s;
+  transform-origin: center;
+}
+.card-03.active .date-block {
+  animation: bloomScale 0.9s var(--ease-luxury) both 0.3s;
+}
+.card-03.active .schedule-item:nth-child(1) {
+  animation: bloomFadeUp 0.7s var(--ease-luxury) both 0.42s;
+}
+.card-03.active .schedule-item:nth-child(2) {
+  animation: bloomFadeUp 0.7s var(--ease-luxury) both 0.52s;
+}
+.card-03.active .schedule-item:nth-child(3) {
+  animation: bloomFadeUp 0.7s var(--ease-luxury) both 0.62s;
+}
+.card-03.active .schedule-item:nth-child(4) {
+  animation: bloomFadeUp 0.7s var(--ease-luxury) both 0.72s;
+}
+.card-03.active .page-indicator {
+  animation: bloomFadeUp 0.6s var(--ease-luxury) both 0.82s;
+}
+
+/* Card 04 见证入场序列 */
+.card-04.active .quote-line:nth-child(1) {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.2s;
+}
+.card-04.active .quote-line:nth-child(2) {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.42s;
+}
+.card-04.active .quote-line:nth-child(3) {
+  animation: bloomFadeUp 1s var(--ease-luxury) both 0.6s;
+}
+
+/* Card 05 地点入场序列 */
+.card-05.active .section-title-wrap {
+  animation: bloomFadeDown 0.8s var(--ease-luxury) both 0.12s;
+}
+.card-05.active .church-icon-box {
+  animation: bloomScale 0.9s var(--ease-luxury) both 0.25s;
+}
+.card-05.active .venue-info {
+  animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.38s;
+}
+.card-05.active .nav-map-btn {
+  animation: bloomScale 0.85s var(--ease-luxury) both 0.52s;
+}
+.card-05.active .gold-divider {
+  animation: dividerExpand 0.8s var(--ease-luxury) both 0.62s;
+  transform-origin: center;
+}
+.card-05.active .page-indicator {
+  animation: bloomFadeUp 0.6s var(--ease-luxury) both 0.72s;
+}
+
+/* Card 06 期待相见入场序列 */
+.card-06.active .see-you-title {
+  animation: seeYouBloom 1.2s var(--ease-luxury) both 0.2s;
+}
+
+/* Card 07 新人照入场序列 */
+.card-07.active .corner-gold-lines {
+  animation: bloomFadeDown 1s var(--ease-luxury) both 0.18s;
+}
+.card-07.active .photo-watermark {
+  animation: watermarkBloom 1s var(--ease-luxury) both 0.32s;
+}
+.card-07.active .hero-photo {
+  animation: photoGentleZoom 14s ease-in-out infinite alternate;
+}
+
+/* Card 08 邀请函全文入场序列 */
+.card-08.active .inv-header-box {
+  animation: bloomFadeDown 0.8s var(--ease-luxury) both 0.12s;
+}
+.card-08.active .script-couple-names {
+  animation: bloomScale 1s var(--ease-luxury) both 0.26s;
+}
+.card-08.active .inv-paragraphs {
+  animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.4s;
+}
+.card-08.active .inv-detail-box {
+  animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.55s;
+}
+
+/* 各卡片翻页箭头柔和淡入 */
+.card.active .scroll-circle-arrow {
+  animation: arrowFadeIn 0.8s var(--ease-luxury) both 0.75s, pulseArrow 2.2s ease-in-out infinite 1.55s;
+  pointer-events: auto;
+}
+
+/* 无障碍偏好：降低动效支持 */
+@media (prefers-reduced-motion: reduce) {
+  .card,
+  .card:not(.active) *,
+  .card.active * {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+  }
+}
+

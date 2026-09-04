@@ -202,12 +202,13 @@ function initAudioPlayer(config) {
 }
 
 /**
- * 全屏滚动平滑翻页与箭头交互
+ * 全屏滚动平滑翻页与联动视差/盛放动效引擎
  */
 function initScrollInteractions() {
   const container = document.getElementById('scrollContainer');
   if (!container) return;
 
+  // 翻页圆圈箭头点击
   document.querySelectorAll('.scroll-circle-arrow, .scroll-hint').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -219,19 +220,39 @@ function initScrollInteractions() {
   });
 
   const cards = document.querySelectorAll('.card');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('active');
-      }
+
+  // 初始化第 1 页为 active
+  const card01 = document.getElementById('card-01');
+  if (card01) card01.classList.add('active');
+
+  // 灵敏的进入/离场观测器 (15% 露出即触发仪式感绽放动效)
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+          entry.target.classList.add('active');
+        } else if (!entry.isIntersecting || entry.intersectionRatio === 0) {
+          // 当卡片完全移出视口且不是第 1 页停在顶部时，移除 active，以便再次滑入时重新绽放
+          if (entry.target !== card01 || container.scrollTop > 60) {
+            entry.target.classList.remove('active');
+          }
+        }
+      });
+    }, {
+      root: container,
+      threshold: [0, 0.15, 0.5, 0.85]
     });
-  }, {
-    root: container,
-    threshold: 0.6
-  });
 
-  cards.forEach(card => observer.observe(card));
+    cards.forEach(card => observer.observe(card));
+  } else {
+    // 极老环境降级：全部卡片激活
+    cards.forEach(card => card.classList.add('active'));
+  }
 
+  // 启动非原生 scroll-driven 浏览器的 rAF 视差层叠降级
+  initCardParallaxFallback(container, cards);
+
+  // 键盘翻页支持
   window.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown' || e.key === 'PageDown') {
       const activeCard = Array.from(cards).find(c => {
@@ -253,6 +274,66 @@ function initScrollInteractions() {
       }
     }
   });
+}
+
+/**
+ * 针对不支持 CSS Scroll-Driven Animations 的移动端浏览器的 60fps rAF 层叠视差引擎
+ */
+function initCardParallaxFallback(container, cards) {
+  // 如果浏览器已原生支持 CSS View Timeline 则直接交由 GPU 渲染，不启动 JS 监听
+  if (window.CSS && CSS.supports('(animation-timeline: view()) and (animation-range: exit)')) {
+    return;
+  }
+
+  let ticking = false;
+  const cardsList = Array.from(cards);
+
+  const onScroll = () => {
+    const scrollTop = container.scrollTop;
+    const viewportHeight = container.clientHeight;
+    if (!viewportHeight) {
+      ticking = false;
+      return;
+    }
+
+    cardsList.forEach((card, i) => {
+      const cardTop = i * viewportHeight;
+      const exitOffset = scrollTop - cardTop;
+
+      // 当卡片正在从顶部离开视口 (exit 0% ~ 100%)
+      if (exitOffset > 0 && exitOffset <= viewportHeight) {
+        const progress = exitOffset / viewportHeight; // 0 -> 1
+        const translateY = progress * 28; // percent
+        const scale = 1 - progress * 0.07; // 1 -> 0.93
+        const brightness = 1 - progress * 0.32; // 1 -> 0.68
+        const opacity = 1 - progress * 0.65; // 1 -> 0.35
+
+        card.style.transform = `translate3d(0, ${translateY}%, 0) scale(${scale})`;
+        card.style.filter = `brightness(${brightness})`;
+        card.style.opacity = `${opacity}`;
+        card.style.transformOrigin = 'center bottom';
+      } else if (exitOffset <= 0) {
+        // 卡片尚未滑出或正在视野内
+        if (card.style.transform) card.style.transform = '';
+        if (card.style.filter) card.style.filter = '';
+        if (card.style.opacity) card.style.opacity = '';
+      } else {
+        // 卡片已完全滑向更上方
+        card.style.opacity = '0';
+      }
+    });
+
+    ticking = false;
+  };
+
+  container.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(onScroll);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  onScroll();
 }
 
 /**
