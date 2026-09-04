@@ -113,6 +113,7 @@ function renderConfigData(config) {
 
   // Screen 06: 期待相见
   setText('page06Text', config.texts?.page06Text || '期待与您相见');
+  setText('page06Sub', config.texts?.page06Sub || 'LOOKING FORWARD TO SEEING YOU');
 
   // Screen 07: 新人展示
   setSrc('page07Photo', config.assets?.welcomePhoto || defaultPhotoPath);
