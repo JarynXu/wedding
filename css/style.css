@@ -86,7 +86,7 @@ html, body {
 }
 
 /* =========================================================
-   单屏固定舞台与 3D 场景切换引擎 (Fixed-Screen Scene Stage)
+   单屏固定舞台与电影级场景渐隐渐入切换引擎 (Fixed-Screen Dissolve Engine)
    ========================================================= */
 .scene-stage,
 .scroll-container {
@@ -95,8 +95,6 @@ html, body {
   height: 100%;
   overflow: hidden;
   touch-action: none;
-  perspective: 1200px;
-  perspective-origin: center center;
   background: #1e1916;
 }
 
@@ -121,57 +119,80 @@ html, body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  transform-origin: center bottom;
-  will-change: transform, opacity, filter;
+  will-change: opacity, transform, filter;
   pointer-events: none;
   visibility: hidden;
   opacity: 0;
-  transform: translate3d(0, 0, 0) scale(1);
+  transform: scale(1) translate3d(0, 0, 0);
   filter: brightness(1);
-  transition: transform 0.62s var(--ease-luxury), opacity 0.62s var(--ease-luxury), filter 0.62s var(--ease-luxury);
+  transition: opacity 0.65s var(--ease-luxury), transform 0.65s var(--ease-luxury), filter 0.65s ease;
 }
 
-.card.no-transition {
-  transition: none !important;
-}
-
-/* 场景激活状态（当前正在全屏展示的场景） */
+/* 场景激活常态（当前全屏展示的场景） */
 .card.scene-active {
   visibility: visible;
   opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
+  transform: scale(1) translate3d(0, 0, 0);
   filter: brightness(1);
   pointer-events: auto;
-  z-index: 20;
-}
-
-/* 场景退至底层（当被新卡片覆盖时，后退微沉并柔和暗化） */
-.card.scene-underneath {
-  visibility: visible;
-  opacity: 0.45;
-  transform: translate3d(0, -6%, 0) scale(0.92);
-  filter: brightness(0.62);
-  pointer-events: none;
   z-index: 10;
 }
 
-/* 场景向下滑出（返回上一页时） */
-.card.scene-exit-down {
+/* 下滑浏览（进入下一页）时的过渡状态：
+   当前页渐隐微浮，下一页渐显自微沉处升起就位 */
+.card.scene-fade-out-up {
   visibility: visible;
-  opacity: 1;
-  transform: translate3d(0, 100%, 0);
-  box-shadow: 0 -20px 45px rgba(25, 12, 5, 0.28);
+  opacity: 0;
+  transform: scale(1.03) translate3d(0, -18px, 0);
+  filter: brightness(0.85);
   pointer-events: none;
-  z-index: 30;
+  z-index: 5;
 }
 
-/* 场景从底部滑入准备类 */
-.card.scene-enter-from-bottom {
+.card.scene-fade-in-up {
   visibility: visible;
   opacity: 1;
-  transform: translate3d(0, 100%, 0);
-  box-shadow: 0 -20px 45px rgba(25, 12, 5, 0.28);
-  z-index: 30;
+  transform: scale(1) translate3d(0, 0, 0);
+  filter: brightness(1);
+  z-index: 10;
+}
+
+/* 上滑返回（返回上一页）时的过渡状态：
+   当前页渐隐微沉，上一页渐显自上方微浮处就位 */
+.card.scene-fade-out-down {
+  visibility: visible;
+  opacity: 0;
+  transform: scale(0.97) translate3d(0, 18px, 0);
+  filter: brightness(0.85);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.card.scene-fade-in-down {
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1) translate3d(0, 0, 0);
+  filter: brightness(1);
+  z-index: 10;
+}
+
+/* 准备进场初始位置类（用于瞬时定位，随后由 transition 平滑淡入淡出） */
+.card.prep-from-bottom {
+  visibility: visible;
+  opacity: 0;
+  transform: scale(0.97) translate3d(0, 18px, 0);
+  filter: brightness(0.9);
+  transition: none !important;
+  z-index: 10;
+}
+
+.card.prep-from-top {
+  visibility: visible;
+  opacity: 0;
+  transform: scale(1.03) translate3d(0, -18px, 0);
+  filter: brightness(0.9);
+  transition: none !important;
+  z-index: 10;
 }
 
 /* =========================================================

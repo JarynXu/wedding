@@ -183,7 +183,7 @@ function initAudioPlayer(config) {
 }
 
 /**
- * 单屏固定舞台与 3D 场景切换引擎 (Fixed-Screen Scene Transition Engine)
+ * 单屏固定舞台与电影级场景渐隐渐入切换引擎 (Fixed-Screen Dissolve Engine)
  */
 function initSceneTransitionEngine() {
   const stage = document.getElementById('scrollContainer') || document.querySelector('.scene-stage');
@@ -195,24 +195,23 @@ function initSceneTransitionEngine() {
 
   let currentIndex = 0;
   let isTransitioning = false;
-  const TRANSITION_DURATION = 620; // 毫秒
+  const TRANSITION_DURATION = 680; // 毫秒
 
-  // 1. 初始化场景状态：仅目标页激活并展示，其余场景隐藏以节约 GPU 功耗
+  // 1. 初始化场景状态：仅当前页展示，其余完全隐藏
   function initSceneStates(initialIndex = 0) {
     currentIndex = Math.max(0, Math.min(initialIndex, totalScenes - 1));
     cards.forEach((card, idx) => {
-      card.classList.remove('scene-active', 'scene-underneath', 'scene-exit-down', 'scene-enter-from-bottom', 'no-transition', 'active');
-      card.style.transform = '';
-      card.style.filter = '';
-      card.style.opacity = '';
-      card.style.zIndex = '';
+      card.className = card.className
+        .replace(/scene-[a-z0-9-]+|prep-[a-z0-9-]+|active/g, '')
+        .trim();
+      card.style.cssText = '';
       if (idx === currentIndex) {
         card.classList.add('scene-active', 'active');
       }
     });
   }
 
-  // 2. 核心场景切换驱动函数
+  // 2. 核心场景渐隐渐出、渐显渐入驱动函数
   function goToScene(targetIndex, direction = 'up', isInstant = false) {
     if (targetIndex < 0 || targetIndex >= totalScenes || targetIndex === currentIndex) {
       return false;
@@ -231,56 +230,42 @@ function initSceneTransitionEngine() {
 
     isTransitioning = true;
 
-    // 清除可能残余的实时手势临时内联样式
-    currentCard.classList.remove('no-transition');
-    targetCard.classList.remove('no-transition');
-    currentCard.style.transform = '';
-    currentCard.style.filter = '';
-    currentCard.style.opacity = '';
-    targetCard.style.transform = '';
-    targetCard.style.filter = '';
-    targetCard.style.opacity = '';
+    // 清空两张卡片上的临时类与内联样式
+    currentCard.className = currentCard.className.replace(/scene-[a-z0-9-]+|prep-[a-z0-9-]+/g, '').trim();
+    targetCard.className = targetCard.className.replace(/scene-[a-z0-9-]+|prep-[a-z0-9-]+/g, '').trim();
+    currentCard.style.cssText = '';
+    targetCard.style.cssText = '';
 
     if (direction === 'up' || targetIndex > currentIndex) {
-      // ===== 向下浏览（进入下一个场景）：新卡片自底部滑入并展开，当前卡片后退微沉 =====
-      targetCard.classList.remove('scene-underneath', 'scene-exit-down');
-      targetCard.classList.add('scene-enter-from-bottom');
-      targetCard.style.zIndex = '30';
+      // ===== 下滑浏览（进入下一页）：目标卡片自微沉处渐显，当前卡片微浮渐隐 =====
+      targetCard.classList.add('prep-from-bottom');
+      currentCard.classList.add('scene-active');
 
-      currentCard.style.zIndex = '10';
-
-      // 强制回流，确保初始进场样式生效
+      // 强制回流使初始位置生效
       void targetCard.offsetWidth;
 
       // 激活目标卡片的仪式感盛放动画
       targetCard.classList.add('active');
 
-      // 触发平滑过渡
       requestAnimationFrame(() => {
+        targetCard.classList.remove('prep-from-bottom');
+        targetCard.classList.add('scene-fade-in-up');
         currentCard.classList.remove('scene-active');
-        currentCard.classList.add('scene-underneath');
-
-        targetCard.classList.remove('scene-enter-from-bottom');
-        targetCard.classList.add('scene-active');
+        currentCard.classList.add('scene-fade-out-up');
       });
 
       setTimeout(() => {
-        currentCard.classList.remove('scene-underneath', 'active');
-        currentCard.style.zIndex = '';
-        targetCard.style.zIndex = '';
+        currentCard.classList.remove('scene-fade-out-up', 'active');
+        targetCard.classList.remove('scene-fade-in-up');
+        targetCard.classList.add('scene-active');
         currentIndex = targetIndex;
         isTransitioning = false;
       }, TRANSITION_DURATION);
 
     } else {
-      // ===== 向上返回（返回上一个场景）：当前卡片向下滑出，上一个卡片在底层重新浮现 =====
-      targetCard.classList.remove('scene-exit-down', 'scene-enter-from-bottom');
-      targetCard.classList.add('scene-underneath');
-      targetCard.style.zIndex = '10';
-
-      currentCard.classList.remove('scene-enter-from-bottom');
+      // ===== 上滑返回（返回上一页）：目标卡片自上方渐显，当前卡片向下渐隐 =====
+      targetCard.classList.add('prep-from-top');
       currentCard.classList.add('scene-active');
-      currentCard.style.zIndex = '30';
 
       // 强制回流
       void targetCard.offsetWidth;
@@ -288,17 +273,16 @@ function initSceneTransitionEngine() {
       targetCard.classList.add('active');
 
       requestAnimationFrame(() => {
-        targetCard.classList.remove('scene-underneath');
-        targetCard.classList.add('scene-active');
-
+        targetCard.classList.remove('prep-from-top');
+        targetCard.classList.add('scene-fade-in-down');
         currentCard.classList.remove('scene-active');
-        currentCard.classList.add('scene-exit-down');
+        currentCard.classList.add('scene-fade-out-down');
       });
 
       setTimeout(() => {
-        currentCard.classList.remove('scene-exit-down', 'active');
-        currentCard.style.zIndex = '';
-        targetCard.style.zIndex = '';
+        currentCard.classList.remove('scene-fade-out-down', 'active');
+        targetCard.classList.remove('scene-fade-in-down');
+        targetCard.classList.add('scene-active');
         currentIndex = targetIndex;
         isTransitioning = false;
       }, TRANSITION_DURATION);
@@ -315,135 +299,55 @@ function initSceneTransitionEngine() {
     return goToScene(currentIndex - 1, 'down');
   }
 
-  // 3. 触摸滑动手势交互（支持快速划动与 1:1 跟手阻尼微预览）
+  // 3. 手机端触摸滑动手势交互（灵敏识别上划/下划触发渐显渐隐换场）
   let startY = 0;
   let startX = 0;
   let startTime = 0;
-  let isTouching = false;
-  let isDraggingVertically = false;
+  let isTracking = false;
 
   const onTouchStart = (e) => {
     if (isTransitioning) return;
     if (e.target.closest('button, a, input, .nav-map-btn, .map-modal-mask, .map-modal-sheet, .music-btn')) {
-      return;
+      return; // 保证按钮和弹窗正常点击，不拦截
     }
     const touch = e.touches[0];
     startY = touch.clientY;
     startX = touch.clientX;
     startTime = Date.now();
-    isTouching = true;
-    isDraggingVertically = false;
+    isTracking = true;
   };
 
   const onTouchMove = (e) => {
-    if (!isTouching || isTransitioning) return;
+    if (!isTracking) return;
     const touch = e.touches[0];
     const deltaY = touch.clientY - startY;
     const deltaX = touch.clientX - startX;
 
-    if (!isDraggingVertically) {
-      if (Math.abs(deltaY) > 8 && Math.abs(deltaY) > Math.abs(deltaX)) {
-        isDraggingVertically = true;
-      } else if (Math.abs(deltaX) > 8) {
-        isTouching = false;
-        return;
-      }
-    }
-
-    if (isDraggingVertically) {
-      // 阻止浏览器默认拉动回弹
-      if (e.cancelable) e.preventDefault();
-
-      const height = stage.clientHeight || window.innerHeight;
-      const currentCard = cards[currentIndex];
-
-      if (deltaY < 0 && currentIndex < totalScenes - 1) {
-        // 向上拖动（探索下一场景）
-        const nextCard = cards[currentIndex + 1];
-        nextCard.classList.add('no-transition');
-        currentCard.classList.add('no-transition');
-
-        const movePercent = Math.min(100, Math.max(0, 100 + (deltaY / height) * 100));
-        const underScale = 1 - (Math.abs(deltaY) / height) * 0.08;
-        const underBright = 1 - (Math.abs(deltaY) / height) * 0.35;
-
-        nextCard.style.visibility = 'visible';
-        nextCard.style.opacity = '1';
-        nextCard.style.zIndex = '30';
-        nextCard.style.transform = `translate3d(0, ${movePercent}%, 0)`;
-
-        currentCard.style.transform = `translate3d(0, ${(-Math.abs(deltaY) / height) * 6}%, 0) scale(${underScale})`;
-        currentCard.style.filter = `brightness(${underBright})`;
-      } else if (deltaY > 0 && currentIndex > 0) {
-        // 向下拖动（重温上一场景）
-        const prevCard = cards[currentIndex - 1];
-        prevCard.classList.add('no-transition');
-        currentCard.classList.add('no-transition');
-
-        const movePercent = Math.min(100, Math.max(0, (deltaY / height) * 100));
-        const underScale = 0.92 + (deltaY / height) * 0.08;
-        const underBright = 0.65 + (deltaY / height) * 0.35;
-
-        prevCard.style.visibility = 'visible';
-        prevCard.style.opacity = '0.5';
-        prevCard.style.zIndex = '10';
-        prevCard.style.transform = `translate3d(0, ${(-6 + (deltaY / height) * 6)}%, 0) scale(${underScale})`;
-        prevCard.style.filter = `brightness(${underBright})`;
-
-        currentCard.style.zIndex = '30';
-        currentCard.style.transform = `translate3d(0, ${movePercent}%, 0)`;
-      } else {
-        // 边界弹性阻尼
-        const damped = deltaY * 0.22;
-        currentCard.classList.add('no-transition');
-        currentCard.style.transform = `translate3d(0, ${damped}px, 0)`;
-      }
+    // 只要是垂直滑动，立即阻止原生页面下拉回弹/刷新
+    if (Math.abs(deltaY) > Math.abs(deltaX) && e.cancelable) {
+      e.preventDefault();
     }
   };
 
   const onTouchEnd = (e) => {
-    if (!isTouching) return;
-    isTouching = false;
+    if (!isTracking) return;
+    isTracking = false;
 
-    if (!isDraggingVertically) return;
-    isDraggingVertically = false;
+    if (isTransitioning) return;
 
     const touch = e.changedTouches[0];
     const deltaY = touch.clientY - startY;
-    const duration = Date.now() - startTime;
-    const height = stage.clientHeight || window.innerHeight;
+    const deltaX = touch.clientX - startX;
 
-    // 清除拖拽卡片的 no-transition 标记
-    cards.forEach(c => c.classList.remove('no-transition'));
-
-    const isFlick = duration < 280 && Math.abs(deltaY) > 24;
-    const isDraggedEnough = Math.abs(deltaY) > height * 0.12 || Math.abs(deltaY) > 45;
-
-    if ((isFlick || isDraggedEnough) && deltaY < 0 && currentIndex < totalScenes - 1) {
-      goToScene(currentIndex + 1, 'up');
-    } else if ((isFlick || isDraggedEnough) && deltaY > 0 && currentIndex > 0) {
-      goToScene(currentIndex - 1, 'down');
-    } else {
-      // 未达到换场阈值，优雅弹性复位
-      const currentCard = cards[currentIndex];
-      currentCard.style.transition = 'transform 0.32s var(--ease-luxury), filter 0.32s ease';
-      currentCard.style.transform = 'translate3d(0, 0, 0) scale(1)';
-      currentCard.style.filter = 'brightness(1)';
-
-      if (currentIndex < totalScenes - 1) {
-        const nextCard = cards[currentIndex + 1];
-        nextCard.style.transition = 'transform 0.32s var(--ease-luxury)';
-        nextCard.style.transform = 'translate3d(0, 100%, 0)';
+    // 划动有效阈值：垂直划动超过 28px，且垂直位移大于水平位移
+    if (Math.abs(deltaY) > 28 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      if (deltaY < 0) {
+        // 手指上划 -> 切换到下一个场景（当前渐隐、下一场景渐显）
+        nextScene();
+      } else {
+        // 手指下划 -> 返回上一个场景（当前渐隐、上一场景渐显）
+        prevScene();
       }
-      if (currentIndex > 0) {
-        const prevCard = cards[currentIndex - 1];
-        prevCard.style.transition = 'transform 0.32s var(--ease-luxury)';
-        prevCard.style.transform = 'translate3d(0, -6%, 0) scale(0.92)';
-      }
-
-      setTimeout(() => {
-        initSceneStates(currentIndex);
-      }, 340);
     }
   };
 
