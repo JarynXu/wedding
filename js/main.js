@@ -63,7 +63,15 @@ function renderConfigData(config) {
   const coverBgPhoto = document.getElementById('coverBgPhoto');
   const coverFrameOverlay = document.getElementById('coverFrameOverlay');
 
-  if (!config.assets?.welcomePhoto || config.assets.welcomePhoto === defaultPhotoPath) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const coverParam = urlParams.get('cover');
+  if (coverParam === 'opt1' && coverBgPhoto) {
+    coverBgPhoto.src = 'assets/images/cover_option_1_french_clean.jpg';
+    if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
+  } else if (coverParam === 'opt2' && coverBgPhoto) {
+    coverBgPhoto.src = 'assets/images/cover_option_2_burgundy_velvet.jpg';
+    if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
+  } else if (!config.assets?.welcomePhoto || config.assets.welcomePhoto === defaultPhotoPath) {
     if (coverBgPhoto) coverBgPhoto.src = 'assets/images/card01_bg.jpg';
     if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
   } else {
