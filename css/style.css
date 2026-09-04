@@ -1263,3 +1263,201 @@ html, body {
   }
 }
 
+/* =========================================================
+   全资源预加载与仪式感开场幕布 (Preloader Overlay)
+   ========================================================= */
+.preloader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 999999;
+  background: radial-gradient(circle at 50% 38%, #281e18 0%, #16110e 65%, #0d0a08 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  user-select: none;
+  transition: opacity 0.85s var(--ease-luxury), transform 0.85s var(--ease-luxury);
+}
+
+.preloader-overlay.fade-out {
+  opacity: 0;
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+.preloader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 320px;
+  text-align: center;
+}
+
+.preloader-monogram {
+  font-family: var(--font-script);
+  font-size: 4.8rem;
+  line-height: 1;
+  color: #e5c483;
+  text-shadow: 0 2px 10px rgba(229, 196, 131, 0.4), 0 0 25px rgba(180, 130, 60, 0.25);
+  margin-bottom: 24px;
+  animation: monogramBreath 3s ease-in-out infinite alternate;
+}
+
+@keyframes monogramBreath {
+  0% {
+    transform: scale(0.98);
+    filter: drop-shadow(0 0 6px rgba(229, 196, 131, 0.3));
+  }
+  100% {
+    transform: scale(1.02);
+    filter: drop-shadow(0 0 16px rgba(229, 196, 131, 0.65));
+  }
+}
+
+.preloader-title-box {
+  margin-bottom: 34px;
+}
+
+.preloader-title {
+  font-family: var(--font-serif-en);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  color: #d1ab75;
+  margin-bottom: 8px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+
+.preloader-names {
+  font-family: var(--font-serif-en);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  color: #a48259;
+}
+
+.preloader-progress-section {
+  width: 82%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.preloader-overlay.ready .preloader-progress-section {
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.preloader-bar-bg {
+  width: 100%;
+  height: 2px;
+  background: rgba(210, 175, 120, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.preloader-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #9a6d38 0%, #e8ca92 50%, #fff1d2 100%);
+  box-shadow: 0 0 8px rgba(232, 202, 146, 0.8);
+  border-radius: 2px;
+  transition: width 0.08s linear;
+}
+
+.preloader-meta {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  color: #a8855e;
+}
+
+.preloader-status {
+  font-family: var(--font-serif-zh);
+  font-weight: 300;
+}
+
+.preloader-percent {
+  font-family: var(--font-serif-en);
+  font-weight: 500;
+  color: #e5c483;
+}
+
+.preloader-action-area {
+  display: none;
+  opacity: 0;
+  transform: translateY(12px) scale(0.95);
+  transition: opacity 0.6s var(--ease-luxury), transform 0.6s var(--ease-luxury);
+}
+
+.preloader-action-area.visible {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.btn-enter-invitation {
+  background: linear-gradient(135deg, rgba(72, 48, 28, 0.94) 0%, rgba(36, 24, 14, 0.98) 100%);
+  border: 1.5px solid #d4af6d;
+  color: #f7e8ce;
+  padding: 13px 32px;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 235, 190, 0.4), 0 0 18px rgba(212, 175, 109, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  outline: none;
+  animation: btnGlowPulse 2.2s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-enter-invitation:active {
+  transform: scale(0.96);
+}
+
+@keyframes btnGlowPulse {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 235, 190, 0.4), 0 0 14px rgba(212, 175, 109, 0.3);
+    border-color: #d4af6d;
+  }
+  50% {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), inset 0 1px 3px rgba(255, 245, 220, 0.6), 0 0 28px rgba(235, 200, 130, 0.65);
+    border-color: #ffe6aa;
+  }
+}
+
+.btn-enter-text {
+  font-family: var(--font-serif-en);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: #fff1d2;
+}
+
+.btn-enter-sub {
+  font-family: var(--font-serif-zh);
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: #c9a674;
+  font-weight: 300;
+}
+

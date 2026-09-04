@@ -5,17 +5,20 @@
 document.addEventListener('DOMContentLoaded', () => {
   const config = window.WEDDING_CONFIG || {};
 
-  // 1. 渲染网页标题与全局数据
+  // 1. 渲染网页标题与全局数据（包含 Preloader 文本）
   renderConfigData(config);
 
   // 2. 初始化背景音乐控制器
-  initAudioPlayer(config);
+  const audioController = initAudioPlayer(config);
 
   // 3. 初始化单屏固定舞台场景切换引擎与多维手势系统
   initSceneTransitionEngine();
 
   // 4. 初始化地图导航弹窗
   initMapModal(config);
+
+  // 5. 初始化全资源预加载与开场仪式感引擎
+  initPreloaderSystem(config, audioController);
 });
 
 /**
@@ -34,6 +37,10 @@ function renderConfigData(config) {
     const el = document.getElementById(id);
     if (el && src) el.src = src;
   };
+
+  // Preloader 预加载界面
+  setText('preloaderMonogram', config.monogram || 'JH');
+  setText('preloaderNames', config.coupleNamesEn || 'JARYN & HANNA');
 
   // Screen 01: 封面智能图层处理
   setText('coverMonogram', config.monogram || 'JH');
@@ -180,6 +187,7 @@ function initAudioPlayer(config) {
   }
 
   playMusic();
+  return { playMusic, pauseMusic };
 }
 
 /**
@@ -515,5 +523,36 @@ function initMapModal(config) {
     setTimeout(() => {
       toast.style.opacity = '0';
     }, 2000);
+  }
+}
+
+/**
+ * 全资源预加载与开场仪式感联动系统
+ */
+function initPreloaderSystem(config, audioController) {
+  const coverCard = document.getElementById('card-01');
+  if (coverCard) {
+    // 初始先移除 active，等待开启请柬瞬间再激活盛放仪式动效
+    coverCard.classList.remove('active');
+  }
+
+  if (typeof window.WeddingPreloader !== 'undefined') {
+    const preloader = new window.WeddingPreloader({
+      onEnter: () => {
+        // 1. 用户点击瞬间唤醒背景音乐（100% 解锁移动端与微信音频播放权限）
+        if (audioController && typeof audioController.playMusic === 'function') {
+          audioController.playMusic();
+        }
+        // 2. 激活封面仪式感盛放动画
+        if (coverCard) {
+          void coverCard.offsetWidth; // 强制重排
+          coverCard.classList.add('active');
+        }
+      }
+    });
+    preloader.init();
+  } else {
+    // 降级兼容：若无 preloader 则直接激活封面
+    if (coverCard) coverCard.classList.add('active');
   }
 }

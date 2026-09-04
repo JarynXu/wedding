@@ -11,11 +11,43 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=20260905_clean">
+  <link rel="stylesheet" href="css/style.css?v=20260905_preloader">
 </head>
 <body>
   <div class="app-wrapper">
     <div class="mobile-phone-frame">
+      <!-- 全资源预加载与仪式感开启幕布 (Preloader Overlay) -->
+      <div class="preloader-overlay" id="preloaderOverlay">
+        <div class="preloader-content">
+          <!-- 浪漫新人花体徽章 -->
+          <div class="preloader-monogram" id="preloaderMonogram">JH</div>
+          
+          <div class="preloader-title-box">
+            <h2 class="preloader-title">WEDDING INVITATION</h2>
+            <div class="preloader-names" id="preloaderNames">JARYN &amp; HANNA</div>
+          </div>
+
+          <!-- 极细烫金进度条与动态状态 -->
+          <div class="preloader-progress-section" id="preloaderProgressSection">
+            <div class="preloader-bar-bg">
+              <div class="preloader-bar-fill" id="preloaderBarFill"></div>
+            </div>
+            <div class="preloader-meta">
+              <span class="preloader-status" id="preloaderStatus">正在装点浪漫殿堂...</span>
+              <span class="preloader-percent" id="preloaderPercent">0%</span>
+            </div>
+          </div>
+
+          <!-- 100% 达成后绽放的仪式感进入按钮 -->
+          <div class="preloader-action-area" id="preloaderActionArea">
+            <button class="btn-enter-invitation" id="btnEnterInvitation" type="button" aria-label="开启婚礼请柬">
+              <span class="btn-enter-text">开启请柬 · OPEN</span>
+              <span class="btn-enter-sub">点击开启浪漫之旅</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- 全局常驻音乐播放开关 -->
       <button class="music-btn playing" id="musicToggle" aria-label="音乐播放控制" title="背景音乐开关">
         <svg viewBox="0 0 24 24">
@@ -225,7 +257,8 @@
   </div>
 
   <!-- 配置文件与脚本 -->
-  <script src="config.js?v=20260904"></script>
-  <script src="js/main.js?v=20260905_clean"></script>
+  <script src="config.js?v=20260905_preloader"></script>
+  <script src="js/preloader.js?v=20260905_preloader"></script>
+  <script src="js/main.js?v=20260905_preloader"></script>
 </body>
 </html>
