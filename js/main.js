@@ -11,30 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. 初始化背景音乐控制器
   initAudioPlayer(config);
 
-  // 3. 初始化全屏滚动与翻页箭头事件
-  initScrollInteractions();
+  // 3. 初始化单屏固定舞台场景切换引擎与多维手势系统
+  initSceneTransitionEngine();
 
   // 4. 初始化地图导航弹窗
   initMapModal(config);
-
-  // 5. URL 参数与 Hash 直接定位卡片支持 (如 ?card=3 或 #card-03)
-  const urlParams = new URLSearchParams(window.location.search);
-  const cardQuery = urlParams.get('card');
-  const container = document.getElementById('scrollContainer');
-  const cards = document.querySelectorAll('.card');
-
-  if (cardQuery && container) {
-    const cardIdx = parseInt(cardQuery, 10) - 1;
-    if (cardIdx >= 0 && cardIdx < cards.length) {
-      container.scrollTop = cardIdx * container.clientHeight;
-    }
-  } else if (window.location.hash && container) {
-    const target = document.querySelector(window.location.hash);
-    const cardIdx = Array.from(cards).indexOf(target);
-    if (cardIdx >= 0) {
-      container.scrollTop = cardIdx * container.clientHeight;
-    }
-  }
 });
 
 /**
@@ -202,138 +183,332 @@ function initAudioPlayer(config) {
 }
 
 /**
- * 全屏滚动平滑翻页与联动视差/盛放动效引擎
+ * 单屏固定舞台与 3D 场景切换引擎 (Fixed-Screen Scene Transition Engine)
  */
-function initScrollInteractions() {
-  const container = document.getElementById('scrollContainer');
-  if (!container) return;
+function initSceneTransitionEngine() {
+  const stage = document.getElementById('scrollContainer') || document.querySelector('.scene-stage');
+  if (!stage) return;
 
-  // 翻页圆圈箭头点击
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const totalScenes = cards.length;
+  if (totalScenes === 0) return;
+
+  let currentIndex = 0;
+  let isTransitioning = false;
+  const TRANSITION_DURATION = 620; // 毫秒
+
+  // 1. 初始化场景状态：仅目标页激活并展示，其余场景隐藏以节约 GPU 功耗
+  function initSceneStates(initialIndex = 0) {
+    currentIndex = Math.max(0, Math.min(initialIndex, totalScenes - 1));
+    cards.forEach((card, idx) => {
+      card.classList.remove('scene-active', 'scene-underneath', 'scene-exit-down', 'scene-enter-from-bottom', 'no-transition', 'active');
+      card.style.transform = '';
+      card.style.filter = '';
+      card.style.opacity = '';
+      card.style.zIndex = '';
+      if (idx === currentIndex) {
+        card.classList.add('scene-active', 'active');
+      }
+    });
+  }
+
+  // 2. 核心场景切换驱动函数
+  function goToScene(targetIndex, direction = 'up', isInstant = false) {
+    if (targetIndex < 0 || targetIndex >= totalScenes || targetIndex === currentIndex) {
+      return false;
+    }
+    if (isTransitioning && !isInstant) {
+      return false;
+    }
+
+    const currentCard = cards[currentIndex];
+    const targetCard = cards[targetIndex];
+
+    if (isInstant) {
+      initSceneStates(targetIndex);
+      return true;
+    }
+
+    isTransitioning = true;
+
+    // 清除可能残余的实时手势临时内联样式
+    currentCard.classList.remove('no-transition');
+    targetCard.classList.remove('no-transition');
+    currentCard.style.transform = '';
+    currentCard.style.filter = '';
+    currentCard.style.opacity = '';
+    targetCard.style.transform = '';
+    targetCard.style.filter = '';
+    targetCard.style.opacity = '';
+
+    if (direction === 'up' || targetIndex > currentIndex) {
+      // ===== 向下浏览（进入下一个场景）：新卡片自底部滑入并展开，当前卡片后退微沉 =====
+      targetCard.classList.remove('scene-underneath', 'scene-exit-down');
+      targetCard.classList.add('scene-enter-from-bottom');
+      targetCard.style.zIndex = '30';
+
+      currentCard.style.zIndex = '10';
+
+      // 强制回流，确保初始进场样式生效
+      void targetCard.offsetWidth;
+
+      // 激活目标卡片的仪式感盛放动画
+      targetCard.classList.add('active');
+
+      // 触发平滑过渡
+      requestAnimationFrame(() => {
+        currentCard.classList.remove('scene-active');
+        currentCard.classList.add('scene-underneath');
+
+        targetCard.classList.remove('scene-enter-from-bottom');
+        targetCard.classList.add('scene-active');
+      });
+
+      setTimeout(() => {
+        currentCard.classList.remove('scene-underneath', 'active');
+        currentCard.style.zIndex = '';
+        targetCard.style.zIndex = '';
+        currentIndex = targetIndex;
+        isTransitioning = false;
+      }, TRANSITION_DURATION);
+
+    } else {
+      // ===== 向上返回（返回上一个场景）：当前卡片向下滑出，上一个卡片在底层重新浮现 =====
+      targetCard.classList.remove('scene-exit-down', 'scene-enter-from-bottom');
+      targetCard.classList.add('scene-underneath');
+      targetCard.style.zIndex = '10';
+
+      currentCard.classList.remove('scene-enter-from-bottom');
+      currentCard.classList.add('scene-active');
+      currentCard.style.zIndex = '30';
+
+      // 强制回流
+      void targetCard.offsetWidth;
+
+      targetCard.classList.add('active');
+
+      requestAnimationFrame(() => {
+        targetCard.classList.remove('scene-underneath');
+        targetCard.classList.add('scene-active');
+
+        currentCard.classList.remove('scene-active');
+        currentCard.classList.add('scene-exit-down');
+      });
+
+      setTimeout(() => {
+        currentCard.classList.remove('scene-exit-down', 'active');
+        currentCard.style.zIndex = '';
+        targetCard.style.zIndex = '';
+        currentIndex = targetIndex;
+        isTransitioning = false;
+      }, TRANSITION_DURATION);
+    }
+
+    return true;
+  }
+
+  function nextScene() {
+    return goToScene(currentIndex + 1, 'up');
+  }
+
+  function prevScene() {
+    return goToScene(currentIndex - 1, 'down');
+  }
+
+  // 3. 触摸滑动手势交互（支持快速划动与 1:1 跟手阻尼微预览）
+  let startY = 0;
+  let startX = 0;
+  let startTime = 0;
+  let isTouching = false;
+  let isDraggingVertically = false;
+
+  const onTouchStart = (e) => {
+    if (isTransitioning) return;
+    if (e.target.closest('button, a, input, .nav-map-btn, .map-modal-mask, .map-modal-sheet, .music-btn')) {
+      return;
+    }
+    const touch = e.touches[0];
+    startY = touch.clientY;
+    startX = touch.clientX;
+    startTime = Date.now();
+    isTouching = true;
+    isDraggingVertically = false;
+  };
+
+  const onTouchMove = (e) => {
+    if (!isTouching || isTransitioning) return;
+    const touch = e.touches[0];
+    const deltaY = touch.clientY - startY;
+    const deltaX = touch.clientX - startX;
+
+    if (!isDraggingVertically) {
+      if (Math.abs(deltaY) > 8 && Math.abs(deltaY) > Math.abs(deltaX)) {
+        isDraggingVertically = true;
+      } else if (Math.abs(deltaX) > 8) {
+        isTouching = false;
+        return;
+      }
+    }
+
+    if (isDraggingVertically) {
+      // 阻止浏览器默认拉动回弹
+      if (e.cancelable) e.preventDefault();
+
+      const height = stage.clientHeight || window.innerHeight;
+      const currentCard = cards[currentIndex];
+
+      if (deltaY < 0 && currentIndex < totalScenes - 1) {
+        // 向上拖动（探索下一场景）
+        const nextCard = cards[currentIndex + 1];
+        nextCard.classList.add('no-transition');
+        currentCard.classList.add('no-transition');
+
+        const movePercent = Math.min(100, Math.max(0, 100 + (deltaY / height) * 100));
+        const underScale = 1 - (Math.abs(deltaY) / height) * 0.08;
+        const underBright = 1 - (Math.abs(deltaY) / height) * 0.35;
+
+        nextCard.style.visibility = 'visible';
+        nextCard.style.opacity = '1';
+        nextCard.style.zIndex = '30';
+        nextCard.style.transform = `translate3d(0, ${movePercent}%, 0)`;
+
+        currentCard.style.transform = `translate3d(0, ${(-Math.abs(deltaY) / height) * 6}%, 0) scale(${underScale})`;
+        currentCard.style.filter = `brightness(${underBright})`;
+      } else if (deltaY > 0 && currentIndex > 0) {
+        // 向下拖动（重温上一场景）
+        const prevCard = cards[currentIndex - 1];
+        prevCard.classList.add('no-transition');
+        currentCard.classList.add('no-transition');
+
+        const movePercent = Math.min(100, Math.max(0, (deltaY / height) * 100));
+        const underScale = 0.92 + (deltaY / height) * 0.08;
+        const underBright = 0.65 + (deltaY / height) * 0.35;
+
+        prevCard.style.visibility = 'visible';
+        prevCard.style.opacity = '0.5';
+        prevCard.style.zIndex = '10';
+        prevCard.style.transform = `translate3d(0, ${(-6 + (deltaY / height) * 6)}%, 0) scale(${underScale})`;
+        prevCard.style.filter = `brightness(${underBright})`;
+
+        currentCard.style.zIndex = '30';
+        currentCard.style.transform = `translate3d(0, ${movePercent}%, 0)`;
+      } else {
+        // 边界弹性阻尼
+        const damped = deltaY * 0.22;
+        currentCard.classList.add('no-transition');
+        currentCard.style.transform = `translate3d(0, ${damped}px, 0)`;
+      }
+    }
+  };
+
+  const onTouchEnd = (e) => {
+    if (!isTouching) return;
+    isTouching = false;
+
+    if (!isDraggingVertically) return;
+    isDraggingVertically = false;
+
+    const touch = e.changedTouches[0];
+    const deltaY = touch.clientY - startY;
+    const duration = Date.now() - startTime;
+    const height = stage.clientHeight || window.innerHeight;
+
+    // 清除拖拽卡片的 no-transition 标记
+    cards.forEach(c => c.classList.remove('no-transition'));
+
+    const isFlick = duration < 280 && Math.abs(deltaY) > 24;
+    const isDraggedEnough = Math.abs(deltaY) > height * 0.12 || Math.abs(deltaY) > 45;
+
+    if ((isFlick || isDraggedEnough) && deltaY < 0 && currentIndex < totalScenes - 1) {
+      goToScene(currentIndex + 1, 'up');
+    } else if ((isFlick || isDraggedEnough) && deltaY > 0 && currentIndex > 0) {
+      goToScene(currentIndex - 1, 'down');
+    } else {
+      // 未达到换场阈值，优雅弹性复位
+      const currentCard = cards[currentIndex];
+      currentCard.style.transition = 'transform 0.32s var(--ease-luxury), filter 0.32s ease';
+      currentCard.style.transform = 'translate3d(0, 0, 0) scale(1)';
+      currentCard.style.filter = 'brightness(1)';
+
+      if (currentIndex < totalScenes - 1) {
+        const nextCard = cards[currentIndex + 1];
+        nextCard.style.transition = 'transform 0.32s var(--ease-luxury)';
+        nextCard.style.transform = 'translate3d(0, 100%, 0)';
+      }
+      if (currentIndex > 0) {
+        const prevCard = cards[currentIndex - 1];
+        prevCard.style.transition = 'transform 0.32s var(--ease-luxury)';
+        prevCard.style.transform = 'translate3d(0, -6%, 0) scale(0.92)';
+      }
+
+      setTimeout(() => {
+        initSceneStates(currentIndex);
+      }, 340);
+    }
+  };
+
+  stage.addEventListener('touchstart', onTouchStart, { passive: true });
+  stage.addEventListener('touchmove', onTouchMove, { passive: false });
+  stage.addEventListener('touchend', onTouchEnd, { passive: true });
+  stage.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+  // 4. PC 鼠标滚轮平滑防抖换场
+  let wheelTimeout = null;
+  stage.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    if (isTransitioning) return;
+
+    if (wheelTimeout) return;
+    wheelTimeout = setTimeout(() => {
+      wheelTimeout = null;
+    }, 400);
+
+    if (e.deltaY > 15) {
+      nextScene();
+    } else if (e.deltaY < -15) {
+      prevScene();
+    }
+  }, { passive: false });
+
+  // 5. 键盘上下键支持
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
+      nextScene();
+      e.preventDefault();
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      prevScene();
+      e.preventDefault();
+    }
+  });
+
+  // 6. 翻页圆圈箭头与滑动提示点击
   document.querySelectorAll('.scroll-circle-arrow, .scroll-hint').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const currentCard = btn.closest('.card');
-      if (currentCard && currentCard.nextElementSibling) {
-        currentCard.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
-      }
+      nextScene();
     });
   });
 
-  const cards = document.querySelectorAll('.card');
-
-  // 初始化第 1 页为 active
-  const card01 = document.getElementById('card-01');
-  if (card01) card01.classList.add('active');
-
-  // 灵敏的进入/离场观测器 (15% 露出即触发仪式感绽放动效)
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
-          entry.target.classList.add('active');
-        } else if (!entry.isIntersecting || entry.intersectionRatio === 0) {
-          // 当卡片完全移出视口且不是第 1 页停在顶部时，移除 active，以便再次滑入时重新绽放
-          if (entry.target !== card01 || container.scrollTop > 60) {
-            entry.target.classList.remove('active');
-          }
-        }
-      });
-    }, {
-      root: container,
-      threshold: [0, 0.15, 0.5, 0.85]
-    });
-
-    cards.forEach(card => observer.observe(card));
-  } else {
-    // 极老环境降级：全部卡片激活
-    cards.forEach(card => card.classList.add('active'));
-  }
-
-  // 启动非原生 scroll-driven 浏览器的 rAF 视差层叠降级
-  initCardParallaxFallback(container, cards);
-
-  // 键盘翻页支持
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-      const activeCard = Array.from(cards).find(c => {
-        const rect = c.getBoundingClientRect();
-        return rect.top >= -50 && rect.top <= window.innerHeight / 2;
-      });
-      if (activeCard && activeCard.nextElementSibling) {
-        activeCard.nextElementSibling.scrollIntoView({ behavior: 'smooth' });
-        e.preventDefault();
-      }
-    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-      const activeCard = Array.from(cards).find(c => {
-        const rect = c.getBoundingClientRect();
-        return rect.top >= -50 && rect.top <= window.innerHeight / 2;
-      });
-      if (activeCard && activeCard.previousElementSibling) {
-        activeCard.previousElementSibling.scrollIntoView({ behavior: 'smooth' });
-        e.preventDefault();
-      }
-    }
-  });
-}
-
-/**
- * 针对不支持 CSS Scroll-Driven Animations 的移动端浏览器的 60fps rAF 层叠视差引擎
- */
-function initCardParallaxFallback(container, cards) {
-  // 如果浏览器已原生支持 CSS View Timeline 则直接交由 GPU 渲染，不启动 JS 监听
-  if (window.CSS && CSS.supports('(animation-timeline: view()) and (animation-range: exit)')) {
-    return;
-  }
-
-  let ticking = false;
-  const cardsList = Array.from(cards);
-
-  const onScroll = () => {
-    const scrollTop = container.scrollTop;
-    const viewportHeight = container.clientHeight;
-    if (!viewportHeight) {
-      ticking = false;
+  // 7. URL 参数与 Hash 深度链接识别
+  const urlParams = new URLSearchParams(window.location.search);
+  const cardQuery = urlParams.get('card');
+  if (cardQuery) {
+    const targetIdx = parseInt(cardQuery, 10) - 1;
+    if (targetIdx >= 0 && targetIdx < totalScenes) {
+      initSceneStates(targetIdx);
       return;
     }
-
-    cardsList.forEach((card, i) => {
-      const cardTop = i * viewportHeight;
-      const exitOffset = scrollTop - cardTop;
-
-      // 当卡片正在从顶部离开视口 (exit 0% ~ 100%)
-      if (exitOffset > 0 && exitOffset <= viewportHeight) {
-        const progress = exitOffset / viewportHeight; // 0 -> 1
-        const translateY = progress * 28; // percent
-        const scale = 1 - progress * 0.07; // 1 -> 0.93
-        const brightness = 1 - progress * 0.32; // 1 -> 0.68
-        const opacity = 1 - progress * 0.65; // 1 -> 0.35
-
-        card.style.transform = `translate3d(0, ${translateY}%, 0) scale(${scale})`;
-        card.style.filter = `brightness(${brightness})`;
-        card.style.opacity = `${opacity}`;
-        card.style.transformOrigin = 'center bottom';
-      } else if (exitOffset <= 0) {
-        // 卡片尚未滑出或正在视野内
-        if (card.style.transform) card.style.transform = '';
-        if (card.style.filter) card.style.filter = '';
-        if (card.style.opacity) card.style.opacity = '';
-      } else {
-        // 卡片已完全滑向更上方
-        card.style.opacity = '0';
-      }
-    });
-
-    ticking = false;
-  };
-
-  container.addEventListener('scroll', () => {
-    if (!ticking) {
-      requestAnimationFrame(onScroll);
-      ticking = true;
+  } else if (window.location.hash) {
+    const target = document.querySelector(window.location.hash);
+    const targetIdx = cards.indexOf(target);
+    if (targetIdx >= 0) {
+      initSceneStates(targetIdx);
+      return;
     }
-  }, { passive: true });
+  }
 
-  onScroll();
+  // 默认启动首场
+  initSceneStates(0);
 }
 
 /**

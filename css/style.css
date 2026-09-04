@@ -86,35 +86,33 @@ html, body {
 }
 
 /* =========================================================
-   滑动容器与全屏立体层叠 (3D Perspective & Card Stacking)
+   单屏固定舞台与 3D 场景切换引擎 (Fixed-Screen Scene Stage)
    ========================================================= */
+.scene-stage,
 .scroll-container {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   width: 100%;
   height: 100%;
-  overflow-y: scroll;
-  overflow-x: hidden;
-  scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  overflow: hidden;
+  touch-action: none;
   perspective: 1200px;
   perspective-origin: center center;
+  background: #1e1916;
 }
 
+.scene-stage::-webkit-scrollbar,
 .scroll-container::-webkit-scrollbar {
   display: none;
 }
 
 .card {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   min-height: 100%;
   max-height: 100%;
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -125,40 +123,55 @@ html, body {
   background-repeat: no-repeat;
   transform-origin: center bottom;
   will-change: transform, opacity, filter;
-  transition: transform 0.45s var(--ease-luxury), opacity 0.45s ease, filter 0.45s ease;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: brightness(1);
+  transition: transform 0.62s var(--ease-luxury), opacity 0.62s var(--ease-luxury), filter 0.62s var(--ease-luxury);
 }
 
-/* 各卡片层叠物理次序与定制厚磅请柬顶边柔和漫射投影 (后一页覆盖前一页) */
-.card-01 { z-index: 10; }
-.card-02 { z-index: 20; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-03 { z-index: 30; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-04 { z-index: 40; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-05 { z-index: 50; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-06 { z-index: 60; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-07 { z-index: 70; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
-.card-08 { z-index: 80; box-shadow: 0 -16px 36px rgba(25, 12, 5, 0.22), 0 -2px 8px rgba(25, 12, 5, 0.1); }
+.card.no-transition {
+  transition: none !important;
+}
 
-/* 原生 CSS Scroll-Driven 动画支持 (Chrome 115+, Edge 115+, Safari 18+) */
-@supports ((animation-timeline: view()) and (animation-range: exit)) {
-  .card {
-    animation: cardStackExit linear both;
-    animation-timeline: view();
-    animation-range: exit 0% exit 100%;
-    transition: none;
-  }
+/* 场景激活状态（当前正在全屏展示的场景） */
+.card.scene-active {
+  visibility: visible;
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: brightness(1);
+  pointer-events: auto;
+  z-index: 20;
+}
 
-  @keyframes cardStackExit {
-    0% {
-      transform: translate3d(0, 0, 0) scale(1);
-      filter: brightness(1);
-      opacity: 1;
-    }
-    100% {
-      transform: translate3d(0, 28%, 0) scale(0.93);
-      filter: brightness(0.68);
-      opacity: 0.35;
-    }
-  }
+/* 场景退至底层（当被新卡片覆盖时，后退微沉并柔和暗化） */
+.card.scene-underneath {
+  visibility: visible;
+  opacity: 0.45;
+  transform: translate3d(0, -6%, 0) scale(0.92);
+  filter: brightness(0.62);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 场景向下滑出（返回上一页时） */
+.card.scene-exit-down {
+  visibility: visible;
+  opacity: 1;
+  transform: translate3d(0, 100%, 0);
+  box-shadow: 0 -20px 45px rgba(25, 12, 5, 0.28);
+  pointer-events: none;
+  z-index: 30;
+}
+
+/* 场景从底部滑入准备类 */
+.card.scene-enter-from-bottom {
+  visibility: visible;
+  opacity: 1;
+  transform: translate3d(0, 100%, 0);
+  box-shadow: 0 -20px 45px rgba(25, 12, 5, 0.28);
+  z-index: 30;
 }
 
 /* =========================================================
