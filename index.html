@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <title>Jaryn & Hanna 的婚礼请柬</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-wrapper">
+    <div class="mobile-phone-frame">
+      <!-- 全局常驻音乐播放开关 -->
+      <button class="music-btn playing" id="musicToggle" aria-label="音乐播放控制" title="背景音乐开关">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+      </button>
+
+      <!-- 背景音乐播放器 -->
+      <audio id="bgMusic" loop preload="auto" src="assets/audio/wedding-bgm.mp3"></audio>
+
+      <!-- 主滚动容器 (CSS Scroll Snap) -->
+      <main class="scroll-container" id="scrollContainer">
+        
+        <!-- Screen 01: 封面 -->
+        <section class="card card-01" id="card-01">
+          <img class="cover-bg-photo" id="coverBgPhoto" src="assets/images/card01_bg.jpg" alt="婚礼封面背景">
+          <!-- 自定义照片时的前景帷幕遮罩 -->
+          <img class="cover-frame-overlay" id="coverFrameOverlay" src="assets/images/card01_frame.png" style="display: none;" alt="帷幕与花艺框架">
+          
+          <div class="cover-content">
+            <div class="monogram-cover" id="coverMonogram">JH</div>
+            <div class="cover-footer">
+              <h1 class="cover-names" id="coverNames">JARYN &amp; HANNA</h1>
+              <div class="cover-date" id="coverDate">2025.05.20</div>
+              <div class="scroll-hint" role="button" aria-label="向下滑动">
+                <span>▲</span>
+                <span>SCROLL</span>
+                <span class="arrow-down">▼</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Screen 02: 过渡 1 - 我们要结婚了 -->
+        <section class="card card-02" id="card-02">
+          <div class="ring-content">
+            <h2 class="page02-title" id="page02Title">我们要结婚了</h2>
+            <div class="page02-sub" id="page02Sub">WE ARE GETTING MARRIED</div>
+          </div>
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 03: 时间 Time -->
+        <section class="card card-03" id="card-03">
+          <div class="time-content">
+            <div class="section-title-wrap">
+              <div class="section-header-en">TIME</div>
+              <div class="section-header-zh">婚礼时间</div>
+              <div class="gold-divider"></div>
+            </div>
+            
+            <div class="date-block">
+              <div class="date-year" id="timeYear">2025</div>
+              <div class="date-big-md" id="timeMonthDay">05/20</div>
+              <div class="date-weekday" id="timeWeekday">SATURDAY</div>
+            </div>
+
+            <div class="gold-divider"></div>
+
+            <div class="schedule-timeline" id="scheduleList">
+              <!-- 由 js 动态渲染 -->
+            </div>
+
+            <div class="page-indicator">3 / 6</div>
+          </div>
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 04: 过渡 2 - 幸福见证 -->
+        <section class="card card-04" id="card-04">
+          <div class="quote-content" id="quoteContainer">
+            <!-- 由 js 动态渲染 -->
+          </div>
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 05: 地点 Location -->
+        <section class="card card-05" id="card-05">
+          <div class="location-content">
+            <div class="section-title-wrap">
+              <div class="section-header-en">LOCATION</div>
+              <div class="section-header-zh">婚礼地点</div>
+              <div class="gold-divider"></div>
+            </div>
+
+            <!-- 庄园/教堂线稿图标 -->
+            <div class="church-icon-box">
+              <svg class="church-svg" viewBox="0 0 64 64">
+                <path d="M32 6v8M28 10h8M32 14l10 10v34H22V24L32 14z" />
+                <path d="M22 28l-8 7v23h8V28zM42 28l8 7v23h-8V28z" />
+                <path d="M28 44h8v14h-8V44zM32 24v8M28 28h8" />
+                <path d="M18 42v6M46 42v6" />
+              </svg>
+            </div>
+
+            <div class="venue-info">
+              <h3 class="venue-name" id="venueName">玫瑰庄园酒店</h3>
+              <div class="venue-name-en" id="venueNameEn">ROSE MANOR HOTEL</div>
+              <div class="venue-address" id="venueAddress">杭州市西湖区之江路128号</div>
+            </div>
+
+            <button class="nav-map-btn" id="openMapBtn" type="button">
+              <svg viewBox="0 0 24 24">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+              <span>导航地图</span>
+            </button>
+
+            <div class="gold-divider"></div>
+            <div class="page-indicator">5 / 6</div>
+          </div>
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 06: 过渡 3 - 期待相见 -->
+        <section class="card card-06" id="card-06">
+          <div class="see-you-content">
+            <div class="see-you-title" id="page06Text">期待与您相见</div>
+          </div>
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 07: 新人展示 Showcase -->
+        <section class="card card-07" id="card-07">
+          <img class="hero-photo" id="page07Photo" src="assets/images/welcome-photo.jpg" alt="新人结婚迎宾照">
+          
+          <!-- 左上角金色几何角线装饰 -->
+          <svg class="corner-gold-lines" viewBox="0 0 90 120" fill="none">
+            <path d="M8 110V18C8 12.4772 12.4772 8 18 8H80" stroke="rgba(196, 160, 105, 0.75)" stroke-width="1.2"/>
+            <path d="M14 95V24C14 18.4772 18.4772 14 24 14H75" stroke="rgba(196, 160, 105, 0.45)" stroke-width="0.8"/>
+            <circle cx="8" cy="112" r="1.5" fill="#c4a069"/>
+            <circle cx="82" cy="8" r="1.5" fill="#c4a069"/>
+          </svg>
+
+          <!-- 右上角半透明艺术字水印 -->
+          <div class="photo-watermark">
+            <div id="page07Watermark">JARYN &amp; HANNA</div>
+            <div class="photo-watermark-sub">&amp; Forever</div>
+          </div>
+
+          <div class="scroll-circle-arrow" role="button" aria-label="翻至下一页">
+            <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+        </section>
+
+        <!-- Screen 08: 邀请函全文 Full Invitation -->
+        <section class="card card-08" id="card-08">
+          <div class="letter-content">
+            <div class="inv-header-box">
+              <div class="inv-header-zh" id="invitationHeader">— 诚挚邀请 —</div>
+              <div class="inv-header-en" id="invitationHeaderEn">INVITATION</div>
+            </div>
+
+            <div class="script-couple-names" id="scriptNames">Jaryn &amp; Hanna</div>
+
+            <div class="inv-paragraphs" id="invitationBody">
+              <!-- 由 js 动态渲染 -->
+            </div>
+
+            <div class="inv-detail-box">
+              <div class="inv-sub-section">
+                <div class="inv-sub-label">时间 / TIME</div>
+                <div class="inv-sub-val-time" id="invFullTime">2025.05.20 17:00</div>
+              </div>
+
+              <div class="inv-sub-section">
+                <div class="inv-sub-label">地点 / LOCATION</div>
+                <div class="inv-sub-val-venue" id="invVenueName">玫瑰庄园酒店</div>
+                <div class="inv-sub-val-addr" id="invVenueAddress">杭州市西湖区之江路128号</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- 地图导航底栏弹窗 (ActionSheet) -->
+  <div class="map-modal-mask" id="mapModalMask">
+    <div class="map-modal-sheet">
+      <div class="modal-header">
+        <h4 class="modal-title">地图导航</h4>
+        <button class="modal-close-btn" id="closeModalBtn" type="button">&times;</button>
+      </div>
+      <div class="modal-address-info" id="modalAddressText">
+        玫瑰庄园酒店 - 杭州市西湖区之江路128号
+      </div>
+      <div class="map-options-list">
+        <a class="map-app-btn" id="linkAmap" target="_blank" rel="noopener">高德地图</a>
+        <a class="map-app-btn" id="linkTencent" target="_blank" rel="noopener">腾讯地图</a>
+        <a class="map-app-btn" id="linkBaidu" target="_blank" rel="noopener">百度地图</a>
+        <a class="map-app-btn" id="linkApple" target="_blank" rel="noopener">Apple 地图</a>
+        <button class="copy-addr-btn" id="copyAddrBtn" type="button">复制详细地址</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 配置文件与脚本 -->
+  <script src="config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

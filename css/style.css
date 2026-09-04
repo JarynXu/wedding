@@ -1,0 +1,914 @@
+/* =========================================================
+   移动端竖版电子婚礼请柬 - 1:1 像素级复刻与高保真样式
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Serif+SC:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --font-serif-en: 'Cinzel', 'Playfair Display', Georgia, serif;
+  --font-body-en: 'Cormorant Garamond', Georgia, serif;
+  --font-script: 'Alex Brush', cursive;
+  --font-serif-zh: 'Noto Serif SC', 'Songti SC', 'SimSun', 'STSong', serif;
+
+  --color-gold-deep: #7a5433;
+  --color-gold-mid: #966c3b;
+  --color-gold-light: #c8a369;
+  --color-gold-bright: #e5c483;
+  --color-burgundy: #6e1c24;
+  --color-cream-bg: #f9f5ef;
+  --color-text-dark: #3a2b20;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1e1916;
+  font-family: var(--font-serif-zh);
+  color: var(--color-gold-deep);
+}
+
+/* 桌面端呈现手机真机壳模型，移动端全屏铺满 */
+.app-wrapper {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, #2e2621 0%, #15110e 100%);
+  overflow: hidden;
+}
+
+.mobile-phone-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 440px;
+  max-height: 920px;
+  background: var(--color-cream-bg);
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+/* 仅在桌面大屏幕且非触屏时显示手机外壳装饰 */
+@media (min-width: 520px) and (min-height: 720px) {
+  .mobile-phone-frame {
+    border-radius: 44px;
+    height: 92vh;
+    aspect-ratio: 9 / 16;
+    border: 10px solid #2a2522;
+  }
+}
+
+@media (max-width: 519px) {
+  .app-wrapper {
+    background: #000;
+  }
+  .mobile-phone-frame {
+    max-width: 100vw;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+}
+
+/* =========================================================
+   滑动容器与全屏吸附 (CSS Scroll Snap)
+   ========================================================= */
+.scroll-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* =========================================================
+   全局悬浮控制：音乐按钮与翻页指示
+   ========================================================= */
+.music-btn {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ecd09b 0%, #a67c33 100%);
+  border: 1.5px solid #fff2d0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.music-btn:active {
+  transform: scale(0.92);
+}
+
+.music-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: #3b220e;
+}
+
+.music-btn.playing svg {
+  animation: spinMusic 5s linear infinite;
+}
+
+.music-btn.paused::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26px;
+  height: 2px;
+  background: #3b220e;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: 1px;
+}
+
+@keyframes spinMusic {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================
+   金色与烫金文字公共样式
+   ========================================================= */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #784f27 0%, #b2884a 30%, #e8c88e 50%, #b08546 70%, #6e4620 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-serif-en);
+  letter-spacing: 0.12em;
+  font-weight: 600;
+}
+
+.gold-classic-text {
+  color: var(--color-gold-deep);
+  font-family: var(--font-serif-en);
+  letter-spacing: 0.1em;
+}
+
+.gold-divider {
+  width: 32px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--color-gold-mid), transparent);
+  margin: 10px auto;
+}
+
+/* =========================================================
+   Screen 01: 封面 Cover
+   ========================================================= */
+.card-01 {
+  background-color: #f6efe8;
+}
+
+.card-01 .cover-bg-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.card-01 .cover-frame-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.card-01 .cover-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16% 8% 7% 8%;
+  pointer-events: none;
+}
+
+.monogram-cover {
+  font-family: var(--font-script);
+  font-size: 3.4rem;
+  line-height: 1;
+  color: #a47a46;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8), 0 2px 8px rgba(160, 120, 60, 0.25);
+  transform: rotate(-3deg);
+  opacity: 0.95;
+}
+
+.cover-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.cover-names {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: #7b5534;
+  text-shadow: 0 1px 3px rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+}
+
+.cover-date {
+  font-family: var(--font-serif-en);
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  color: #8c6742;
+  font-weight: 500;
+}
+
+.scroll-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+  font-family: var(--font-serif-en);
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  color: #8e6844;
+  opacity: 0.85;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.scroll-hint .arrow-down {
+  font-size: 0.6rem;
+  animation: bounceDown 1.8s ease-in-out infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translateY(0); opacity: 0.6; }
+  50% { transform: translateY(5px); opacity: 1; }
+}
+
+/* =========================================================
+   Screen 02: 过渡 1 - 我们要结婚了
+   ========================================================= */
+.card-02 {
+  background-image: url('../assets/images/card02_bg.jpg');
+}
+
+.card-02 .ring-content {
+  position: absolute;
+  top: 41%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 68%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.card-02 .page02-title {
+  font-size: 1.55rem;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  color: var(--color-gold-deep);
+  margin-bottom: 8px;
+}
+
+.card-02 .page02-sub {
+  font-family: var(--font-serif-en);
+  font-size: 0.65rem;
+  letter-spacing: 0.24em;
+  color: var(--color-gold-mid);
+  font-weight: 500;
+}
+
+/* =========================================================
+   Screen 03: 时间 Time
+   ========================================================= */
+.card-03 {
+  background-image: url('../assets/images/card03_bg.jpg');
+}
+
+.card-03 .time-content {
+  position: absolute;
+  top: 13%;
+  bottom: 9%;
+  left: 17%;
+  right: 17%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.section-header-en {
+  font-family: var(--font-serif-en);
+  font-size: 1.45rem;
+  letter-spacing: 0.22em;
+  color: var(--color-gold-deep);
+  font-weight: 600;
+}
+
+.section-header-zh {
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  color: var(--color-gold-mid);
+  margin-top: 2px;
+}
+
+.date-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.date-year {
+  font-family: var(--font-serif-en);
+  font-size: 0.95rem;
+  letter-spacing: 0.12em;
+  color: var(--color-gold-mid);
+}
+
+.date-big-md {
+  font-family: var(--font-serif-en);
+  font-size: 2.55rem;
+  letter-spacing: 0.08em;
+  color: var(--color-gold-deep);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.date-weekday {
+  font-family: var(--font-serif-en);
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  color: var(--color-gold-mid);
+  margin-top: 2px;
+}
+
+.schedule-timeline {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 4px 0;
+}
+
+.schedule-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 0.88rem;
+}
+
+.schedule-time {
+  font-family: var(--font-serif-en);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--color-gold-deep);
+  min-width: 48px;
+  text-align: right;
+}
+
+.schedule-title {
+  color: var(--color-gold-deep);
+  letter-spacing: 0.12em;
+  min-width: 68px;
+  text-align: left;
+}
+
+.page-indicator {
+  font-family: var(--font-serif-en);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  color: #9c7855;
+  opacity: 0.85;
+}
+
+/* =========================================================
+   Screen 04: 过渡 2 - 幸福见证
+   ========================================================= */
+.card-04 {
+  background-image: url('../assets/images/card04_bg.jpg');
+}
+
+.card-04 .quote-content {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 75%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 18px;
+}
+
+.quote-line {
+  font-size: 1.05rem;
+  letter-spacing: 0.24em;
+  color: var(--color-gold-deep);
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* =========================================================
+   Screen 05: 地点 Location
+   ========================================================= */
+.card-05 {
+  background-image: url('../assets/images/card05_bg.jpg');
+}
+
+.card-05 .location-content {
+  position: absolute;
+  top: 13%;
+  bottom: 9%;
+  left: 14%;
+  right: 14%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.church-icon-box {
+  margin: 6px 0;
+}
+
+.church-svg {
+  width: 46px;
+  height: 46px;
+  stroke: var(--color-gold-deep);
+  stroke-width: 1.2;
+  fill: none;
+}
+
+.venue-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.venue-name {
+  font-size: 1.35rem;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  color: var(--color-gold-deep);
+}
+
+.venue-name-en {
+  font-family: var(--font-serif-en);
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  color: var(--color-gold-mid);
+  margin-top: 2px;
+}
+
+.venue-address {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  color: #7b5939;
+  margin-top: 10px;
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+.nav-map-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 24px;
+  border-radius: 20px;
+  background: rgba(248, 243, 235, 0.85);
+  border: 1px solid var(--color-gold-mid);
+  color: var(--color-gold-deep);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(120, 80, 40, 0.12);
+  transition: all 0.25s ease;
+  pointer-events: auto;
+  font-family: var(--font-serif-zh);
+}
+
+.nav-map-btn:hover {
+  background: rgba(245, 235, 220, 0.95);
+  transform: translateY(-1px);
+}
+
+.nav-map-btn:active {
+  transform: scale(0.96);
+}
+
+.nav-map-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: var(--color-gold-deep);
+}
+
+/* =========================================================
+   Screen 06: 过渡 3 - 期待相见
+   ========================================================= */
+.card-06 {
+  background-image: url('../assets/images/card06_bg.jpg');
+}
+
+.card-06 .see-you-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 80%;
+}
+
+.card-06 .see-you-title {
+  font-size: 1.4rem;
+  letter-spacing: 0.25em;
+  color: #5d3f24;
+  font-weight: 500;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+}
+
+/* =========================================================
+   Screen 07: 新人展示 Showcase
+   ========================================================= */
+.card-07 {
+  position: relative;
+  background-color: #f7efe6;
+}
+
+.card-07 .hero-photo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.card-07 .corner-gold-lines {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 90px;
+  height: 120px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.card-07 .photo-watermark {
+  position: absolute;
+  top: 16%;
+  right: 12%;
+  z-index: 2;
+  font-family: var(--font-serif-en);
+  color: rgba(184, 142, 85, 0.45);
+  font-size: 1.35rem;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  text-align: right;
+  line-height: 1.2;
+  transform: rotate(-2deg);
+  pointer-events: none;
+}
+
+.card-07 .photo-watermark-sub {
+  font-family: var(--font-script);
+  font-size: 1.6rem;
+  letter-spacing: 0.05em;
+  color: rgba(184, 142, 85, 0.4);
+}
+
+.card-07 .flowers-br {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 48%;
+  max-width: 210px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* =========================================================
+   Screen 08: 邀请函全文 Full Invitation
+   ========================================================= */
+.card-08 {
+  background-image: url('../assets/images/card08_bg.jpg');
+}
+
+.card-08 .letter-content {
+  position: absolute;
+  top: 21%;
+  bottom: 20%;
+  left: 14%;
+  right: 14%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.inv-header-zh {
+  font-size: 1.05rem;
+  letter-spacing: 0.28em;
+  color: var(--color-gold-deep);
+  font-weight: 500;
+}
+
+.inv-header-en {
+  font-family: var(--font-serif-en);
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+  color: var(--color-gold-mid);
+  margin-top: 3px;
+}
+
+.script-couple-names {
+  font-family: var(--font-script);
+  font-size: 2.6rem;
+  line-height: 1.1;
+  color: #94693b;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  margin: 4px 0 8px 0;
+}
+
+.inv-paragraphs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 4px 0;
+}
+
+.inv-para-line {
+  font-size: 0.85rem;
+  letter-spacing: 0.18em;
+  color: var(--color-gold-deep);
+  line-height: 1.6;
+}
+
+.inv-detail-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding-right: 16%; /* 避免遮挡右下角精致火漆印章 */
+  margin-top: 4px;
+}
+
+.inv-sub-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.inv-sub-label {
+  font-family: var(--font-serif-zh);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  color: #946d46;
+}
+
+.inv-sub-val-time {
+  font-family: var(--font-serif-en);
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  color: var(--color-gold-deep);
+  font-weight: 600;
+}
+
+.inv-sub-val-venue {
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  color: var(--color-gold-deep);
+  font-weight: 600;
+}
+
+.inv-sub-val-addr {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: #82603f;
+  max-width: 220px;
+}
+
+/* =========================================================
+   圆形下翻箭头按钮 (统一交互规范)
+   ========================================================= */
+.scroll-circle-arrow {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(170, 130, 80, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+  transition: all 0.2s ease;
+  animation: pulseArrow 2.2s ease-in-out infinite;
+  pointer-events: auto;
+}
+
+.scroll-circle-arrow svg {
+  width: 14px;
+  height: 14px;
+  stroke: #865f3a;
+  stroke-width: 1.5;
+  fill: none;
+}
+
+@keyframes pulseArrow {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.75; }
+  50% { transform: translateX(-50%) translateY(4px); opacity: 1; }
+}
+
+/* =========================================================
+   地图导航 ActionSheet 弹窗
+   ========================================================= */
+.map-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 999999;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.map-modal-mask.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.map-modal-sheet {
+  width: 100%;
+  max-width: 440px;
+  background: #fff9f2;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  padding: 24px 20px 32px 20px;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.map-modal-mask.active .map-modal-sheet {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-gold-deep);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.modal-address-info {
+  background: rgba(220, 190, 150, 0.15);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  color: #66482e;
+  line-height: 1.4;
+}
+
+.map-options-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.map-app-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(160, 120, 70, 0.25);
+  background: #ffffff;
+  color: var(--color-gold-deep);
+  font-size: 0.88rem;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.map-app-btn:active {
+  transform: scale(0.96);
+  background: #fbf5ee;
+}
+
+.copy-addr-btn {
+  grid-column: span 2;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: var(--color-gold-deep);
+  color: #fff9f0;
+  font-size: 0.9rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.copy-addr-btn:active {
+  opacity: 0.9;
+}
