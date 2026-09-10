@@ -4,7 +4,7 @@
  */
 const monogramImgUrl = new URL('./assets/monogram_xu_zhao.png', import.meta.url).href;
 const bgMusicUrl = new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href;
-const coverBgUrl = new URL('./assets/card01_bg.jpg', import.meta.url).href;
+const coverBgUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
 const coverFrameUrl = new URL('./assets/card01_frame.png', import.meta.url).href;
 const card2Url = new URL('./assets/card_02_hd.jpg', import.meta.url).href;
 const card3Url = new URL('./assets/card_03_hd.jpg', import.meta.url).href;
@@ -64,6 +64,10 @@ export const WEDDING_CONFIG = {
     coverBg: coverBgUrl,
     coverFrame: coverFrameUrl,
     cards: [coverBgUrl, card2Url, card3Url, card4Url],
+  },
+
+  coverSettings: {
+    useGildedFrame: true, // 窄屏补齐参考图的金线画框。
   },
 
   texts: {

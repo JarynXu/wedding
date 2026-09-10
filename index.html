@@ -4,44 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>徐旨越 &amp; 赵荣蓉 · 婚礼请柬</title>
+  <!-- critical-welcome -->
+  <link rel="icon" type="image/png" href="/src/assets/monogram_xu_zhao.png">
   
-  <!-- 预加载核心字体与资源 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Great+Vibes&family=Noto+Serif+SC:wght@300;400;500;600&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
-
+  <!-- 字体由项目资源加载，入口等待字体就绪。 -->
   <script type="module" src="/src/main.js"></script>
 </head>
-<body>
+<body class="invitation-loading">
 
   <!-- 背景音频 -->
-  <audio id="bgm" loop preload="auto" src="/src/assets/Close to You-Olivia Ong.mp3"></audio>
+  <audio id="bgm" loop preload="auto"></audio>
 
   <div id="app">
-    <!-- 法式信笺全资源预加载与仪式感开启幕布 (Preloader Overlay) -->
-    <div class="preloader-overlay" id="preloaderOverlay">
-      <!-- 法式庄园信笺双金线边框与典雅角花 -->
-      <div class="preloader-frame-border">
-        <div class="preloader-corner preloader-corner-tl"></div>
-        <div class="preloader-corner preloader-corner-tr"></div>
-        <div class="preloader-corner preloader-corner-bl"></div>
-        <div class="preloader-corner preloader-corner-br"></div>
-      </div>
+    <!-- 迎宾信笺与图片加载入口 -->
+    <div class="preloader-overlay" id="preloaderOverlay" data-state="booting" role="dialog" aria-modal="true" aria-label="婚礼迎宾请柬">
+      <div class="welcome-background" aria-hidden="true"></div>
+      <div class="preloader-frame-border" aria-hidden="true"></div>
 
-      <div class="preloader-content">
-        <!-- 浪漫新人花体徽章 (方案一：行书毛笔花体「徐 & 赵」) -->
-        <div class="preloader-monogram" id="preloaderMonogram">
-          <img src="/src/assets/monogram_xu_zhao.png" alt="徐 &amp; 赵" class="preloader-monogram-img">
-        </div>
+      <div class="preloader-content glass-surface">
+        <div class="welcome-eyebrow">诚 挚 邀 请</div>
+        <div class="welcome-emblem" aria-hidden="true"><!-- invitation-mark --></div>
         
         <div class="preloader-title-box">
-          <h2 class="preloader-title">WEDDING INVITATION</h2>
-          <div class="preloader-names" id="preloaderNames">徐旨越 &amp; 赵荣蓉</div>
-          <div class="preloader-date" id="preloaderDate">2026.10.17</div>
+          <div class="welcome-script" aria-hidden="true">The Wedding</div>
+          <h2 class="preloader-subtitle">WEDDING INVITATION</h2>
         </div>
+        <div class="welcome-rule" aria-hidden="true"><span></span>✦<span></span></div>
+        <p class="welcome-message">有一份喜悦，想与您分享</p>
 
         <!-- 极细烫金进度条与动态状态 -->
-        <div class="preloader-progress-section" id="preloaderProgressSection">
+        <div class="preloader-progress-section" id="preloaderProgressSection" role="progressbar" aria-label="请柬素材加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <div class="preloader-bar-bg">
             <div class="preloader-bar-fill" id="preloaderBarFill"></div>
           </div>
@@ -51,26 +43,32 @@
           </div>
         </div>
 
-        <!-- 100% 达成后绽放的法式烫金信笺开启按钮 -->
+        <!-- 全部图片、字体与音乐就绪后提供入口。 -->
         <div class="preloader-action-area" id="preloaderActionArea">
-          <button class="btn-enter-invitation" id="btnEnterInvitation" type="button" aria-label="开启婚礼请柬">
-            <span class="btn-enter-text">开启请柬 · OPEN</span>
-            <span class="btn-enter-sub">点击开启浪漫华章</span>
+          <button class="btn-enter-invitation" id="btnEnterInvitation" type="button" disabled aria-label="开启请柬">
+            <span class="btn-enter-text">开启请柬</span>
+            <span class="btn-enter-sub">OPEN THE INVITATION</span>
           </button>
         </div>
+        <div class="preloader-recovery">
+          <p class="preloader-load-note" id="preloaderLoadNote" role="status"></p>
+          <button class="preloader-retry" id="preloaderRetry" type="button" hidden>重新加载</button>
+          <button class="preloader-retry" id="preloaderPrepareMusic" type="button" hidden>点按准备音乐</button>
+        </div>
       </div>
+      <div class="welcome-footnote">佳 期 将 至 · 敬 候 莅 临</div>
     </div>
 
     <!-- 浪漫落花 Canvas 粒子层 -->
-    <canvas id="petalsCanvas"></canvas>
+    <canvas id="petalsCanvas" aria-hidden="true"></canvas>
 
     <!-- 顶部音乐播放按钮 -->
     <div class="music-player">
-      <div class="music-disc" id="musicBtn" title="播放 / 暂停背景音乐">
+      <button class="music-disc" id="musicBtn" type="button" aria-label="播放或暂停背景音乐" title="播放 / 暂停背景音乐">
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
         </svg>
-      </div>
+      </button>
       <div class="music-pulse"></div>
       <div class="music-tip" id="musicTip">点击播放音乐</div>
     </div>
@@ -82,50 +80,49 @@
     </div>
 
     <!-- 右侧页面导航小点 -->
-    <div class="page-nav" id="pageNav">
-      <div class="nav-dot active" data-index="0"></div>
-      <div class="nav-dot" data-index="1"></div>
-      <div class="nav-dot" data-index="2"></div>
-      <div class="nav-dot" data-index="3"></div>
-    </div>
+    <nav class="page-nav" id="pageNav" aria-label="请柬页面">
+      <button class="nav-dot active" data-index="0" type="button" aria-label="新人封面" aria-current="page"></button>
+      <button class="nav-dot" data-index="1" type="button" aria-label="婚礼时间"></button>
+      <button class="nav-dot" data-index="2" type="button" aria-label="婚礼地点"></button>
+      <button class="nav-dot" data-index="3" type="button" aria-label="诚挚邀请"></button>
+    </nav>
 
     <!-- 4 屏轮播主体 -->
     <div class="swiper-wrapper" id="swiperWrapper">
 
       <!-- ================= 01 封面 · 喜讯 ================= -->
-      <section class="page page-1 active" data-index="0">
-        <img class="cover-bg-photo" id="coverBgPhoto" src="/src/assets/card01_bg.jpg" alt="婚礼封面背景">
-        <img class="cover-frame-overlay" id="coverFrameOverlay" src="/src/assets/card01_frame.png" style="display: none;" alt="帷幕与花艺框架">
+      <section class="page page-1 active" data-index="0" aria-owns="welcomeGlass">
+        <img class="cover-bg-photo" id="coverBgPhoto" src="/src/assets/cover-welcome-art.webp" alt="玫瑰花艺环绕的新人迎宾合影">
+        <div class="cover-gilded-frame" id="coverGildedFrame" aria-hidden="true">
+          <div class="cgf-corner cgf-tl"></div>
+          <div class="cgf-corner cgf-tr"></div>
+          <div class="cgf-corner cgf-bl"></div>
+          <div class="cgf-corner cgf-br"></div>
+        </div>
         
         <div class="cover-content">
-          <div class="monogram-cover" id="coverMonogram">XZ</div>
-          <div class="cover-footer">
-            <div class="p1-announcement">
-              <div class="p1-header-ornament">
-                <span class="p1-diamond">✦</span>
-                <span class="p1-text">We Are Getting Married</span>
-                <span class="p1-diamond">✦</span>
-              </div>
-            </div>
-            <h1 class="cover-names" id="p1CouplesNames">徐旨越 &amp; 赵荣蓉</h1>
-            <div class="cover-date" id="p1DateText">2026.10.17</div>
+          <div class="cover-heading">
+            <div class="cover-kicker">THE WEDDING OF</div>
+            <h1 class="cover-names" id="p1CouplesNames" tabindex="-1">徐旨越 &amp; 赵荣蓉</h1>
+            <div class="cover-dedication">一 生 所 爱 · 一 世 相 伴</div>
+            <div class="cover-together">TOGETHER FOREVER</div>
           </div>
         </div>
 
         <!-- 底部向下滑动提示（与全站所有页面100%统一风格与位置） -->
-        <div class="scroll-hint" data-action="next-page" role="button" aria-label="向下滑动">
+        <button class="scroll-hint" data-action="next-page" type="button" aria-label="查看下一页">
           <div class="scroll-arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
-        </div>
+        </button>
       </section>
 
       <!-- ================= 02 时间 · 流程 ================= -->
       <section class="page page-2" data-index="1">
         <!-- Page 2 高清矢量排版（TIME / 婚礼时间 / 2026 / 10/17 / 星期六 SATURDAY / 流程时刻表） -->
-        <div class="p2-content anim-fade delay-1">
+        <div class="p2-content">
           <div class="p2-header-pediment">
             <div class="p2-title-en">
               <span class="header-star">✦</span>
@@ -161,10 +158,8 @@
               <span class="p2-agenda-time">12:28</span>
               <span class="p2-agenda-event">喜宴开席</span>
             </div>
-
-            <!-- Page 2 专属功能：添加到日历（法式高定双层排印） -->
             <div class="p2-calendar-wrap">
-              <button class="p2-calendar-btn" data-action="add-calendar">
+              <button class="calendar-button" data-action="add-calendar">
                 <span class="btn-line-main">✦ 添加到日历 ✦</span>
                 <span class="btn-line-sub">ADD TO CALENDAR</span>
               </button>
@@ -174,18 +169,18 @@
 
 
         <!-- 底部向下滑动提示 -->
-        <div class="scroll-hint" data-action="next-page">
+        <button class="scroll-hint" data-action="next-page" type="button" aria-label="查看下一页">
           <div class="scroll-arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
-        </div>
+        </button>
       </section>
 
       <!-- ================= 03 地点 · 庄园 ================= -->
       <section class="page page-3" data-index="2">
-        <div class="p3-content anim-fade delay-1">
+        <div class="p3-content">
           <div class="p3-header-pediment">
             <div class="p3-title-en">
               <span class="header-star">✦</span>
@@ -217,19 +212,19 @@
         </div>
 
         <!-- 底部向下滑动提示 -->
-        <div class="scroll-hint" data-action="next-page">
+        <button class="scroll-hint" data-action="next-page" type="button" aria-label="查看下一页">
           <div class="scroll-arrow">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
-        </div>
+        </button>
       </section>
 
       <!-- ================= 04 邀请 · 婚典 ================= -->
       <section class="page page-4" data-index="3">
         <!-- 邀请函主体（法式典雅对称居中排版） -->
-        <div class="p4-invitation anim-fade delay-1">
+        <div class="p4-invitation">
           <div class="p4-header-badge">诚挚邀请</div>
           <div class="p4-header-en">INVITATION</div>
           
@@ -254,12 +249,21 @@
       </section>
 
     </div>
+    <!-- 迎宾牌位于花瓣画布前方；正文归属迎宾页。 -->
+    <div class="cover-footer glass-surface" id="welcomeGlass" data-state="hidden" aria-hidden="true">
+      <div class="cover-welcome-copy">
+        <div class="cover-welcome-script">Welcome</div>
+        <div class="cover-welcome-subtitle">TO OUR WEDDING</div>
+        <div class="cover-welcome-divider" aria-hidden="true"><span></span>✦<span></span></div>
+        <p class="cover-welcome-message">有一份喜悦，想与您分享</p>
+      </div>
+    </div>
   </div>
 
   <!-- 地图导航弹窗 (法式名址文书纯排版) -->
-  <div class="modal-backdrop" id="mapModal">
-    <div class="modal-card">
-      <div class="modal-close" data-close-modal="mapModal">&times;</div>
+  <div class="modal-backdrop" id="mapModal" inert>
+    <div class="modal-card glass-surface">
+      <button class="modal-close" type="button" aria-label="关闭弹窗" data-close-modal="mapModal">&times;</button>
       <div class="modal-title">婚礼地点 · 导航</div>
       <div class="modal-subtitle">Location Navigation</div>
       <div class="modal-divider"></div>
@@ -307,9 +311,9 @@
 
 
   <!-- 联系新人弹窗 (纯字韵排版) -->
-  <div class="modal-backdrop" id="contactModal">
+  <div class="modal-backdrop" id="contactModal" inert>
     <div class="modal-card">
-      <div class="modal-close" data-close-modal="contactModal">&times;</div>
+      <button class="modal-close" type="button" aria-label="关闭弹窗" data-close-modal="contactModal">&times;</button>
       <div class="modal-title">联系新人</div>
       <div class="modal-subtitle">Contact Us</div>
       <div class="modal-divider"></div>
@@ -333,9 +337,9 @@
   </div>
 
   <!-- 日历提醒弹窗 (法式高定纯双语排版) -->
-  <div class="modal-backdrop" id="calendarModal">
-    <div class="modal-card">
-      <div class="modal-close" data-close-modal="calendarModal">&times;</div>
+  <div class="modal-backdrop" id="calendarModal" inert>
+    <div class="modal-card glass-surface">
+      <button class="modal-close" type="button" aria-label="关闭弹窗" data-close-modal="calendarModal">&times;</button>
       <div class="modal-title">添加婚礼日程</div>
       <div class="modal-subtitle">Add to Calendar</div>
       <div class="modal-divider"></div>

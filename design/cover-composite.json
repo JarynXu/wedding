@@ -1,0 +1,8 @@
+{
+  "source": "src/assets/card01_bg.jpg",
+  "output": "src/assets/cover-portrait-paper.webp",
+  "mask": "design/cover-portrait-mask.png",
+  "width": 1536,
+  "height": 2730,
+  "method": "照片主体保留不透明度、肤色及暗部层次；纸面过渡限于底部 74.5%–79.5% 区域；未使用图像生成或人物重绘。"
+}

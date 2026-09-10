@@ -1,0 +1,119 @@
+/* 开场背景为丝缎与玫瑰静物；中央纸笺承载文字与入口。 */
+.preloader-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Welcome Serif", "Songti SC", "SimSun", serif;
+  pointer-events: none;
+}
+
+.preloader-overlay[hidden] { display: none; }
+.preloader-overlay.fade-out .welcome-background { opacity: 0; transform: scale(1.06); }
+.preloader-overlay.fade-out .preloader-content { opacity: 0; transform: translateY(-10px) scale(1.03); }
+.preloader-overlay.fade-out :is(.preloader-frame-border, .welcome-footnote) { opacity: 0; }
+
+.welcome-background {
+  position: absolute;
+  z-index: 60;
+  inset: -2%;
+  background: var(--welcome-preview) center / cover no-repeat;
+  transition: opacity 900ms ease, transform 900ms var(--ease-reveal);
+}
+
+.preloader-frame-border {
+  position: absolute;
+  z-index: 61;
+  inset: 18px;
+  border: 1px solid rgba(182, 143, 86, 0.65);
+  outline: 1px solid rgba(242, 222, 179, 0.5);
+  outline-offset: 4px;
+  pointer-events: none;
+  transition: opacity 600ms ease;
+}
+
+.preloader-content {
+  position: relative;
+  z-index: 90;
+  width: 75%;
+  max-width: 336px;
+  padding: 38px 14px 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid rgba(161, 120, 62, 0.42);
+  border-radius: 2px;
+  outline: 1px solid rgba(161, 120, 62, 0.18);
+  outline-offset: -6px;
+  box-shadow: 0 10px 36px rgba(92, 64, 37, 0.1);
+  pointer-events: auto;
+  transition: opacity 650ms ease, transform 900ms var(--ease-reveal);
+}
+
+.welcome-eyebrow { font-size: 9px; letter-spacing: 0.16em; color: var(--gold-dark); }
+.welcome-emblem { width: 64px; height: 64px; margin: 22px 0 16px; }
+.welcome-emblem svg { display: block; width: 100%; height: 100%; }
+.welcome-script { font: 54px/1.15 "Welcome Script", "Cormorant Garamond", cursive; color: var(--burgundy); margin-top: 6px; }
+.preloader-subtitle { font: 9px/1.5 "Welcome Capitals", Georgia, serif; letter-spacing: 0.2em; color: var(--gold-dark); margin-top: 20px; }
+.welcome-rule { display: flex; align-items: center; gap: 9px; width: 100px; margin: 19px 0 13px; font-size: 9px; color: var(--gold); }
+.welcome-rule span { height: 1px; flex: 1; background: #ba985e; }
+.welcome-message { font-size: 12px; line-height: 2.1; letter-spacing: 0.12em; color: #6e5346; }
+
+.preloader-progress-section { width: 78%; height: 64px; margin-top: 24px; }
+.preloader-bar-bg { width: 100%; height: 2px; background: #ddcdb6; overflow: hidden; }
+.preloader-bar-fill { width: 100%; height: 100%; background: #9a7140; transform: scaleX(0); transform-origin: left; transition: transform 280ms ease; }
+.preloader-meta { display: flex; justify-content: space-between; margin-top: 10px; font-size: 9px; color: #805831; }
+.preloader-percent { font-family: "Welcome Capitals", Georgia, serif; }
+.preloader-overlay.ready .preloader-progress-section { display: none; }
+
+.preloader-action-area { display: none; width: 100%; height: 64px; margin-top: 24px; }
+.preloader-action-area.visible { display: flex; flex-direction: column; align-items: center; animation: entry-arrive 550ms var(--ease-reveal) both; }
+.btn-enter-invitation {
+  position: relative;
+  flex-shrink: 0;
+  width: 204px;
+  min-height: 54px;
+  border: 1px solid #be9962;
+  outline: 1px solid rgba(238, 210, 164, 0.5);
+  outline-offset: -4px;
+  border-radius: 2px;
+  background: var(--burgundy);
+  color: #fff2d8;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background var(--motion-detail), transform var(--motion-detail);
+}
+.btn-enter-text { display: block; font: 14px "Welcome Serif", serif; letter-spacing: 0.25em; }
+.btn-enter-sub { display: block; margin-top: 5px; font: 8px "Welcome Capitals", Georgia, serif; letter-spacing: 0.17em; color: #e8ccac; }
+.btn-enter-invitation:hover { background: #661c28; }
+.btn-enter-invitation:active { transform: scale(0.97); }
+.btn-enter-invitation:disabled { cursor: default; }
+.preloader-recovery { width: 100%; }
+.preloader-load-note { margin-top: 9px; font-size: 10px; line-height: 1.6; color: #6b4834; }
+.preloader-load-note:empty { display: none; }
+.preloader-retry { margin-top: 8px; min-height: 44px; padding: 8px 24px; font: 12px "Welcome Serif", serif; color: var(--burgundy); border: 1px solid var(--gold); background: #fff9ef; cursor: pointer; }
+.preloader-retry[hidden] { display: none; }
+.preloader-overlay[data-state='error'] .preloader-progress-section { height: 30px; }
+.welcome-footnote { position: absolute; z-index: 90; bottom: 12%; font-size: 10px; letter-spacing: 0.15em; color: #5f3c28; text-shadow: 0 1px 3px #fff6e7; transition: opacity 600ms ease; }
+
+@media (max-height: 720px) {
+  .preloader-content { padding: 22px 12px 20px; }
+  .welcome-emblem { width: 54px; height: 54px; margin: 16px 0 10px; }
+  .welcome-script { font-size: 45px; }
+  .preloader-subtitle { margin-top: 14px; }
+  .welcome-rule { margin: 13px 0 8px; }
+  .preloader-progress-section, .preloader-action-area { margin-top: 17px; }
+  .welcome-footnote { bottom: 8%; }
+}
+
+@media (max-width: 360px) {
+  .preloader-content { width: 77%; }
+  .btn-enter-invitation { width: 184px; }
+}
+
+@media (max-height: 620px) {
+  .welcome-footnote { display: none; }
+}

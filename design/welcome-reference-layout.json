@@ -1,0 +1,59 @@
+{
+  "width": 941,
+  "height": 1672,
+  "source": "welcome-reference.png",
+  "background": "src/assets/cover-welcome-art.webp",
+  "modifiedPixels": 129980,
+  "textIsLiveHtml": true,
+  "removedStaticPetals": [
+    [
+      813,
+      62,
+      895,
+      151
+    ],
+    [
+      47,
+      509,
+      125,
+      592
+    ],
+    [
+      763,
+      414,
+      841,
+      486
+    ],
+    [
+      839,
+      982,
+      1004,
+      1133
+    ],
+    [
+      -45,
+      1232,
+      102,
+      1345
+    ],
+    [
+      2,
+      1315,
+      113,
+      1412
+    ],
+    [
+      789,
+      1481,
+      923,
+      1623
+    ],
+    [
+      20,
+      1522,
+      220,
+      1668
+    ]
+  ],
+  "protectedPortrait": true
+}

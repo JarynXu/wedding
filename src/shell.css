@@ -1,0 +1,61 @@
+:root {
+      --bg-cream: #faf5ee;
+      --paper-cream: #f7f0e7;
+      --burgundy: #7a1f2b;
+      --burgundy-deep: #54141e;
+      --gold: #b9935f;
+      --gold-light: #dfc192;
+      --gold-dark: #8e6c38;
+      --ink: #3c2f2b;
+      --ink-light: #7c6d66;
+      --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+      --motion-page: 840ms;
+      --ease-page: cubic-bezier(0.4, 0, 0.2, 1);
+      --motion-detail: 180ms;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #241d1a;
+      background-image: radial-gradient(circle at 50% 30%, #3a2a24 0%, #1a1412 100%);
+      font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+      color: var(--ink);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 桌面端居中仿真机身框架 / 移动端全屏 */
+    #app {
+      position: relative;
+      container-type: size;
+      width: 100%;
+      height: 100%;
+      max-width: 450px;
+      max-height: 920px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--paper-cream);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(185, 147, 95, 0.35);
+    }
+
+    @media (min-width: 500px) {
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #app {
+        height: 92vh;
+        border-radius: 28px;
+      }
+    }

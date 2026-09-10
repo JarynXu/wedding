@@ -1,60 +1,3 @@
-:root {
-      --bg-cream: #faf5ee;
-      --paper-cream: #f7f0e7;
-      --burgundy: #7a1f2b;
-      --burgundy-deep: #54141e;
-      --gold: #b9935f;
-      --gold-light: #dfc192;
-      --gold-dark: #8e6c38;
-      --ink: #3c2f2b;
-      --ink-light: #7c6d66;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: #241d1a;
-      background-image: radial-gradient(circle at 50% 30%, #3a2a24 0%, #1a1412 100%);
-      font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
-      color: var(--ink);
-      user-select: none;
-      -webkit-user-select: none;
-    }
-
-    /* 桌面端居中仿真机身框架 / 移动端全屏 */
-    #app {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      max-width: 450px;
-      max-height: 920px;
-      margin: 0 auto;
-      overflow: hidden;
-      background: var(--paper-cream);
-      box-shadow: 0 0 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(185, 147, 95, 0.35);
-    }
-
-    @media (min-width: 500px) {
-      body {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-      }
-      #app {
-        height: 92vh;
-        border-radius: 28px;
-      }
-    }
-
     /* 浪漫花瓣飘落 Canvas */
     #petalsCanvas {
       position: absolute;
@@ -63,7 +6,7 @@
       width: 100%;
       height: 100%;
       pointer-events: none;
-      z-index: 30;
+      z-index: 70;
     }
 
     /* 音乐播放控制器 */
@@ -155,43 +98,55 @@
     /* 右侧页面指示圆点 */
     .page-nav {
       position: absolute;
-      right: 12px;
+      right: 0;
       top: 50%;
       transform: translateY(-50%);
       z-index: 40;
       display: flex;
       flex-direction: column;
-      gap: 12px;
     }
 
     .nav-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: rgba(185, 147, 95, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.6);
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: transparent;
       cursor: pointer;
-      transition: all 0.35s ease;
     }
 
-    .nav-dot.active {
-      height: 22px;
-      border-radius: 6px;
-      background: var(--gold);
-      box-shadow: 0 0 8px rgba(185, 147, 95, 0.7);
+    .nav-dot::after {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 4px;
+      background: #b2946b;
+      box-shadow: 0 0 0 1px rgba(255, 250, 240, 0.65);
+      transition: transform 350ms var(--ease-reveal), background 350ms;
+    }
+
+    .nav-dot.active::after {
+      background: var(--burgundy);
+      transform: scaleY(3.2);
     }
 
     /* 主滑动视窗 */
     .swiper-wrapper {
-      width: 100%;
-      height: 100%;
-      transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .page {
       position: relative;
       width: 100%;
       height: 100%;
+      isolation: isolate;
+    }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      z-index: 0;
       overflow: hidden;
       background-size: cover;
       background-position: center center;
@@ -200,29 +155,15 @@
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      image-rendering: -webkit-optimize-contrast;
     }
+
+    .page.active { opacity: 1; visibility: visible; z-index: 2; }
+    .page.is-leaving { opacity: 1; visibility: visible; z-index: 1; }
 
     /* 页面背景配置（超清 2K 法式宫廷微距花艺重构） */
     .page-2 { background-image: url('./assets/card_02_hd.jpg'); }
     .page-3 { background-image: url('./assets/card_03_hd.jpg'); }
     .page-4 { background-image: url('./assets/card_04_hd.jpg'); }
-
-    /* 页面动画进场元素 */
-    .anim-fade {
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
-    }
-
-    .page.active .anim-fade {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .delay-1 { transition-delay: 0.15s; }
-    .delay-2 { transition-delay: 0.3s; }
-    .delay-3 { transition-delay: 0.45s; }
 
     /* 页面底部向下滑动提示 */
     .scroll-hint {
@@ -269,153 +210,179 @@
       60% { transform: translateY(3px); }
     }
 
-    /* =========================================================
-       Page 1: 迎宾封面高定分层架构 (Multi-Layer Architecture)
-       ========================================================= */
+    /* 迎宾页沿用选定方案的照片、花艺与迎宾牌，文字为独立图层。 */
     .page-1 {
-      background-color: #f6efe8;
-      background-image: none !important;
-      position: relative;
-      overflow: hidden;
+      background-color: #f5edde;
+      background-image: none;
+      container-type: size;
     }
 
     .page-1 .cover-bg-photo {
       position: absolute;
-      top: 0;
-      left: 0;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
       z-index: 1;
-      animation: photoGentleZoom 14s ease-in-out infinite alternate;
     }
 
-    .page-1 .cover-frame-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: fill;
-      z-index: 2;
-      pointer-events: none;
-    }
-
+    /* 文字坐标跟随原图的等比裁切，人物不做横向拉伸。 */
     .page-1 .cover-content {
       position: absolute;
       top: 0;
-      left: 0;
-      width: 100%;
+      left: 50%;
       height: 100%;
-      z-index: 3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 21.5% 6% 7% 6%;
+      width: auto;
+      aspect-ratio: 941 / 1672;
+      transform: translateX(-50%);
+      z-index: 4;
       pointer-events: none;
+      text-align: center;
     }
 
-    /* 顶部法式花体 Monogram 徽章 */
-    .monogram-cover {
-      font-family: "Alex Brush", "Great Vibes", cursive;
-      font-size: 3.4rem;
-      line-height: 1;
-      color: #a47a46;
-      background: linear-gradient(135deg, #dfba73 0%, #b88330 40%, #eec774 70%, #7a4714 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.85)) drop-shadow(0 2px 8px rgba(80, 40, 10, 0.25));
-      transform: scale(0.88) rotate(-3deg);
-      opacity: 0;
-      transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.15s, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.15s;
+    .cover-heading { position: absolute; inset: 0; }
+    .cover-kicker {
+      position: absolute;
+      top: 8.6%;
+      left: 0;
+      right: 0;
+      font: 400 clamp(8px, 1.12cqh, 11px) / 1.5 "Cinzel", serif;
+      letter-spacing: 0.29em;
+      color: #b08b5c;
     }
-
-    .page-1.active .monogram-cover {
-      opacity: 0.95;
-      transform: scale(1) rotate(-3deg);
-    }
-
-    /* 底部专属仪式区域 */
-    .cover-footer {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 2px;
-      width: 100%;
-      opacity: 0;
-      transform: translateY(20px);
-      transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1) 0.3s, transform 1s cubic-bezier(0.25, 1, 0.5, 1) 0.3s;
-    }
-
-    .page-1.active .cover-footer {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .p1-announcement {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      pointer-events: none;
-      margin-bottom: 2px;
-    }
-
-    .p1-header-ornament {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      white-space: nowrap;
-    }
-
-    .p1-diamond {
-      font-size: 8px;
-      color: #9e6f28;
-      line-height: 1;
-      transform: translateY(-0.5px);
-      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95));
-    }
-
-    .p1-text {
-      font-family: "Cinzel", "Cormorant Garamond", serif;
-      font-size: 11.5px;
-      font-weight: 700;
-      letter-spacing: 0.24em;
-      color: #381219;
-      text-transform: uppercase;
-      white-space: nowrap;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 2px rgba(60, 20, 25, 0.18);
-    }
-
     .cover-names {
-      font-family: "Noto Serif SC", serif;
-      font-size: 27px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      color: #240c06;
-      background: linear-gradient(135deg, #240c06 0%, #5a2e12 26%, #966929 50%, #52270e 74%, #1e0904 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      position: absolute;
+      top: 11.7%;
+      left: 50%;
+      width: calc(100cqw - 32px);
+      transform: translateX(-50%);
+      font: 400 clamp(18px, 2.65cqh, 28px) / 1.3 "Noto Serif SC", serif;
+      letter-spacing: 0.16em;
+      color: #421b1b;
       white-space: nowrap;
-      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 6px rgba(50, 20, 8, 0.28));
-      line-height: 1.2;
+    }
+    .cover-dedication {
+      position: absolute;
+      top: 18.3%;
+      left: 0;
+      right: 0;
+      font-size: clamp(9px, 1.05cqh, 11px);
+      letter-spacing: 0.2em;
+      color: #573629;
+    }
+    .cover-together {
+      position: absolute;
+      top: 20.3%;
+      left: 0;
+      right: 0;
+      font: 400 clamp(6.5px, 0.72cqh, 8px) / 1.5 "Cinzel", serif;
+      letter-spacing: 0.4em;
+      color: #604336;
     }
 
-    .cover-date {
-      font-family: "Cinzel", "Cormorant Garamond", serif;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.22em;
-      color: #381219;
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+    .cover-footer {
+      --art-width: calc(100cqh * 941 / 1672);
+      --scene-shift: 14px;
+      position: absolute;
+      top: 75.65%;
+      left: calc(50% - var(--art-width) * 0.351);
+      width: calc(var(--art-width) * 0.7056);
+      height: 18.25%;
+      color: var(--burgundy-deep);
+      text-align: center;
+      pointer-events: none;
+      z-index: 80;
+      visibility: hidden;
+      opacity: 0;
+      border: 1px solid rgba(173, 133, 77, 0.72);
+      box-shadow: 0 6px 20px rgba(82, 57, 32, 0.12), inset 0 0 0 1px rgba(255, 254, 247, 0.75);
+    }
+    .cover-footer::before {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border: 1px solid rgba(255, 252, 240, 0.62);
+      pointer-events: none;
+    }
+    .cover-welcome-copy { position: absolute; inset: 0; }
+    .cover-welcome-script {
+      position: absolute;
+      top: 6%;
+      left: 0;
+      right: 0;
+      font: 400 clamp(48px, 9.8cqh, 94px) / 1.22 "Great Vibes", cursive;
+      color: #7a0f23;
+    }
+    .cover-welcome-subtitle {
+      position: absolute;
+      top: 56%;
+      left: 0;
+      right: 0;
+      font: 400 clamp(7px, 1.05cqh, 11px) / 1.2 "Cinzel", serif;
+      letter-spacing: 0.42em;
+      color: #651629;
+    }
+    .cover-welcome-message {
+      position: absolute;
+      top: 81%;
+      left: 0;
+      right: 0;
+      font-size: clamp(9px, 1.12cqh, 12px);
+      letter-spacing: 0.25em;
+      color: #573326;
+      white-space: nowrap;
+    }
+    .cover-welcome-divider {
+      position: absolute;
+      top: 68%;
+      left: 33%;
+      width: 34%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: #a57a4c;
+      font-size: clamp(6px, 0.85cqh, 9px);
+      line-height: 1;
+    }
+    .cover-welcome-divider span { flex: 1; height: 1px; background: #b79263; }
+
+    /* 长屏裁掉原图侧边时，在屏幕边缘补齐同一套角花。 */
+    .cover-gilded-frame {
+      position: absolute;
+      top: 2.05%;
+      bottom: 1.75%;
+      left: 2%;
+      right: 2%;
+      border: 0.7px solid rgba(174, 132, 74, 0.8);
+      pointer-events: none;
+      z-index: 3;
+    }
+    .cover-gilded-frame::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 0.6px solid rgba(174, 132, 74, 0.65);
+    }
+    .cgf-corner {
+      position: absolute;
+      width: 6.52cqh;
+      height: 6.58cqh;
+      background: url('./assets/cover-frame-corner.webp') center / contain no-repeat;
+    }
+    .cgf-tr { top: -2.05cqh; right: -2cqw; }
+    .cgf-tl { top: -2.05cqh; left: -2cqw; transform: scaleX(-1); }
+    .cgf-br { bottom: -1.75cqh; right: -2cqw; transform: scaleY(-1); }
+    .cgf-bl { bottom: -1.75cqh; left: -2cqw; transform: scale(-1); }
+
+    @container (min-aspect-ratio: 109 / 200) {
+      .cover-gilded-frame { visibility: hidden; }
     }
 
-
-    @keyframes photoGentleZoom {
-      0% { transform: scale(1); }
-      100% { transform: scale(1.035); }
+    @container (max-height: 620px) {
+      .page-1 .scroll-hint { bottom: 0; }
+      .cover-welcome-message { top: 78%; }
     }
 
     /* Page 2: 时间与流程高清矢量排版（100%匹配原比例，多端自适应） */
@@ -443,9 +410,8 @@
       text-align: center;
       z-index: 20;
       pointer-events: none;
-      padding: 8px 32px 10px;
-      border-radius: 40px;
-      background: radial-gradient(ellipse at center, rgba(255, 252, 246, 0.88) 0%, rgba(255, 250, 242, 0.52) 48%, rgba(255, 250, 242, 0) 76%);
+      padding: 0;
+      background: none;
     }
 
     .p3-header-pediment {
@@ -461,9 +427,8 @@
       text-align: center;
       z-index: 20;
       pointer-events: none;
-      padding: 8px 32px 10px;
-      border-radius: 40px;
-      background: radial-gradient(ellipse at center, rgba(255, 252, 246, 0.88) 0%, rgba(255, 250, 242, 0.52) 48%, rgba(255, 250, 242, 0) 76%);
+      padding: 0;
+      background: none;
     }
 
     .p2-title-en, .p3-title-en {
@@ -620,7 +585,7 @@
       text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
     }
 
-    /* Page 2: 加入日历按钮（法式高定双层排印，去图标化，杜绝重叠遮挡） */
+    /* 日历操作跟随时间页流程列表。 */
     .p2-calendar-wrap {
       position: relative;
       margin-top: 10px;
@@ -630,7 +595,7 @@
       pointer-events: auto;
     }
 
-    .p2-calendar-btn {
+    .calendar-button {
       display: inline-flex;
       flex-direction: column;
       align-items: center;
@@ -648,17 +613,17 @@
       transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
-    .p2-calendar-btn:hover {
+    .calendar-button:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(120, 30, 40, 0.42);
       background: linear-gradient(135deg, #8e2432 0%, #631823 100%);
     }
 
-    .p2-calendar-btn:active {
+    .calendar-button:active {
       transform: translateY(1px) scale(0.97);
     }
 
-    .p2-calendar-btn .btn-line-main {
+    .calendar-button .btn-line-main {
       font-family: "Noto Serif SC", serif;
       font-size: 13.5px;
       font-weight: 600;
@@ -667,7 +632,7 @@
       line-height: 1.2;
     }
 
-    .p2-calendar-btn .btn-line-sub {
+    .calendar-button .btn-line-sub {
       font-family: "Cinzel", "Cormorant Garamond", serif;
       font-size: 9.5px;
       letter-spacing: 0.22em;
@@ -678,12 +643,8 @@
 
     /* 移动端紧凑屏幕智能适配（高度 <= 720px） */
     @media (max-height: 720px) {
-      .page-1 .cover-content { padding: 16% 5% 5% 5%; }
-      .monogram-cover { font-size: 2.7rem; }
-      .cover-names { font-size: 22px; }
-      .cover-date { font-size: 14px; }
-      .p2-header-pediment { top: 15.0%; padding: 6px 22px 8px; }
-      .p3-header-pediment { top: 19.5%; padding: 6px 22px 8px; }
+      .p2-header-pediment { top: 15.0%; padding: 0; }
+      .p3-header-pediment { top: 19.5%; padding: 0; }
       .p2-title-en, .p3-title-en { font-size: 21px; }
       .p2-title-cn, .p3-title-cn { font-size: 14.5px; }
       .p2-date-box { top: 30.5%; }
@@ -694,8 +655,7 @@
       .p2-agenda { top: 52.0%; gap: 11px; }
       .p2-agenda-time { font-size: 16px; }
       .p2-agenda-event { font-size: 15px; }
-      .p2-calendar-wrap { margin-top: 6px; }
-      .p2-calendar-btn { padding: 6px 20px; font-size: 12.5px; }
+      .calendar-button { padding: 6px 20px; font-size: 12.5px; }
       .p3-castle-wrap { top: 37.0%; }
     }
 
@@ -1034,6 +994,14 @@
       }
     }
 
+@media (max-height: 620px) {
+  .p4-invitation { top: 23%; }
+  .p4-ornament { margin-bottom: 6px; }
+  .p4-poem { font-size: 12px; line-height: 1.8; margin-bottom: 8px; }
+  .p4-poem strong { font-size: 12.5px; }
+  .p4-footnote { display: none; }
+}
+
     /* 实时送出的祝福小弹幕/气泡 */
     .blessing-toast {
       position: absolute;
@@ -1070,22 +1038,22 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(15, 10, 8, 0.72);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
+      background: rgba(15, 10, 8, 0);
       z-index: 100;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 20px;
-      opacity: 0;
+      visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.3s ease;
+      transition: background-color 0.3s ease, visibility 0s linear 0.3s;
     }
 
     .modal-backdrop.open {
-      opacity: 1;
+      visibility: visible;
+      background: rgba(15, 10, 8, 0.18);
       pointer-events: auto;
+      transition-delay: 0s;
     }
 
     .modal-card {
@@ -1099,15 +1067,21 @@
       padding: 28px 22px 24px;
       box-shadow: 0 24px 60px rgba(40, 20, 15, 0.45);
       position: relative;
+      opacity: 0;
       transform: translateY(20px) scale(0.96);
-      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
       max-height: 85vh;
       overflow-y: auto;
     }
 
     .modal-backdrop.open .modal-card {
+      opacity: 1;
       transform: translateY(0) scale(1);
     }
+
+    .modal-card.glass-surface { background: var(--glass-background); }
+    .modal-card.glass-surface :is(.map-stationery-card, .calendar-event-card) { background: rgba(255, 249, 236, 0.2); }
+    .modal-card.glass-surface :is(.map-copy-pill-btn, .map-app-btn, .calendar-option-btn.secondary) { background: rgba(255, 251, 242, 0.4); }
 
     .modal-close {
       position: absolute;
@@ -1677,303 +1651,4 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-    }
-
-    /* =========================================================
-       法式信笺全资源预加载与仪式感开场幕布 (French Ivory Preloader)
-       ========================================================= */
-    .preloader-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 9999;
-      background: radial-gradient(circle at 50% 38%, #fcf9f4 0%, #f6eee2 60%, #ece0d0 100%);
-      box-shadow: inset 0 0 60px rgba(180, 140, 90, 0.15);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      overflow: hidden;
-      user-select: none;
-      -webkit-user-select: none;
-      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .preloader-overlay.fade-out {
-      opacity: 0;
-      transform: scale(1.05);
-      pointer-events: none;
-    }
-
-    /* 法式双金线边框与四角古典角花 */
-    .preloader-frame-border {
-      position: absolute;
-      top: 18px;
-      bottom: 18px;
-      left: 18px;
-      right: 18px;
-      border: 1px solid rgba(180, 140, 90, 0.42);
-      outline: 1px solid rgba(180, 140, 90, 0.22);
-      outline-offset: -6px;
-      border-radius: 4px;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .preloader-corner {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      pointer-events: none;
-    }
-
-    .preloader-corner::after {
-      content: '';
-      position: absolute;
-      width: 3.5px;
-      height: 3.5px;
-      background-color: #b88d58;
-      border-radius: 50%;
-    }
-
-    .preloader-corner-tl {
-      top: -1px;
-      left: -1px;
-      border-top: 2px solid #b88d58;
-      border-left: 2px solid #b88d58;
-    }
-    .preloader-corner-tl::after { top: 2px; left: 2px; }
-
-    .preloader-corner-tr {
-      top: -1px;
-      right: -1px;
-      border-top: 2px solid #b88d58;
-      border-right: 2px solid #b88d58;
-    }
-    .preloader-corner-tr::after { top: 2px; right: 2px; }
-
-    .preloader-corner-bl {
-      bottom: -1px;
-      left: -1px;
-      border-bottom: 2px solid #b88d58;
-      border-left: 2px solid #b88d58;
-    }
-    .preloader-corner-bl::after { bottom: 2px; left: 2px; }
-
-    .preloader-corner-br {
-      bottom: -1px;
-      right: -1px;
-      border-bottom: 2px solid #b88d58;
-      border-right: 2px solid #b88d58;
-    }
-    .preloader-corner-br::after { bottom: 2px; right: 2px; }
-
-    .preloader-content {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      max-width: 320px;
-      text-align: center;
-    }
-
-    .preloader-monogram {
-      min-height: 80px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 16px;
-      position: relative;
-    }
-
-    .preloader-monogram-img {
-      height: 78px;
-      max-width: 240px;
-      object-fit: contain;
-      animation: preloaderMonogramBreath 3s ease-in-out infinite alternate;
-    }
-
-    .preloader-monogram-text {
-      font-family: "Zhi Mang Xing", "Great Vibes", cursive;
-      font-size: 3.5rem;
-      line-height: 1;
-      color: #8c633a;
-      background: linear-gradient(135deg, #b88d58 0%, #7a5433 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(150, 108, 59, 0.22);
-      animation: preloaderMonogramBreath 3s ease-in-out infinite alternate;
-    }
-
-    @keyframes preloaderMonogramBreath {
-      0% {
-        transform: scale(0.97);
-        filter: drop-shadow(0 2px 6px rgba(180, 135, 75, 0.25));
-      }
-      100% {
-        transform: scale(1.03);
-        filter: drop-shadow(0 4px 16px rgba(210, 165, 95, 0.55));
-      }
-    }
-
-    .preloader-title-box {
-      margin-bottom: 24px;
-    }
-
-    .preloader-title {
-      font-family: "Cinzel", serif;
-      font-size: 0.82rem;
-      font-weight: 600;
-      letter-spacing: 0.28em;
-      color: #7a5433;
-      margin-bottom: 8px;
-      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
-    }
-
-    .preloader-names {
-      font-family: "Noto Serif SC", serif;
-      font-size: 0.92rem;
-      font-weight: 500;
-      letter-spacing: 0.24em;
-      color: #4a2c26;
-      margin-bottom: 6px;
-      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
-    }
-
-    .preloader-date {
-      font-family: "Cinzel", serif;
-      font-size: 0.74rem;
-      letter-spacing: 0.2em;
-      color: #966c3b;
-    }
-
-    .preloader-progress-section {
-      width: 82%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-
-    .preloader-overlay.ready .preloader-progress-section {
-      opacity: 0;
-      transform: translateY(-8px);
-      pointer-events: none;
-      position: absolute;
-    }
-
-    .preloader-bar-bg {
-      width: 100%;
-      height: 3px;
-      background: rgba(180, 140, 90, 0.2);
-      border-radius: 3px;
-      overflow: hidden;
-      position: relative;
-      box-shadow: inset 0 1px 2px rgba(120, 80, 40, 0.15);
-    }
-
-    .preloader-bar-fill {
-      width: 0%;
-      height: 100%;
-      background: linear-gradient(90deg, #966c3b 0%, #c8a369 50%, #7a5433 100%);
-      box-shadow: 0 0 8px rgba(200, 163, 105, 0.55);
-      border-radius: 3px;
-      transition: width 0.08s linear;
-    }
-
-    .preloader-meta {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.72rem;
-      letter-spacing: 0.12em;
-      color: #8c6c4c;
-    }
-
-    .preloader-status {
-      font-family: "Noto Serif SC", serif;
-      font-weight: 400;
-    }
-
-    .preloader-percent {
-      font-family: "Cinzel", serif;
-      font-weight: 600;
-      color: #7a5433;
-    }
-
-    .preloader-action-area {
-      display: none;
-      opacity: 0;
-      transform: translateY(12px) scale(0.95);
-      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .preloader-action-area.visible {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    /* 法式象牙手工棉纸双金线胶囊开启按钮 */
-    .btn-enter-invitation {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 246, 238, 0.96) 60%, rgba(243, 235, 219, 0.94) 100%);
-      border: 1.2px solid #b88d58;
-      outline: 1px solid rgba(184, 141, 88, 0.35);
-      outline-offset: -4px;
-      color: #7a5433;
-      padding: 13px 38px;
-      border-radius: 32px;
-      cursor: pointer;
-      box-shadow: 0 6px 22px rgba(120, 80, 40, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 16px rgba(200, 163, 105, 0.22);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      animation: btnFrenchPaperPulse 2.4s ease-in-out infinite;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .btn-enter-invitation:active {
-      transform: scale(0.97);
-    }
-
-    @keyframes btnFrenchPaperPulse {
-      0%, 100% {
-        box-shadow: 0 6px 18px rgba(120, 80, 40, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 12px rgba(200, 163, 105, 0.18);
-        border-color: #b88d58;
-        transform: scale(1);
-      }
-      50% {
-        box-shadow: 0 8px 24px rgba(120, 80, 40, 0.16), inset 0 1px 2px rgba(255, 255, 255, 1), 0 0 22px rgba(200, 163, 105, 0.45);
-        border-color: #916838;
-        transform: scale(1.025);
-      }
-    }
-
-    .btn-enter-text {
-      font-family: "Cinzel", serif;
-      font-size: 0.92rem;
-      font-weight: 600;
-      letter-spacing: 0.26em;
-      color: #7a5433;
-      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
-    }
-
-    .btn-enter-sub {
-      font-family: "Noto Serif SC", serif;
-      font-size: 0.65rem;
-      letter-spacing: 0.18em;
-      color: #966c3b;
-      font-weight: 400;
-      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
     }

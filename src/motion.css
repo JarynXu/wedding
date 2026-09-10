@@ -1,0 +1,116 @@
+@import './welcome.css';
+
+.welcome-background::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('./assets/welcome-silk-roses.webp') center / cover no-repeat;
+  opacity: 0;
+  transition: opacity 450ms ease;
+}
+.preloader-overlay.art-ready .welcome-background::after { opacity: 1; }
+
+/* 页面共用叠化节奏；旧页底图覆盖整个过渡，避免露出浅色空底。 */
+.page { --page-copy-delay: 160ms; --scene-shift: 14px; }
+@keyframes scene-arrive {
+  from { opacity: 0; transform: translateY(var(--scene-shift)); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scene-copy-leave {
+  from { opacity: 1; translate: 0 0; }
+  to { opacity: 0; translate: 0 -8px; }
+}
+@keyframes glass-leave {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.invitation-open .cover-footer[data-state='active'] {
+  visibility: visible;
+  opacity: 1;
+  animation: scene-arrive var(--motion-page) var(--ease-page) both;
+}
+.invitation-open .cover-footer[data-state='leaving'] {
+  visibility: visible;
+  animation: glass-leave var(--motion-page) var(--ease-page) both;
+}
+.cover-footer[data-state='active'] .cover-welcome-copy { animation: entry-arrive 750ms 810ms var(--ease-reveal) both; }
+.cover-footer[data-state='leaving'] .cover-welcome-copy { animation: scene-copy-leave 220ms ease-out both; }
+.invitation-open .page.active { animation: scene-arrive var(--motion-page) var(--ease-page) both; }
+.swiper-wrapper[data-transition='running'] .page.active { will-change: opacity, transform; }
+.page.is-leaving > :is(.cover-content, .p2-content, .p3-content, .p4-invitation, .scroll-hint) {
+  animation: scene-copy-leave 220ms ease-out both;
+}
+
+/* 动画依附当前页面状态；排版位移仍由各页面样式持有。 */
+@keyframes stationery-arrive {
+  from { opacity: 0; translate: 0 22px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes entry-arrive {
+  from { opacity: 0; translate: 0 9px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes inscription-reveal {
+  from { opacity: 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: 1; clip-path: inset(0); }
+}
+@keyframes date-unfold {
+  from { opacity: 0; translate: 0 10px; scale: 0.92; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes agenda-arrive {
+  from { opacity: 0; translate: -16px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes rule-extend {
+  from { scale: 0 1; opacity: 0; }
+  to { scale: 1 1; opacity: 1; }
+}
+@keyframes manor-arrive {
+  from { opacity: 0; clip-path: inset(100% 0 0); translate: 0 7px; }
+  to { opacity: 1; clip-path: inset(0); translate: 0 0; }
+}
+@keyframes invitation-appear {
+  from { opacity: 0; translate: 0 9px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+.invitation-open .page-1:is(.active, .is-leaving) .cover-heading { animation: stationery-arrive 1200ms calc(var(--page-copy-delay) + 300ms) var(--ease-reveal) both; }
+
+.invitation-open .page:is(.active, .is-leaving) :is(.p2-title-en, .p3-title-en) { animation: inscription-reveal 900ms calc(var(--page-copy-delay) + 180ms) var(--ease-reveal) both; }
+.invitation-open .page:is(.active, .is-leaving) :is(.p2-title-cn, .p3-title-cn) { animation: entry-arrive 650ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
+.invitation-open .page:is(.active, .is-leaving) .flourish-line { animation: rule-extend 900ms calc(var(--page-copy-delay) + 400ms) var(--ease-reveal) both; }
+.invitation-open .page-2:is(.active, .is-leaving) .p2-date-box { animation: date-unfold 1000ms calc(var(--page-copy-delay) + 320ms) var(--ease-reveal) both; }
+.invitation-open .page-2:is(.active, .is-leaving) .p2-divider { animation: rule-extend 750ms calc(var(--page-copy-delay) + 550ms) var(--ease-reveal) both; }
+.invitation-open .page-2:is(.active, .is-leaving) .p2-agenda-row { animation: agenda-arrive 800ms calc(var(--page-copy-delay) + 620ms + var(--item-index, 0) * 140ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-castle-img { animation: manor-arrive 1250ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-hotel-name { animation: entry-arrive 850ms calc(var(--page-copy-delay) + 580ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-hotel-en { animation: inscription-reveal 1000ms calc(var(--page-copy-delay) + 730ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-address { animation: entry-arrive 750ms calc(var(--page-copy-delay) + 820ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-map-btn-wrap { animation: entry-arrive 650ms calc(var(--page-copy-delay) + 1000ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) :is(.p4-header-badge, .p4-header-en) { animation: inscription-reveal 850ms calc(var(--page-copy-delay) + 180ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-couples { animation: date-unfold 1000ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-ornament-line { animation: rule-extend 1000ms calc(var(--page-copy-delay) + 500ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-poem p { animation: invitation-appear 850ms calc(var(--page-copy-delay) + 500ms + var(--line-index, 0) * 130ms) var(--ease-reveal) both; }
+.p4-poem p:nth-child(2) { --line-index: 1; }
+.p4-poem p:nth-child(3) { --line-index: 2; }
+.p4-poem p:nth-child(4) { --line-index: 3; }
+.p4-poem p:nth-child(5) { --line-index: 4; }
+.p4-poem p:nth-child(6) { --line-index: 5; }
+.invitation-open .page-2:is(.active, .is-leaving) .p2-calendar-wrap { animation: entry-arrive 750ms calc(var(--page-copy-delay) + 1050ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-footnote { animation: entry-arrive 900ms calc(var(--page-copy-delay) + 1350ms) var(--ease-reveal) both; }
+
+button:focus-visible, a:focus-visible, [role='button']:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 5px; }
+.btn-enter-invitation:focus-visible { outline-color: var(--burgundy); }
+.cover-names:focus { outline: none; }
+.scroll-hint { min-width: 44px; min-height: 44px; justify-content: center; border: 0; background: transparent; }
+.modal-close { border: 0; background: transparent; font-family: inherit; }
+.page:not(.active) .scroll-arrow { animation-play-state: paused; }
+.calendar-button, .p3-map-btn { min-height: 44px; }
+.invitation-paused *, .invitation-paused *::before, .invitation-paused *::after { animation-play-state: paused !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .preloader-overlay.fade-out { transform: none; }
+  #petalsCanvas { display: none; }
+}

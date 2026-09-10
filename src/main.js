@@ -1,19 +1,31 @@
+import './fonts.css';
+import './shell.css';
+import './glass.css';
 import './style.css';
+import './motion.css';
+import { RosePetals } from './petals.js';
+import { WeddingPreloader } from './preloader.js';
 import { WEDDING_CONFIG } from './config.js';
+
+// 生产样式非阻塞加载；资源清单须在样式可读后收集。
+const stylesReady = Promise.all([...document.querySelectorAll('link[data-invitation-styles]')].map(link => new Promise((resolve, reject) => {
+  if (link.dataset.loaded === 'true') { resolve(); return; }
+  if (link.dataset.failed === 'true') { reject(new Error('请柬样式加载失败')); return; }
+  link.addEventListener('load', resolve, { once: true });
+  link.addEventListener('error', () => reject(new Error('请柬样式加载失败')), { once: true });
+})));
+
+stylesReady.then(initializeInvitation).catch(error => {
+  window.invitationBootFailed();
+  console.error('请柬初始化失败', error);
+});
 
 const coverOption1Url = new URL('./assets/cover_option_1_french_clean.jpg', import.meta.url).href;
 const coverOption2Url = new URL('./assets/cover_option_2_burgundy_velvet.jpg', import.meta.url).href;
-const curtainCoverUrl = new URL('./assets/card_01_hd.png', import.meta.url).href;
-const burgundyCoverUrl = new URL('./assets/card01_bg_option_b.jpg', import.meta.url).href;
-const defaultCoverUrl = new URL('./assets/card01_bg.jpg', import.meta.url).href;
-const defaultCoverFrameUrl = new URL('./assets/card01_frame.png', import.meta.url).href;
-const welcomePhotoUrl = new URL('./assets/welcome_photo_hd.jpg', import.meta.url).href;
-const card2Url = new URL('./assets/card_02_hd.jpg', import.meta.url).href;
-const card3Url = new URL('./assets/card_03_hd.jpg', import.meta.url).href;
-const card4Url = new URL('./assets/card_04_hd.jpg', import.meta.url).href;
-const defaultBgmUrl = new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href;
+const defaultCoverUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
 const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
 
+function initializeInvitation() {
 // ==========================================
     // 婚礼全局配置引入 (来源于 config.js)
     // ==========================================
@@ -23,63 +35,37 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
     function renderConfigData() {
       if (!config) return;
 
-      // 网页标题
-      if (config.coupleNamesZh) {
-        document.title = `${config.coupleNamesZh} · 婚礼请柬`;
-      }
-
-      // Preloader 信笺元素
-      const monoEl = document.getElementById('preloaderMonogram');
-      if (monoEl) {
-        if (config.monogramImg) {
-          monoEl.innerHTML = `<img src="${config.monogramImg}" alt="${config.monogram || '徐 & 赵'}" class="preloader-monogram-img">`;
-        } else if (config.monogram) {
-          monoEl.innerHTML = `<span class="preloader-monogram-text">${config.monogram}</span>`;
-        }
-      }
-      const preNamesEl = document.getElementById('preloaderNames');
-      if (preNamesEl && config.coupleNamesZh) preNamesEl.textContent = config.coupleNamesZh;
-      const preDateEl = document.getElementById('preloaderDate');
-      if (preDateEl && config.date?.formattedDate) preDateEl.textContent = config.date.formattedDate;
+      if (config.coupleNamesZh) document.title = `${config.coupleNamesZh} · 婚礼请柬`;
 
       // Page 1
       const p1Names = document.getElementById('p1CouplesNames');
       if (p1Names && config.coupleNamesZh) p1Names.textContent = config.coupleNamesZh;
-      const p1Date = document.getElementById('p1DateText');
-      if (p1Date && config.date?.formattedDate) p1Date.textContent = config.date.formattedDate;
 
-      // Page 1 Monogram 徽章与多方案高清图层
-      const coverMonogram = document.getElementById('coverMonogram');
-      if (coverMonogram && config.monogram) coverMonogram.textContent = config.monogram;
+      // Page 1 可选双金线宫廷画框
+      const page1El = document.querySelector('.page-1');
+      const coverGildedFrame = document.getElementById('coverGildedFrame');
+      const currentUrlParams = new URLSearchParams(window.location.search);
+      const frameParam = currentUrlParams.get('frame');
+      if (coverGildedFrame && page1El) {
+        if (config.coverSettings?.useGildedFrame || frameParam === '1' || frameParam === 'true') {
+          page1El.classList.add('has-gilded-frame');
+          coverGildedFrame.style.display = 'block';
+        } else {
+          page1El.classList.remove('has-gilded-frame');
+          coverGildedFrame.style.display = 'none';
+        }
+      }
 
       const coverBgPhoto = document.getElementById('coverBgPhoto');
-      const coverFrameOverlay = document.getElementById('coverFrameOverlay');
-      const currentUrlParams = new URLSearchParams(window.location.search);
       const coverParam = currentUrlParams.get('cover');
 
       if (coverParam === 'opt1' && coverBgPhoto) {
         coverBgPhoto.src = coverOption1Url;
-        if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
       } else if (coverParam === 'opt2' && coverBgPhoto) {
         coverBgPhoto.src = coverOption2Url;
-        if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
-      } else if (coverParam === 'curtain' && coverBgPhoto) {
-        coverBgPhoto.src = curtainCoverUrl;
-        if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
-      } else if (coverParam === 'burgundy' && coverBgPhoto) {
-        coverBgPhoto.src = burgundyCoverUrl;
-        if (coverFrameOverlay) coverFrameOverlay.style.display = 'none';
       } else {
         if (coverBgPhoto) {
           coverBgPhoto.src = (config.assets && config.assets.coverBg) || defaultCoverUrl;
-        }
-        if (coverFrameOverlay) {
-          if (config.assets && config.assets.useCoverFrame) {
-            coverFrameOverlay.src = config.assets.coverFrame || defaultCoverFrameUrl;
-            coverFrameOverlay.style.display = 'block';
-          } else {
-            coverFrameOverlay.style.display = 'none';
-          }
         }
       }
 
@@ -98,19 +84,14 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
       // Page 2 流程日程动态渲染
       const p2Agenda = document.getElementById('p2Agenda');
       if (p2Agenda && Array.isArray(config.schedule)) {
-        p2Agenda.innerHTML = config.schedule.map(item => `
-          <div class="p2-agenda-row">
+        const calendarAction = p2Agenda.querySelector('.p2-calendar-wrap');
+        p2Agenda.innerHTML = config.schedule.map((item, index) => `
+          <div class="p2-agenda-row" style="--item-index: ${index}">
             <span class="p2-agenda-time">${item.time}</span>
             <span class="p2-agenda-event">${item.title || item.event}</span>
           </div>
-        `).join('') + `
-          <div class="p2-calendar-wrap">
-            <button class="p2-calendar-btn" data-action="add-calendar">
-              <span class="btn-line-main">✦ 添加到日历 ✦</span>
-              <span class="btn-line-sub">ADD TO CALENDAR</span>
-            </button>
-          </div>
-        `;
+        `).join('');
+        if (calendarAction) p2Agenda.append(calendarAction);
       }
 
       // Page 3
@@ -209,224 +190,6 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
       const calLoc = document.getElementById('calEventLoc');
       if (calLoc && config.venue) calLoc.textContent = `${config.venue.name} · ${config.venue.hall || '国际厅(三楼)'}`;
 
-      // 音频源
-      if (config.assets?.bgMusic) {
-        const audioEl = document.getElementById('bgm');
-        if (audioEl && audioEl.getAttribute('src') !== config.assets.bgMusic) {
-          audioEl.src = config.assets.bgMusic;
-        }
-      }
-    }
-
-    // ==========================================
-    // 全资源预加载与开场仪式感引擎 (WeddingPreloader)
-    // ==========================================
-    class WeddingPreloader {
-      constructor(options = {}) {
-        this.overlay = document.getElementById('preloaderOverlay');
-        this.barFill = document.getElementById('preloaderBarFill');
-        this.percentText = document.getElementById('preloaderPercent');
-        this.statusText = document.getElementById('preloaderStatus');
-        this.actionArea = document.getElementById('preloaderActionArea');
-        this.enterBtn = document.getElementById('btnEnterInvitation');
-
-        this.onEnterCallback = options.onEnter || null;
-
-        this.targetProgress = 12; // 初始启动底数，确保进入页面进度条即刻有呼吸动效
-        this.displayProgress = 0;
-        this.isCompleted = false;
-        this.isEntered = false;
-        this.animId = null;
-
-        const cards = config.assets?.cards || [
-          welcomePhotoUrl,
-          card2Url,
-          card3Url,
-          card4Url
-        ];
-        const bgMusic = config.assets?.bgMusic || defaultBgmUrl;
-
-        this.manifest = [
-          ...cards.map(url => ({ type: 'image', url, weight: 15 })),
-          { type: 'audio', url: bgMusic, weight: 15 },
-          { type: 'font', name: 'WebFonts', weight: 10 }
-        ];
-
-        this.totalWeight = this.manifest.reduce((sum, item) => sum + item.weight, 0);
-        this.loadedWeight = 0;
-      }
-
-      init() {
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('nopreloader') === '1') {
-          if (this.overlay) this.overlay.style.display = 'none';
-          if (typeof this.onEnterCallback === 'function') this.onEnterCallback();
-          const targetP = parseInt(urlParams.get('page'), 10);
-          if (!isNaN(targetP) && typeof goToPage === 'function') {
-            setTimeout(() => goToPage(targetP), 150);
-          }
-          return;
-        }
-        if (!this.overlay || this.overlay.style.display === 'none') return;
-
-        this.startProgressLoop();
-        this.loadAllAssets();
-
-        // 3.2 秒弱网超时保底（保证任何极端弱网环境均不会卡死）
-        setTimeout(() => {
-          if (!this.isCompleted) {
-            this.targetProgress = 100;
-          }
-        }, 3200);
-
-        if (this.enterBtn) {
-          this.enterBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.enterInvitation();
-          });
-        }
-
-        this.overlay.addEventListener('click', () => {
-          if (!this.isCompleted) {
-            // 加载中点击可快速加速至100%
-            this.targetProgress = 100;
-          } else if (!this.isEntered) {
-            this.enterInvitation();
-          }
-        });
-      }
-
-      loadAllAssets() {
-        this.manifest.forEach(item => {
-          if (item.type === 'image') {
-            const img = new Image();
-            let handled = false;
-            const onImg = () => {
-              if (!handled) {
-                handled = true;
-                this.onItemLoaded(item.weight);
-              }
-            };
-            img.onload = onImg;
-            img.onerror = onImg;
-            img.src = item.url;
-            if (img.complete) {
-              onImg();
-            }
-            setTimeout(onImg, 2000);
-          } else if (item.type === 'audio') {
-            const audioObj = new Audio();
-            audioObj.preload = 'auto';
-            let handled = false;
-            const markAudio = () => {
-              if (!handled) {
-                handled = true;
-                this.onItemLoaded(item.weight);
-              }
-            };
-            audioObj.addEventListener('canplaythrough', markAudio, { once: true });
-            audioObj.addEventListener('loadeddata', markAudio, { once: true });
-            audioObj.addEventListener('error', markAudio, { once: true });
-            setTimeout(markAudio, 1500);
-            audioObj.src = item.url;
-            try { audioObj.load(); } catch (e) { markAudio(); }
-          } else if (item.type === 'font') {
-            let handled = false;
-            const markFont = () => {
-              if (!handled) {
-                handled = true;
-                this.onItemLoaded(item.weight);
-              }
-            };
-            if (document.fonts && document.fonts.ready) {
-              document.fonts.ready.then(markFont).catch(markFont);
-              setTimeout(markFont, 1000);
-            } else {
-              markFont();
-            }
-          }
-        });
-      }
-
-      onItemLoaded(weight) {
-        this.loadedWeight += weight;
-        const rawPercent = Math.min(100, Math.round(12 + (this.loadedWeight / this.totalWeight) * 88));
-        this.targetProgress = Math.max(this.targetProgress, rawPercent);
-      }
-
-      startProgressLoop() {
-        const update = () => {
-          const diff = this.targetProgress - this.displayProgress;
-          if (Math.abs(diff) > 0.05) {
-            this.displayProgress += diff * 0.09;
-          } else {
-            this.displayProgress = this.targetProgress;
-          }
-
-          const percent = Math.min(100, Math.floor(this.displayProgress));
-
-          if (this.barFill) {
-            this.barFill.style.width = `${percent}%`;
-          }
-          if (this.percentText) {
-            this.percentText.textContent = `${percent}%`;
-          }
-
-          if (this.statusText) {
-            if (percent < 35) {
-              this.statusText.textContent = "正在装点浪漫殿堂...";
-            } else if (percent < 75) {
-              this.statusText.textContent = "正在调校礼堂音律...";
-            } else if (percent < 100) {
-              this.statusText.textContent = "即将开启婚礼华章...";
-            }
-          }
-
-          if (percent >= 100 && !this.isCompleted) {
-            this.isCompleted = true;
-            this.onProgressComplete();
-          }
-
-          if (!this.isEntered) {
-            this.animId = requestAnimationFrame(update);
-          }
-        };
-
-        this.animId = requestAnimationFrame(update);
-      }
-
-      onProgressComplete() {
-        if (this.statusText) {
-          this.statusText.textContent = "爱意就绪 · 诚挚邀请";
-        }
-        if (this.overlay) {
-          this.overlay.classList.add('ready');
-        }
-        if (this.actionArea) {
-          this.actionArea.classList.add('visible');
-        }
-      }
-
-      enterInvitation() {
-        if (this.isEntered) return;
-        this.isEntered = true;
-
-        if (this.animId) {
-          cancelAnimationFrame(this.animId);
-          this.animId = null;
-        }
-
-        if (typeof this.onEnterCallback === 'function') {
-          this.onEnterCallback();
-        }
-
-        if (this.overlay) {
-          this.overlay.classList.add('fade-out');
-          setTimeout(() => {
-            this.overlay.style.display = 'none';
-          }, 880);
-        }
-      }
     }
 
     // ==========================================
@@ -436,29 +199,54 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
     const totalPages = 4;
     const swiper = document.getElementById('swiperWrapper');
     const pages = document.querySelectorAll('.page');
+    const welcomeGlass = document.getElementById('welcomeGlass');
     const dots = document.querySelectorAll('.nav-dot');
     let isAnimating = false;
     let touchStartY = 0;
     let touchEndY = 0;
 
     function goToPage(index) {
-      if (index < 0 || index >= totalPages || isAnimating) return;
+      if (index < 0 || index >= totalPages || index === currentPage || isAnimating || navigationBlocked()) return;
       isAnimating = true;
+      const outgoing = pages[currentPage];
+      const incoming = pages[index];
+      incoming.style.setProperty('--scene-shift', index > currentPage ? '14px' : '-14px');
+      outgoing.classList.add('is-leaving');
+      swiper.dataset.transition = 'running';
       currentPage = index;
-
-      swiper.style.transform = `translateY(-${currentPage * 100}%)`;
 
       pages.forEach((p, idx) => {
         p.classList.toggle('active', idx === currentPage);
+        p.inert = idx !== currentPage;
       });
+      syncWelcomeGlass();
 
       dots.forEach((d, idx) => {
         d.classList.toggle('active', idx === currentPage);
+        if (idx === currentPage) d.setAttribute('aria-current', 'page');
+        else d.removeAttribute('aria-current');
       });
 
-      setTimeout(() => {
+      // 旧页保持不透明底图，入口文字退场；新页叠化结束后释放旧页。
+      Promise.allSettled(incoming.getAnimations().map(animation => animation.finished)).then(() => {
+        outgoing.classList.remove('is-leaving');
+        syncWelcomeGlass();
+        swiper.dataset.transition = 'idle';
         isAnimating = false;
-      }, 700);
+      });
+    }
+
+    function syncWelcomeGlass() {
+      const active = currentPage === 0 && document.body.classList.contains('invitation-open');
+      const leaving = pages[0].classList.contains('is-leaving') && welcomeGlass.dataset.state !== 'hidden';
+      welcomeGlass.dataset.state = active ? 'active' : leaving ? 'leaving' : 'hidden';
+      welcomeGlass.setAttribute('aria-hidden', String(!active));
+      welcomeGlass.style.setProperty('--scene-shift', pages[0].style.getPropertyValue('--scene-shift') || '14px');
+    }
+
+    function navigationBlocked() {
+      return !document.body.classList.contains('invitation-open')
+        || !!document.querySelector('.modal-backdrop.open, .wechat-guide-overlay.show');
     }
 
     function nextPage() {
@@ -500,6 +288,8 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
 
     // 键盘导航
     window.addEventListener('keydown', (e) => {
+      if (navigationBlocked() || e.target.closest('button, a, input, textarea, [role=button]')) return;
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' '].includes(e.key)) e.preventDefault();
       if (e.key === 'ArrowDown' || e.key === 'PageDown' || e.key === ' ') {
         nextPage();
       } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
@@ -515,19 +305,9 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
       });
     });
 
-    // 支持 URL 参数定位页面 (?page=3 或 #p=3) 与跳过预加载 (?nopreloader=1)
+    // URL 参数 page 使用从零开始的页码；开场完成后定位。
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('nopreloader')) {
-      const overlay = document.getElementById('preloaderOverlay');
-      if (overlay) overlay.style.display = 'none';
-    }
-    const initialPageParam = urlParams.get('page');
-    if (initialPageParam !== null) {
-      const pIdx = parseInt(initialPageParam);
-      if (!isNaN(pIdx) && pIdx >= 0 && pIdx < totalPages) {
-        setTimeout(() => goToPage(pIdx), 150);
-      }
-    }
+    const initialPageIndex = Number.parseInt(urlParams.get('page'), 10);
 
     // ==========================================
     // 背景音乐播放控制与自动播放唤醒
@@ -535,7 +315,6 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
     const audio = document.getElementById('bgm');
     const musicBtn = document.getElementById('musicBtn');
     const musicTip = document.getElementById('musicTip');
-    let hasInteracted = false;
 
     function toggleMusic() {
       if (audio.paused) {
@@ -556,36 +335,30 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
       toggleMusic();
     });
 
-    // 首次触摸/点击全屏自动尝试唤醒背景音乐
-    function autoPlayOnFirstTouch() {
-      if (!hasInteracted) {
-        hasInteracted = true;
-        audio.play().then(() => {
-          musicBtn.classList.add('playing');
-          musicTip.classList.add('fade-out');
-        }).catch(() => {
-          // 浏览器阻止自动播放时保留手动按钮
-        });
-        document.removeEventListener('click', autoPlayOnFirstTouch);
-        document.removeEventListener('touchstart', autoPlayOnFirstTouch);
-      }
-    }
-    document.addEventListener('click', autoPlayOnFirstTouch);
-    document.addEventListener('touchstart', autoPlayOnFirstTouch);
-
     // ==========================================
     // 全局配置渲染与开场仪式感预加载引擎启动
     // ==========================================
     renderConfigData();
 
+    const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
     const weddingPreloader = new WeddingPreloader({
+      audio,
+      audioUrl: config.assets?.bgMusic || new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href,
+      petals: rosePetals,
       onEnter: () => {
+        document.body.classList.remove('invitation-loading');
+        document.body.classList.add('invitation-open');
+        swiper.inert = false;
+        pages.forEach((page, index) => { page.inert = index !== currentPage; });
+        document.getElementById('pageNav').inert = false;
+        document.querySelector('.music-player').inert = false;
+        if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
+        syncWelcomeGlass();
         // 用户主动点击“开启请柬”，顺畅激活背景音乐
         if (audio && audio.paused) {
           audio.play().then(() => {
             musicBtn.classList.add('playing');
             musicTip.classList.add('fade-out');
-            hasInteracted = true;
           }).catch(() => {});
         }
       }
@@ -595,86 +368,17 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
     // ==========================================
     // 浪漫玫瑰花瓣飘落 Canvas 特效
     // ==========================================
-    const canvas = document.getElementById('petalsCanvas');
-    const ctx = canvas.getContext('2d');
-    let width, height;
-    const petals = [];
-    const petalCount = 26;
-
-    function resizeCanvas() {
-      const container = document.getElementById('app');
-      const dpr = Math.min(window.devicePixelRatio || 1, 3);
-      width = container.clientWidth;
-      height = container.clientHeight;
-      canvas.width = Math.floor(width * dpr);
-      canvas.height = Math.floor(height * dpr);
-      canvas.style.width = width + 'px';
-      canvas.style.height = height + 'px';
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.scale(dpr, dpr);
+    if (import.meta.env.DEV) {
+      window.__petals = rosePetals;
+      window.__preloader = weddingPreloader;
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Petal {
-      constructor() {
-        this.reset(true);
-      }
-      reset(initial = false) {
-        this.x = Math.random() * width;
-        this.y = initial ? Math.random() * height : -20;
-        this.size = 9 + Math.random() * 13;
-        this.speedY = 1.1 + Math.random() * 1.6;
-        this.speedX = (Math.random() - 0.5) * 1.1;
-        this.rotation = Math.random() * 360;
-        this.rotSpeed = (Math.random() - 0.5) * 2;
-        this.oscillation = Math.random() * Math.PI * 2;
-        this.oscSpeed = 0.02 + Math.random() * 0.03;
-        const colors = [
-          'rgba(215, 80, 95, 0.72)',
-          'rgba(235, 140, 150, 0.78)',
-          'rgba(180, 50, 65, 0.65)',
-          'rgba(255, 205, 215, 0.85)',
-          'rgba(240, 160, 170, 0.7)'
-        ];
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-      }
-      update() {
-        this.oscillation += this.oscSpeed;
-        this.x += this.speedX + Math.sin(this.oscillation) * 0.8;
-        this.y += this.speedY;
-        this.rotation += this.rotSpeed;
-        if (this.y > height + 20 || this.x < -30 || this.x > width + 30) {
-          this.reset(false);
-        }
-      }
-      draw() {
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate((this.rotation * Math.PI) / 180);
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.bezierCurveTo(-this.size / 2, -this.size / 2, -this.size / 2, this.size / 2, 0, this.size);
-        ctx.bezierCurveTo(this.size / 2, this.size / 2, this.size / 2, -this.size / 2, 0, 0);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    for (let i = 0; i < petalCount; i++) {
-      petals.push(new Petal());
-    }
-
-    function animatePetals() {
-      ctx.clearRect(0, 0, width, height);
-      petals.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      requestAnimationFrame(animatePetals);
-    }
-    animatePetals();
+    if (import.meta.hot) import.meta.hot.dispose(() => {
+      weddingPreloader.destroy();
+      rosePetals.destroy();
+    });
+    document.addEventListener('visibilitychange', () => {
+      document.body.classList.toggle('invitation-paused', document.hidden);
+    });
 
     // ==========================================
     // 婚礼倒计时计算器
@@ -710,22 +414,35 @@ const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
     // ==========================================
     // 模态弹窗系统
     // ==========================================
+    const modalTriggers = new WeakMap();
     function openModal(id) {
       const modal = document.getElementById(id);
-      if (modal) modal.classList.add('open');
+      if (!modal) return;
+      modalTriggers.set(modal, document.activeElement);
+      modal.inert = false;
+      modal.classList.add('open');
+      modal.querySelector('.modal-close').focus({ preventScroll: true });
     }
 
     function closeModal(id) {
       const modal = document.getElementById(id);
-      if (modal) modal.classList.remove('open');
+      if (!modal) return;
+      modal.classList.remove('open');
+      modal.inert = true;
+      modalTriggers.get(modal)?.focus({ preventScroll: true });
     }
 
     document.querySelectorAll('.modal-backdrop').forEach(b => {
       b.addEventListener('click', (e) => {
         if (e.target === b) {
-          b.classList.remove('open');
+          closeModal(b.id);
         }
       });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      const modal = document.querySelector('.modal-backdrop.open');
+      if (event.key === 'Escape' && modal) closeModal(modal.id);
     });
 
     document.addEventListener('click', (event) => {
@@ -904,3 +621,4 @@ END:VCALENDAR`;
       const overlay = document.getElementById('wechatGuideOverlay');
       if (overlay) overlay.classList.remove('show');
     }
+}
