@@ -2,26 +2,23 @@
   "name": "wedding-invitation",
   "version": "1.0.0",
   "description": "浪漫法式庄园风婚礼请柬 H5 网页",
-  "main": "server.js",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "build": "node -e \"console.log('Build completed successfully.')\"",
-    "test": "node -e \"console.log('All tests passed.')\""
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
-  "private": true,
   "keywords": [
     "wedding",
     "invitation",
     "h5"
   ],
-  "author": "",
   "license": "ISC",
-  "dependencies": {
-    "compression": "^1.8.1",
-    "express": "^5.2.1"
+  "devDependencies": {
+    "vite": "^6.4.3"
   }
 }

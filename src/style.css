@@ -1,0 +1,1979 @@
+:root {
+      --bg-cream: #faf5ee;
+      --paper-cream: #f7f0e7;
+      --burgundy: #7a1f2b;
+      --burgundy-deep: #54141e;
+      --gold: #b9935f;
+      --gold-light: #dfc192;
+      --gold-dark: #8e6c38;
+      --ink: #3c2f2b;
+      --ink-light: #7c6d66;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #241d1a;
+      background-image: radial-gradient(circle at 50% 30%, #3a2a24 0%, #1a1412 100%);
+      font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+      color: var(--ink);
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* 桌面端居中仿真机身框架 / 移动端全屏 */
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      max-width: 450px;
+      max-height: 920px;
+      margin: 0 auto;
+      overflow: hidden;
+      background: var(--paper-cream);
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(185, 147, 95, 0.35);
+    }
+
+    @media (min-width: 500px) {
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      #app {
+        height: 92vh;
+        border-radius: 28px;
+      }
+    }
+
+    /* 浪漫花瓣飘落 Canvas */
+    #petalsCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 30;
+    }
+
+    /* 音乐播放控制器 */
+    .music-player {
+      position: absolute;
+      top: 22px;
+      right: 20px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .music-disc {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(255, 250, 243, 0.88);
+      border: 1.5px solid var(--gold);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(100, 60, 40, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--burgundy);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .music-disc:active {
+      transform: scale(0.92);
+    }
+
+    .music-disc svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .music-disc.playing {
+      animation: spinDisc 6s linear infinite;
+    }
+
+    .music-pulse {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .music-disc.playing ~ .music-pulse {
+      animation: musicPulse 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    @keyframes spinDisc {
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes musicPulse {
+      0% { transform: scale(1); opacity: 0.85; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .music-tip {
+      position: absolute;
+      top: 50px;
+      right: 0;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--gold-dark);
+      background: rgba(255, 252, 248, 0.94);
+      padding: 3px 8px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      border: 0.5px solid rgba(185, 147, 95, 0.3);
+    }
+
+    .music-tip.fade-out {
+      opacity: 0;
+    }
+
+    /* 右侧页面指示圆点 */
+    .page-nav {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 40;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .nav-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(185, 147, 95, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: all 0.35s ease;
+    }
+
+    .nav-dot.active {
+      height: 22px;
+      border-radius: 6px;
+      background: var(--gold);
+      box-shadow: 0 0 8px rgba(185, 147, 95, 0.7);
+    }
+
+    /* 主滑动视窗 */
+    .swiper-wrapper {
+      width: 100%;
+      height: 100%;
+      transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .page {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      image-rendering: -webkit-optimize-contrast;
+    }
+
+    /* 页面背景配置（超清 2K 法式宫廷微距花艺重构） */
+    .page-2 { background-image: url('./assets/card_02_hd.jpg'); }
+    .page-3 { background-image: url('./assets/card_03_hd.jpg'); }
+    .page-4 { background-image: url('./assets/card_04_hd.jpg'); }
+
+    /* 页面动画进场元素 */
+    .anim-fade {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s cubic-bezier(0.25, 1, 0.5, 1), transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .page.active .anim-fade {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .delay-1 { transition-delay: 0.15s; }
+    .delay-2 { transition-delay: 0.3s; }
+    .delay-3 { transition-delay: 0.45s; }
+
+    /* 页面底部向下滑动提示 */
+    .scroll-hint {
+      position: absolute;
+      bottom: 14px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: fit-content;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      z-index: 25;
+    }
+
+    .scroll-arrow {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 252, 247, 0.85);
+      border: 1px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--burgundy);
+      box-shadow: 0 4px 10px rgba(90, 50, 30, 0.15);
+      animation: bounceDown 2s ease-in-out infinite;
+    }
+
+    .scroll-text {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      font-family: "Cinzel", serif;
+      opacity: 0.85;
+    }
+
+    @keyframes bounceDown {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(7px); }
+      60% { transform: translateY(3px); }
+    }
+
+    /* =========================================================
+       Page 1: 迎宾封面高定分层架构 (Multi-Layer Architecture)
+       ========================================================= */
+    .page-1 {
+      background-color: #f6efe8;
+      background-image: none !important;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page-1 .cover-bg-photo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      animation: photoGentleZoom 14s ease-in-out infinite alternate;
+    }
+
+    .page-1 .cover-frame-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .page-1 .cover-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 21.5% 6% 7% 6%;
+      pointer-events: none;
+    }
+
+    /* 顶部法式花体 Monogram 徽章 */
+    .monogram-cover {
+      font-family: "Alex Brush", "Great Vibes", cursive;
+      font-size: 3.4rem;
+      line-height: 1;
+      color: #a47a46;
+      background: linear-gradient(135deg, #dfba73 0%, #b88330 40%, #eec774 70%, #7a4714 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.85)) drop-shadow(0 2px 8px rgba(80, 40, 10, 0.25));
+      transform: scale(0.88) rotate(-3deg);
+      opacity: 0;
+      transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.15s, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1) 0.15s;
+    }
+
+    .page-1.active .monogram-cover {
+      opacity: 0.95;
+      transform: scale(1) rotate(-3deg);
+    }
+
+    /* 底部专属仪式区域 */
+    .cover-footer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      margin-bottom: 2px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 1s cubic-bezier(0.25, 1, 0.5, 1) 0.3s, transform 1s cubic-bezier(0.25, 1, 0.5, 1) 0.3s;
+    }
+
+    .page-1.active .cover-footer {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .p1-announcement {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      margin-bottom: 2px;
+    }
+
+    .p1-header-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      white-space: nowrap;
+    }
+
+    .p1-diamond {
+      font-size: 8px;
+      color: #9e6f28;
+      line-height: 1;
+      transform: translateY(-0.5px);
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95));
+    }
+
+    .p1-text {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.24em;
+      color: #381219;
+      text-transform: uppercase;
+      white-space: nowrap;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 2px rgba(60, 20, 25, 0.18);
+    }
+
+    .cover-names {
+      font-family: "Noto Serif SC", serif;
+      font-size: 27px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      color: #240c06;
+      background: linear-gradient(135deg, #240c06 0%, #5a2e12 26%, #966929 50%, #52270e 74%, #1e0904 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 6px rgba(50, 20, 8, 0.28));
+      line-height: 1.2;
+    }
+
+    .cover-date {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      color: #381219;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+
+    @keyframes photoGentleZoom {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.035); }
+    }
+
+    /* Page 2: 时间与流程高清矢量排版（100%匹配原比例，多端自适应） */
+    .p2-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Page 2 & Page 3: 法式高定立体烫金抬檐 (Header Pediment) */
+    .p2-header-pediment {
+      position: absolute;
+      top: 17.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+      pointer-events: none;
+      padding: 8px 32px 10px;
+      border-radius: 40px;
+      background: radial-gradient(ellipse at center, rgba(255, 252, 246, 0.88) 0%, rgba(255, 250, 242, 0.52) 48%, rgba(255, 250, 242, 0) 76%);
+    }
+
+    .p3-header-pediment {
+      position: absolute;
+      top: 22.0%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: max-content;
+      max-width: 90%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+      pointer-events: none;
+      padding: 8px 32px 10px;
+      border-radius: 40px;
+      background: radial-gradient(ellipse at center, rgba(255, 252, 246, 0.88) 0%, rgba(255, 250, 242, 0.52) 48%, rgba(255, 250, 242, 0) 76%);
+    }
+
+    .p2-title-en, .p3-title-en {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-family: "Cinzel", serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0.26em;
+      background: linear-gradient(180deg, #f3cf7a 0%, #b88330 32%, #e5bc64 56%, #804a10 84%, #3f1a03 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 1.2px rgba(60, 20, 5, 0.72)) drop-shadow(0 2px 5px rgba(35, 12, 4, 0.32));
+      line-height: 1.15;
+    }
+
+    .header-star {
+      font-size: 8px;
+      color: #9e6f28;
+      line-height: 1;
+      filter: drop-shadow(0 1px 1px rgba(60, 20, 5, 0.65));
+      -webkit-text-fill-color: initial;
+    }
+
+    .p2-title-cn, .p3-title-cn {
+      font-family: "Noto Serif SC", serif;
+      font-size: 15.5px;
+      font-weight: 600;
+      letter-spacing: 0.42em;
+      color: #381219;
+      text-shadow: 0 1px 1.5px rgba(60, 20, 25, 0.22);
+      margin-top: 5px;
+    }
+
+    .header-flourish {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .header-flourish .flourish-line {
+      width: 44px;
+      height: 1px;
+    }
+
+    .header-flourish .flourish-line.left {
+      background: linear-gradient(90deg, transparent, rgba(160, 115, 55, 0.75) 60%, #c99b50 100%);
+    }
+
+    .header-flourish .flourish-line.right {
+      background: linear-gradient(90deg, #c99b50 0%, rgba(160, 115, 55, 0.75) 40%, transparent 100%);
+    }
+
+    .header-flourish .flourish-star {
+      font-size: 7.5px;
+      color: #916323;
+      line-height: 1;
+      filter: drop-shadow(0 1px 1px rgba(60, 20, 5, 0.55));
+    }
+
+    .p2-divider.bot {
+      position: absolute;
+      top: 51.5%;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 54px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #b9935f 30%, #e2c488 50%, #b9935f 70%, transparent);
+    }
+
+    .p2-date-box {
+      position: absolute;
+      top: 33.5%;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .p2-year {
+      font-family: "Cinzel", serif;
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: #5d3824;
+      line-height: 1.2;
+    }
+
+    .p2-day {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 58px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #421a22;
+      line-height: 1.0;
+      margin: 1px 0 1px;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .p2-week {
+      font-family: "Noto Serif SC", "Cinzel", serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: #7d5733;
+      text-transform: uppercase;
+    }
+
+    .p2-divider.bot {
+      top: 51.5%;
+    }
+
+    .p2-agenda {
+      position: absolute;
+      top: 55.5%;
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .p2-agenda-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .p2-agenda-time {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 18.5px;
+      font-weight: 600;
+      color: #581622;
+      letter-spacing: 0.1em;
+      min-width: 58px;
+      text-align: right;
+    }
+
+    .p2-agenda-event {
+      font-family: "Noto Serif SC", serif;
+      font-size: 17px;
+      font-weight: 500;
+      color: #3e221d;
+      letter-spacing: 0.2em;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+
+    /* Page 2: 加入日历按钮（法式高定双层排印，去图标化，杜绝重叠遮挡） */
+    .p2-calendar-wrap {
+      position: relative;
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      z-index: 25;
+      pointer-events: auto;
+    }
+
+    .p2-calendar-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 26px 7px;
+      border-radius: 24px;
+      border: 1px solid var(--gold);
+      outline: 1px solid rgba(185, 147, 95, 0.35);
+      outline-offset: -4px;
+      background: linear-gradient(135deg, #7c1f2b 0%, #54141e 100%);
+      color: #fffaf2;
+      box-shadow: 0 4px 16px rgba(120, 30, 40, 0.32);
+      cursor: pointer;
+      pointer-events: auto;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .p2-calendar-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(120, 30, 40, 0.42);
+      background: linear-gradient(135deg, #8e2432 0%, #631823 100%);
+    }
+
+    .p2-calendar-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    .p2-calendar-btn .btn-line-main {
+      font-family: "Noto Serif SC", serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: #fffaf2;
+      line-height: 1.2;
+    }
+
+    .p2-calendar-btn .btn-line-sub {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 9.5px;
+      letter-spacing: 0.22em;
+      color: #e5cfb3;
+      margin-top: 3px;
+      line-height: 1;
+    }
+
+    /* 移动端紧凑屏幕智能适配（高度 <= 720px） */
+    @media (max-height: 720px) {
+      .page-1 .cover-content { padding: 16% 5% 5% 5%; }
+      .monogram-cover { font-size: 2.7rem; }
+      .cover-names { font-size: 22px; }
+      .cover-date { font-size: 14px; }
+      .p2-header-pediment { top: 15.0%; padding: 6px 22px 8px; }
+      .p3-header-pediment { top: 19.5%; padding: 6px 22px 8px; }
+      .p2-title-en, .p3-title-en { font-size: 21px; }
+      .p2-title-cn, .p3-title-cn { font-size: 14.5px; }
+      .p2-date-box { top: 30.5%; }
+      .p2-year { font-size: 16px; }
+      .p2-day { font-size: 48px; }
+      .p2-week { font-size: 12px; }
+      .p2-divider.bot { top: 48.0%; }
+      .p2-agenda { top: 52.0%; gap: 11px; }
+      .p2-agenda-time { font-size: 16px; }
+      .p2-agenda-event { font-size: 15px; }
+      .p2-calendar-wrap { margin-top: 6px; }
+      .p2-calendar-btn { padding: 6px 20px; font-size: 12.5px; }
+      .p3-castle-wrap { top: 37.0%; }
+    }
+
+    /* Page 3: 婚礼地点高清矢量排版（100%匹配原比例，舒展自然） */
+    .p3-content {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .p3-castle-wrap {
+      position: absolute;
+      top: 39.5%;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .p3-castle-img {
+      width: 78px;
+      height: auto;
+      filter: drop-shadow(0 4px 10px rgba(120, 80, 40, 0.12));
+    }
+
+    .p3-hotel-name {
+      position: absolute;
+      top: 53.0%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: "Noto Serif SC", serif;
+      font-size: 23px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: #3e1e23;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .p3-hotel-en {
+      position: absolute;
+      top: 58.5%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: "Cinzel", serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: #8c6738;
+      text-transform: uppercase;
+    }
+
+    .p3-address {
+      position: absolute;
+      top: 65.5%;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: "Noto Serif SC", serif;
+      font-size: 13.5px;
+      letter-spacing: 0.08em;
+      color: #5d423b;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.85);
+    }
+
+    .p3-map-btn-wrap {
+      position: absolute;
+      top: 74.0%;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .p3-map-btn {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 26px 7px;
+      border-radius: 24px;
+      border: 1px solid #b9935f;
+      outline: 1px solid rgba(185, 147, 95, 0.35);
+      outline-offset: -4px;
+      background: rgba(255, 252, 247, 0.95);
+      color: #4a2027;
+      box-shadow: 0 4px 16px rgba(120, 80, 50, 0.16);
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      pointer-events: auto;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .p3-map-btn:hover {
+      background: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(120, 80, 50, 0.22);
+      border-color: var(--gold);
+    }
+
+    .p3-map-btn:active {
+      transform: translateY(1px) scale(0.97);
+    }
+
+    .p3-map-btn .btn-line-main {
+      font-family: "Noto Serif SC", serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      color: var(--burgundy);
+      line-height: 1.2;
+    }
+
+    .p3-map-btn .btn-line-sub {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: #9e743a;
+      margin-top: 3px;
+      line-height: 1;
+    }
+
+    /* Page 4: 竖屏全适配邀请函正文（经典法式对称居中，精简高雅） */
+    .p4-invitation {
+      position: absolute;
+      top: 24.8%;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 84%;
+      max-width: 290px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      z-index: 20;
+      pointer-events: auto;
+    }
+
+    .p4-header-badge {
+      font-family: "Noto Serif SC", serif;
+      font-size: 16.5px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      color: #2b0b10;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+      margin-bottom: 2px;
+    }
+
+    .p4-header-en {
+      font-family: "Cinzel", serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.35em;
+      color: #6d4414;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .p4-couples {
+      font-family: "Noto Serif SC", serif;
+      font-size: 21.5px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #240c06;
+      background: linear-gradient(135deg, #240c06 0%, #5a2e12 26%, #966929 50%, #52270e 74%, #1e0904 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 5px rgba(50, 20, 8, 0.22));
+      margin: 3px 0 4px;
+      white-space: nowrap;
+    }
+
+    .p4-ornament {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 2px 0 12px;
+      color: #7b521b;
+      font-size: 8px;
+      width: 100%;
+    }
+
+    .p4-ornament-line {
+      width: 32px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #8f6324, transparent);
+    }
+
+    .p4-poem {
+      font-size: 13px;
+      line-height: 1.95;
+      color: #1a0e0a;
+      letter-spacing: 0.06em;
+      margin-bottom: 14px;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+      white-space: nowrap;
+    }
+
+    .p4-poem p {
+      margin: 2px 0;
+    }
+
+    .p4-poem strong {
+      color: #5a111a;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+    }
+
+    .p4-poem-sub {
+      font-size: 10.5px;
+      color: #724915;
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      margin: 1px 0 4px !important;
+      opacity: 0.92;
+    }
+
+
+    /* Page 4: 邀请函交互操作栏 */
+    .p4-actions {
+      margin-top: 13px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 25;
+      pointer-events: auto;
+    }
+
+    .btn-luxury {
+      width: 100%;
+      height: 42px;
+      border-radius: 21px;
+      border: 1.5px solid var(--gold);
+      background: linear-gradient(135deg, #7c1f2b 0%, #5d141e 100%);
+      color: #fffaf2;
+      font-family: "Noto Serif SC", serif;
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(90, 20, 30, 0.3);
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .btn-luxury:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(90, 20, 30, 0.4);
+      background: linear-gradient(135deg, #8e2432 0%, #6b1823 100%);
+    }
+
+    .btn-luxury:active {
+      transform: translateY(1px) scale(0.98);
+    }
+
+    .btn-luxury.secondary {
+      background: rgba(255, 252, 247, 0.94);
+      color: var(--burgundy);
+      box-shadow: 0 6px 16px rgba(130, 90, 60, 0.15);
+    }
+
+    .btn-luxury.secondary:hover {
+      background: #ffffff;
+      color: var(--burgundy-deep);
+    }
+
+    .btn-luxury svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-row .btn-luxury {
+      flex: 1;
+      height: 42px;
+      font-size: 13.5px;
+    }
+
+    .p4-footnote {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      color: #6d4414;
+      margin-top: 6px;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.95);
+      white-space: nowrap;
+    }
+
+    @media (max-height: 750px) {
+      .p4-invitation {
+        top: 23.5%;
+      }
+      .p4-couples {
+        font-size: 19.5px;
+      }
+      .p4-poem {
+        font-size: 12px;
+        line-height: 1.8;
+        margin-bottom: 10px;
+      }
+      .p4-poem strong {
+        font-size: 13px;
+      }
+      .p4-footnote {
+        font-size: 10px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .p4-couples {
+        font-size: 18.5px;
+      }
+      .p4-poem {
+        font-size: 11.5px;
+      }
+    }
+
+    /* 实时送出的祝福小弹幕/气泡 */
+    .blessing-toast {
+      position: absolute;
+      top: 75px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: fit-content;
+      background: rgba(255, 252, 248, 0.95);
+      border: 1px solid var(--gold);
+      border-radius: 20px;
+      padding: 6px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--burgundy);
+      font-size: 12px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      z-index: 60;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s ease;
+      white-space: nowrap;
+      max-width: 90%;
+      transform: translateY(0);
+    }
+
+    .blessing-toast.show {
+      opacity: 1;
+      transform: translateY(10px);
+    }
+
+    /* 全局优雅模态弹窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 10, 8, 0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 380px;
+      background: #fdfbf7;
+      border: 1.5px solid var(--gold);
+      outline: 1px solid rgba(185, 147, 95, 0.35);
+      outline-offset: -6px;
+      border-radius: 20px;
+      padding: 28px 22px 24px;
+      box-shadow: 0 24px 60px rgba(40, 20, 15, 0.45);
+      position: relative;
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(185, 147, 95, 0.45);
+      background: #fdfbf7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--gold-dark);
+      font-size: 18px;
+      line-height: 1;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: var(--burgundy);
+      color: #fff;
+      border-color: var(--burgundy);
+    }
+
+    .modal-title {
+      font-family: "Noto Serif SC", serif;
+      font-size: 19px;
+      color: var(--burgundy);
+      text-align: center;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+    }
+
+    .modal-subtitle {
+      text-align: center;
+      font-size: 10px;
+      color: var(--gold-dark);
+      letter-spacing: 0.26em;
+      margin-top: 3px;
+      font-family: "Cinzel", serif;
+      text-transform: uppercase;
+    }
+
+    .modal-divider {
+      width: 48px;
+      height: 1px;
+      background: var(--gold);
+      margin: 12px auto 18px;
+    }
+
+    /* 地图弹窗样式：名址文书卡片 (去图标化，纯字韵排版) */
+    .map-stationery-card {
+      background: rgba(250, 246, 240, 0.95);
+      border: 1px solid rgba(185, 147, 95, 0.35);
+      border-radius: 14px;
+      padding: 16px 18px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .stationery-venue-badge {
+      font-family: "Cinzel", serif;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      color: var(--gold-dark);
+      margin-bottom: 6px;
+    }
+
+    .stationery-hotel-name {
+      font-family: "Noto Serif SC", serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--burgundy);
+      letter-spacing: 0.08em;
+      line-height: 1.35;
+    }
+
+    .stationery-hotel-en {
+      font-family: "Cinzel", "Cormorant Garamond", serif;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      color: #9e743a;
+      margin-top: 3px;
+      margin-bottom: 10px;
+    }
+
+    .stationery-address-text {
+      font-size: 13px;
+      color: var(--ink);
+      line-height: 1.55;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(185, 147, 95, 0.3);
+      letter-spacing: 0.04em;
+    }
+
+    /* 复制地址胶囊按键 (纯文字双语) */
+    .map-copy-pill-btn {
+      width: 100%;
+      padding: 10px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--gold);
+      outline: 1px solid rgba(185, 147, 95, 0.25);
+      outline-offset: -3px;
+      background: #fffdf9;
+      color: var(--burgundy);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      transition: all 0.25s ease;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(185, 147, 95, 0.12);
+    }
+
+    .map-copy-pill-btn:hover {
+      background: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(185, 147, 95, 0.22);
+      border-color: var(--burgundy);
+    }
+
+    .map-copy-pill-btn .pill-main-text {
+      font-family: "Noto Serif SC", serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: var(--burgundy);
+    }
+
+    .map-copy-pill-btn .pill-sub-text {
+      font-family: "Cinzel", serif;
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: #9e743a;
+    }
+
+    /* 地图分割线 */
+    .map-apps-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 18px 0 12px;
+      position: relative;
+    }
+
+    .map-apps-divider::before, .map-apps-divider::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(185, 147, 95, 0.35);
+    }
+
+    .map-apps-divider span {
+      padding: 0 12px;
+      font-family: "Cinzel", serif;
+      font-size: 9.5px;
+      letter-spacing: 0.22em;
+      color: var(--gold-dark);
+    }
+
+    /* 四大地图 App 网格：纯排版小方砖 */
+    .map-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .map-app-btn {
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(185, 147, 95, 0.45);
+      background: #faf6f0;
+      color: var(--ink);
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .map-app-btn:hover {
+      background: #fff;
+      border-color: var(--gold);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(185, 147, 95, 0.18);
+    }
+
+    .map-app-btn .app-name-zh {
+      font-family: "Noto Serif SC", serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: var(--burgundy);
+    }
+
+    .map-app-btn .app-name-en {
+      font-family: "Cinzel", serif;
+      font-size: 8.5px;
+      letter-spacing: 0.18em;
+      color: #9e743a;
+    }
+
+    /* 宾客回执表单 */
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: var(--gold-dark);
+      margin-bottom: 5px;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid rgba(185, 147, 95, 0.45);
+      border-radius: 10px;
+      background: #fff;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(185, 147, 95, 0.15);
+    }
+
+    .form-options {
+      display: flex;
+      gap: 10px;
+    }
+
+    .form-radio-btn {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid rgba(185, 147, 95, 0.4);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 13px;
+      cursor: pointer;
+      background: #faf6f0;
+      transition: all 0.2s;
+    }
+
+    .form-radio-btn.active {
+      border-color: var(--burgundy);
+      background: var(--burgundy);
+      color: #fff;
+    }
+
+    .quick-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .quick-tag {
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 12px;
+      border: 1px dashed rgba(185, 147, 95, 0.5);
+      background: #faf5ee;
+      color: var(--gold-dark);
+      cursor: pointer;
+    }
+
+    .quick-tag:hover {
+      background: var(--burgundy);
+      color: #fff;
+      border-style: solid;
+      border-color: var(--burgundy);
+    }
+
+    .copy-toast {
+      position: fixed;
+      bottom: 40px;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: fit-content;
+      max-width: 85vw;
+      background: rgba(40, 30, 25, 0.92);
+      color: #fff;
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.4;
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    .copy-toast.show { opacity: 1; }
+
+    /* 日历提醒弹窗专属样式：纯双语高定排版 */
+    .wechat-calendar-tip {
+      background: rgba(185, 147, 95, 0.08);
+      border: 1px dashed rgba(185, 147, 95, 0.5);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+    }
+    .wechat-tip-text {
+      font-size: 11.5px;
+      color: #6b4c2b;
+      line-height: 1.55;
+      text-align: center;
+    }
+    .wechat-tip-text strong {
+      color: var(--burgundy);
+    }
+
+    .calendar-event-card {
+      background: rgba(250, 246, 240, 0.95);
+      border: 1px solid rgba(185, 147, 95, 0.35);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .calendar-card-badge {
+      font-family: "Cinzel", serif;
+      font-size: 9.5px;
+      letter-spacing: 0.24em;
+      color: var(--gold-dark);
+      margin-bottom: 6px;
+    }
+    .calendar-event-title {
+      font-family: "Noto Serif SC", serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--burgundy);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .calendar-event-time-line, .calendar-event-loc-line {
+      font-size: 12.5px;
+      color: var(--ink);
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+      line-height: 1.45;
+    }
+    .cal-date-label {
+      font-family: "Cinzel", serif;
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      color: #9e743a;
+      flex-shrink: 0;
+    }
+
+    .calendar-action-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .calendar-option-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+    .calendar-option-btn:hover, .calendar-option-btn:active {
+      transform: translateY(-1px);
+    }
+    .calendar-option-btn.primary {
+      background: linear-gradient(135deg, #7c1f2b 0%, #54141e 100%);
+      border: 1px solid var(--gold);
+      outline: 1px solid rgba(185, 147, 95, 0.35);
+      outline-offset: -3px;
+      box-shadow: 0 4px 16px rgba(120, 30, 40, 0.28);
+    }
+    .calendar-option-btn.primary:hover {
+      box-shadow: 0 6px 20px rgba(120, 30, 40, 0.38);
+      background: linear-gradient(135deg, #8e2432 0%, #631823 100%);
+    }
+    .calendar-option-btn.primary .btn-main-title {
+      color: #fffaf2;
+      font-weight: 600;
+    }
+    .calendar-option-btn.primary .btn-sub-title {
+      color: #e5cfb3;
+    }
+
+    .calendar-option-btn.secondary {
+      background: #faf6f0;
+      border: 1px solid rgba(185, 147, 95, 0.45);
+      box-shadow: 0 2px 8px rgba(185, 147, 95, 0.1);
+    }
+    .calendar-option-btn.secondary:hover {
+      background: #fff;
+      border-color: var(--gold);
+      box-shadow: 0 4px 14px rgba(185, 147, 95, 0.18);
+    }
+    .calendar-option-btn.secondary .btn-main-title {
+      color: var(--burgundy);
+      font-weight: 600;
+    }
+    .calendar-option-btn.secondary .btn-sub-title {
+      color: #9e743a;
+    }
+
+    .calendar-option-btn .btn-text-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .calendar-option-btn .btn-main-title {
+      font-family: "Noto Serif SC", serif;
+      font-size: 13.5px;
+      letter-spacing: 0.14em;
+      line-height: 1.2;
+    }
+    .calendar-option-btn .btn-sub-title {
+      font-family: "Cinzel", serif;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      line-height: 1;
+    }
+
+    .calendar-footnote {
+      text-align: center;
+      font-size: 11px;
+      color: var(--gold-dark);
+      letter-spacing: 0.14em;
+      margin-top: 14px;
+    }
+
+    /* 联系新人弹窗样式 (纯字韵排版) */
+    .contact-item-card {
+      background: rgba(250, 246, 240, 0.95);
+      border: 1px solid rgba(185, 147, 95, 0.35);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .contact-info-text {
+      text-align: left;
+    }
+    .contact-role-label {
+      font-family: "Cinzel", serif;
+      font-size: 9.5px;
+      letter-spacing: 0.2em;
+      color: var(--gold-dark);
+    }
+    .contact-name-val {
+      font-family: "Noto Serif SC", serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--burgundy);
+      letter-spacing: 0.08em;
+      margin-top: 2px;
+    }
+    .contact-call-btn {
+      padding: 6px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--gold);
+      background: linear-gradient(135deg, #7c1f2b 0%, #54141e 100%);
+      color: #fffaf2;
+      text-decoration: none;
+      font-family: "Noto Serif SC", serif;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      transition: all 0.2s;
+    }
+    .contact-call-btn:hover {
+      box-shadow: 0 3px 12px rgba(120, 30, 40, 0.32);
+      transform: translateY(-1px);
+    }
+
+    /* 微信右上角指引遮罩 */
+    .wechat-guide-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.82);
+      z-index: 9999;
+      display: none;
+      flex-direction: column;
+      align-items: flex-end;
+      padding: 16px 24px;
+      box-sizing: border-box;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .wechat-guide-overlay.show {
+      display: flex;
+    }
+    .wechat-guide-arrow {
+      margin-right: 8px;
+      animation: floatArrow 1.5s ease-in-out infinite;
+    }
+    @keyframes floatArrow {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(4px, -6px); }
+    }
+    .wechat-guide-content {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-top: 10px;
+      color: #fff;
+      max-width: 280px;
+      text-align: center;
+      align-self: center;
+    }
+    .wechat-guide-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--gold);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    .wechat-guide-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #f5f5f5;
+    }
+    .wechat-guide-text strong {
+      color: #ffd79e;
+      font-weight: 600;
+    }
+    .wechat-guide-btn {
+      margin-top: 16px;
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 20px;
+      background: #fff;
+      color: var(--burgundy);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       法式信笺全资源预加载与仪式感开场幕布 (French Ivory Preloader)
+       ========================================================= */
+    .preloader-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9999;
+      background: radial-gradient(circle at 50% 38%, #fcf9f4 0%, #f6eee2 60%, #ece0d0 100%);
+      box-shadow: inset 0 0 60px rgba(180, 140, 90, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .preloader-overlay.fade-out {
+      opacity: 0;
+      transform: scale(1.05);
+      pointer-events: none;
+    }
+
+    /* 法式双金线边框与四角古典角花 */
+    .preloader-frame-border {
+      position: absolute;
+      top: 18px;
+      bottom: 18px;
+      left: 18px;
+      right: 18px;
+      border: 1px solid rgba(180, 140, 90, 0.42);
+      outline: 1px solid rgba(180, 140, 90, 0.22);
+      outline-offset: -6px;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .preloader-corner {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+    }
+
+    .preloader-corner::after {
+      content: '';
+      position: absolute;
+      width: 3.5px;
+      height: 3.5px;
+      background-color: #b88d58;
+      border-radius: 50%;
+    }
+
+    .preloader-corner-tl {
+      top: -1px;
+      left: -1px;
+      border-top: 2px solid #b88d58;
+      border-left: 2px solid #b88d58;
+    }
+    .preloader-corner-tl::after { top: 2px; left: 2px; }
+
+    .preloader-corner-tr {
+      top: -1px;
+      right: -1px;
+      border-top: 2px solid #b88d58;
+      border-right: 2px solid #b88d58;
+    }
+    .preloader-corner-tr::after { top: 2px; right: 2px; }
+
+    .preloader-corner-bl {
+      bottom: -1px;
+      left: -1px;
+      border-bottom: 2px solid #b88d58;
+      border-left: 2px solid #b88d58;
+    }
+    .preloader-corner-bl::after { bottom: 2px; left: 2px; }
+
+    .preloader-corner-br {
+      bottom: -1px;
+      right: -1px;
+      border-bottom: 2px solid #b88d58;
+      border-right: 2px solid #b88d58;
+    }
+    .preloader-corner-br::after { bottom: 2px; right: 2px; }
+
+    .preloader-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 320px;
+      text-align: center;
+    }
+
+    .preloader-monogram {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .preloader-monogram-img {
+      height: 78px;
+      max-width: 240px;
+      object-fit: contain;
+      animation: preloaderMonogramBreath 3s ease-in-out infinite alternate;
+    }
+
+    .preloader-monogram-text {
+      font-family: "Zhi Mang Xing", "Great Vibes", cursive;
+      font-size: 3.5rem;
+      line-height: 1;
+      color: #8c633a;
+      background: linear-gradient(135deg, #b88d58 0%, #7a5433 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9), 0 2px 10px rgba(150, 108, 59, 0.22);
+      animation: preloaderMonogramBreath 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes preloaderMonogramBreath {
+      0% {
+        transform: scale(0.97);
+        filter: drop-shadow(0 2px 6px rgba(180, 135, 75, 0.25));
+      }
+      100% {
+        transform: scale(1.03);
+        filter: drop-shadow(0 4px 16px rgba(210, 165, 95, 0.55));
+      }
+    }
+
+    .preloader-title-box {
+      margin-bottom: 24px;
+    }
+
+    .preloader-title {
+      font-family: "Cinzel", serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      letter-spacing: 0.28em;
+      color: #7a5433;
+      margin-bottom: 8px;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
+    }
+
+    .preloader-names {
+      font-family: "Noto Serif SC", serif;
+      font-size: 0.92rem;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      color: #4a2c26;
+      margin-bottom: 6px;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    }
+
+    .preloader-date {
+      font-family: "Cinzel", serif;
+      font-size: 0.74rem;
+      letter-spacing: 0.2em;
+      color: #966c3b;
+    }
+
+    .preloader-progress-section {
+      width: 82%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+
+    .preloader-overlay.ready .preloader-progress-section {
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
+      position: absolute;
+    }
+
+    .preloader-bar-bg {
+      width: 100%;
+      height: 3px;
+      background: rgba(180, 140, 90, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: inset 0 1px 2px rgba(120, 80, 40, 0.15);
+    }
+
+    .preloader-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #966c3b 0%, #c8a369 50%, #7a5433 100%);
+      box-shadow: 0 0 8px rgba(200, 163, 105, 0.55);
+      border-radius: 3px;
+      transition: width 0.08s linear;
+    }
+
+    .preloader-meta {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: #8c6c4c;
+    }
+
+    .preloader-status {
+      font-family: "Noto Serif SC", serif;
+      font-weight: 400;
+    }
+
+    .preloader-percent {
+      font-family: "Cinzel", serif;
+      font-weight: 600;
+      color: #7a5433;
+    }
+
+    .preloader-action-area {
+      display: none;
+      opacity: 0;
+      transform: translateY(12px) scale(0.95);
+      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .preloader-action-area.visible {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* 法式象牙手工棉纸双金线胶囊开启按钮 */
+    .btn-enter-invitation {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(251, 246, 238, 0.96) 60%, rgba(243, 235, 219, 0.94) 100%);
+      border: 1.2px solid #b88d58;
+      outline: 1px solid rgba(184, 141, 88, 0.35);
+      outline-offset: -4px;
+      color: #7a5433;
+      padding: 13px 38px;
+      border-radius: 32px;
+      cursor: pointer;
+      box-shadow: 0 6px 22px rgba(120, 80, 40, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 16px rgba(200, 163, 105, 0.22);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      animation: btnFrenchPaperPulse 2.4s ease-in-out infinite;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .btn-enter-invitation:active {
+      transform: scale(0.97);
+    }
+
+    @keyframes btnFrenchPaperPulse {
+      0%, 100% {
+        box-shadow: 0 6px 18px rgba(120, 80, 40, 0.1), inset 0 1px 2px rgba(255, 255, 255, 0.95), 0 0 12px rgba(200, 163, 105, 0.18);
+        border-color: #b88d58;
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 8px 24px rgba(120, 80, 40, 0.16), inset 0 1px 2px rgba(255, 255, 255, 1), 0 0 22px rgba(200, 163, 105, 0.45);
+        border-color: #916838;
+        transform: scale(1.025);
+      }
+    }
+
+    .btn-enter-text {
+      font-family: "Cinzel", serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.26em;
+      color: #7a5433;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.9);
+    }
+
+    .btn-enter-sub {
+      font-family: "Noto Serif SC", serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      color: #966c3b;
+      font-weight: 400;
+      text-shadow: 0 1px 1px rgba(255, 255, 255, 0.85);
+    }
