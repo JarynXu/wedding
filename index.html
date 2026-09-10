@@ -343,14 +343,6 @@
       <div class="modal-subtitle">Add to Calendar</div>
       <div class="modal-divider"></div>
 
-      <!-- 微信环境提示栏 (JS 自动识别是否为微信) -->
-      <div class="wechat-calendar-tip" id="wechatCalendarTip" style="display:none;">
-        <div class="wechat-tip-text">
-          <strong>微信访问提示：</strong>微信内置浏览器限制直接写入系统日历。<br>
-          推荐点击右上角 <strong>【···】</strong> 选择 <strong>【在默认浏览器打开】</strong> 即可一键添加到手机日历！
-        </div>
-      </div>
-
       <!-- 日程信息小卡片 (去图标化，纯字韵排版) -->
       <div class="calendar-event-card">
         <div class="calendar-card-badge">✦ WEDDING CEREMONY ✦</div>
@@ -375,7 +367,9 @@
           </div>
         </button>
 
-        <!-- 按钮2：一键复制日程 (微信最稳方案) -->
+        <button class="calendar-help" id="calendarHelp" data-action="calendar-help" type="button" hidden>未打开日历？查看打开方式</button>
+
+        <!-- 复制日程 -->
         <button class="calendar-option-btn secondary" data-action="copy-calendar">
           <div class="btn-text-wrap">
             <div class="btn-main-title">复制婚礼日程文本</div>
@@ -402,7 +396,7 @@
       <div class="wechat-guide-text">
         点击右上角 <strong>【···】</strong><br>
         选择 <strong>【在默认浏览器打开】</strong><br>
-        即可直接一键将婚礼加入手机日历！
+        再点击“添加至手机系统日历”
       </div>
       <div class="wechat-guide-btn">我知道了</div>
     </div>

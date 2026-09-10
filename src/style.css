@@ -1396,22 +1396,20 @@
     .copy-toast.show { opacity: 1; }
 
     /* 日历提醒弹窗专属样式：纯双语高定排版 */
-    .wechat-calendar-tip {
-      background: rgba(185, 147, 95, 0.08);
-      border: 1px dashed rgba(185, 147, 95, 0.5);
-      border-radius: 12px;
-      padding: 10px 14px;
-      margin-bottom: 14px;
-    }
-    .wechat-tip-text {
-      font-size: 11.5px;
-      color: #6b4c2b;
-      line-height: 1.55;
-      text-align: center;
-    }
-    .wechat-tip-text strong {
+    .calendar-help {
+      min-height: 44px;
+      padding: 6px 10px;
+      border: 0;
+      background: transparent;
       color: var(--burgundy);
+      font-size: 12px;
+      line-height: 1.6;
+      font-family: inherit;
+      text-decoration: underline;
+      text-underline-offset: 4px;
+      cursor: pointer;
     }
+    .calendar-help[hidden] { display: none; }
 
     .calendar-event-card {
       background: rgba(250, 246, 240, 0.95);

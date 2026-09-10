@@ -403,6 +403,41 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
     });
 
+    await suite.test('微信日历先请求日程文件，未离开页面时提供可选帮助', async () => {
+      const mobile = await browser.newPage({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce', userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 MicroMessenger/8.0' });
+      try {
+        let calendarRequests = 0;
+        // 204 保留当前页面，模拟宿主未切换到日历；不把该信号当作保存失败。
+        await mobile.route('**/wedding.ics', route => { calendarRequests++; return route.fulfill({ status: 204 }); });
+        await mobile.goto(url);
+        await mobile.locator('#preloaderOverlay[data-state="ready"]').waitFor();
+        await mobile.locator('#btnEnterInvitation').tap();
+        await mobile.locator('.nav-dot[data-index="1"]').tap();
+        await mobile.locator('.calendar-button').tap();
+        assert.doesNotMatch(await mobile.locator('#calendarModal').innerText(), /微信|默认浏览器/);
+        assert.equal(await mobile.locator('#calendarHelp').isVisible(), false);
+        if (process.env.WEDDING_QA_DIR) await mobile.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'mobile-calendar.png') });
+        const request = mobile.waitForResponse('**/wedding.ics');
+        await mobile.locator('[data-action="system-calendar"]').tap();
+        await request;
+        assert.equal(calendarRequests, 1);
+        assert.equal(await mobile.locator('#wechatGuideOverlay').isVisible(), false);
+        await mobile.locator('#calendarHelp').waitFor({ state: 'visible' });
+        assert.equal(await mobile.locator('#wechatGuideOverlay').isVisible(), false);
+        await mobile.locator('#calendarHelp').tap();
+        assert.equal(await mobile.locator('#wechatGuideOverlay').isVisible(), true);
+        await mobile.locator('.wechat-guide-btn').tap();
+        await mobile.locator('[data-action="system-calendar"]').tap();
+        await mobile.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+        await mobile.waitForTimeout(2700);
+        assert.equal(await mobile.locator('#calendarHelp').isVisible(), false, '离开页面取消延迟帮助');
+        await mobile.locator('[data-action="system-calendar"]').tap();
+        await mobile.locator('[data-close-modal="calendarModal"]').tap();
+        await mobile.waitForTimeout(2700);
+        await mobile.locator('.calendar-button').tap();
+        assert.equal(await mobile.locator('#calendarHelp').isVisible(), false, '关闭弹窗取消旧尝试');
+      } finally { await mobile.close(); }
+    });
   } finally {
     releaseMusic?.();
     await browser.close();
