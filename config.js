@@ -6,17 +6,18 @@ const WEDDING_CONFIG = {
   // 新人姓名
   groom: {
     name: "Jaryn",
-    nameZh: "嘉伦",
+    nameZh: "徐旨越",
   },
   bride: {
-    name: "Hanna",
-    nameZh: "涵娜",
+    name: "Shelley",
+    nameZh: "赵荣蓉",
   },
   // 英文连写展示格式
-  coupleNamesEn: "JARYN & HANNA",
-  coupleScriptNames: "Jaryn & Hanna",
+  coupleNamesEn: "JARYN & SHELLEY",
+  coupleScriptNames: "Jaryn & Shelley",
+  coupleNamesZh: "徐旨越 & 赵荣蓉",
   // 姓氏字母缩写（用于印章和花体 Monogram）
-  monogram: "JH",
+  monogram: "JS",
 
   // 婚礼日期与时间
   date: {
@@ -80,7 +81,7 @@ const WEDDING_CONFIG = {
   // 媒体资源路径（可随时替换为你自己的照片与音乐）
   assets: {
     // 迎宾婚纱照
-    welcomePhoto: "assets/images/welcome-photo.jpg",
+    welcomePhoto: "assets/images/welcome-photo.jpg?v=20260905_user",
     // 背景音乐音频文件
     bgMusic: "assets/audio/wedding-bgm.mp3",
     // 音乐名称（用于悬浮提示）
@@ -89,9 +90,9 @@ const WEDDING_CONFIG = {
 
   // 网页标题与元信息
   meta: {
-    pageTitle: "Jaryn & Hanna 的婚礼请柬",
-    shareTitle: "诚挚邀请您参加 Jaryn & Hanna 的婚礼",
-    shareDesc: "2025.05.20 我们要结婚了，期待与您相见！",
+    pageTitle: "Jaryn & Shelley 的婚礼请柬",
+    shareTitle: "诚挚邀请您参加 徐旨越 & 赵荣蓉 (Jaryn & Shelley) 的婚礼",
+    shareDesc: "我们要结婚了，期待与您相见！",
   }
 };
 

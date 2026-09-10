@@ -38,10 +38,10 @@
 
 ```javascript
 window.WEDDING_CONFIG = {
-  groom: { name: "新郎姓名", nameEn: "JARYN" },
-  bride: { name: "新娘姓名", nameEn: "HANNA" },
-  coupleNamesEn: "JARYN & HANNA",
-  monogram: "JH",
+  groom: { name: "徐旨越", nameEn: "JARYN" },
+  bride: { name: "赵荣蓉", nameEn: "SHELLEY" },
+  coupleNamesEn: "JARYN & SHELLEY",
+  monogram: "JS",
   date: {
     year: "2025",
     month: "05",

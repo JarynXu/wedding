@@ -39,12 +39,12 @@ function renderConfigData(config) {
   };
 
   // Preloader 预加载界面
-  setText('preloaderMonogram', config.monogram || 'JH');
-  setText('preloaderNames', config.coupleNamesEn || 'JARYN & HANNA');
+  setText('preloaderMonogram', config.monogram || 'JS');
+  setText('preloaderNames', config.coupleNamesEn || 'JARYN & SHELLEY');
 
   // Screen 01: 封面智能图层处理
-  setText('coverMonogram', config.monogram || 'JH');
-  setText('coverNames', config.coupleNamesEn || 'JARYN & HANNA');
+  setText('coverMonogram', config.monogram || 'JS');
+  setText('coverNames', config.coupleNamesEn || 'JARYN & SHELLEY');
   setText('coverDate', config.date?.formattedDate || '2025.05.20');
 
   const defaultPhotoPath = 'assets/images/welcome-photo.jpg';
@@ -104,12 +104,13 @@ function renderConfigData(config) {
 
   // Screen 07: 新人展示
   setSrc('page07Photo', config.assets?.welcomePhoto || defaultPhotoPath);
-  setText('page07Watermark', config.coupleNamesEn || 'JARYN & HANNA');
+  setText('page07Watermark', config.coupleNamesEn || 'JARYN & SHELLEY');
 
   // Screen 08: 邀请函正文
   setText('invitationHeader', `— ${config.texts?.invitationHeader || '诚挚邀请'} —`);
   setText('invitationHeaderEn', config.texts?.invitationHeaderEn || 'INVITATION');
-  setText('scriptNames', config.coupleScriptNames || 'Jaryn & Hanna');
+  setText('scriptNames', config.coupleScriptNames || 'Jaryn & Shelley');
+  setText('zhCoupleNames', config.coupleNamesZh || `${config.groom?.nameZh || '徐旨越'} & ${config.bride?.nameZh || '赵荣蓉'}`);
 
   const invBodyEl = document.getElementById('invitationBody');
   if (invBodyEl && Array.isArray(config.texts?.invitationBody)) {

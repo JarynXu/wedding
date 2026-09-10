@@ -787,7 +787,17 @@ html, body {
   line-height: 1.1;
   color: #94693b;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-  margin: 4px 0 8px 0;
+  margin: 4px 0 2px 0;
+}
+
+.zh-couple-names {
+  font-family: var(--font-serif-zh);
+  font-size: 1.05rem;
+  letter-spacing: 0.22em;
+  color: var(--color-gold-deep);
+  font-weight: 500;
+  margin: 0 0 8px 0;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 .inv-paragraphs {
@@ -1123,6 +1133,7 @@ html, body {
 .card:not(.active) .photo-watermark,
 .card:not(.active) .inv-header-box,
 .card:not(.active) .script-couple-names,
+.card:not(.active) .zh-couple-names,
 .card:not(.active) .inv-paragraphs,
 .card:not(.active) .inv-detail-box,
 .card:not(.active) .scroll-circle-arrow {
@@ -1236,6 +1247,9 @@ html, body {
 }
 .card-08.active .script-couple-names {
   animation: bloomScale 1s var(--ease-luxury) both 0.26s;
+}
+.card-08.active .zh-couple-names {
+  animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.34s;
 }
 .card-08.active .inv-paragraphs {
   animation: bloomFadeUp 0.9s var(--ease-luxury) both 0.4s;
