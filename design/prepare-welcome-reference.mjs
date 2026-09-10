@@ -38,7 +38,7 @@ function mark([left, top, right, bottom], predicate) {
   }
 }
 
-// 文字区域与人物区域分离；保留底部迎宾牌及分隔饰线。
+// 文字区域与人物区域分离；保留姓名下方的分隔饰线。
 for (const bounds of [
   [331, 138, 625, 174],
   [269, 189, 685, 246],
@@ -48,6 +48,18 @@ for (const bounds of [
   [328, 1430, 647, 1463],
   [307, 1501, 637, 1544],
 ]) mark(bounds, isType);
+
+// 迎宾牌由 HTML 排布，移除照片内固定的牌框、角饰和分隔线，避免小屏上移后留有重影。
+for (const bounds of [
+  [133, 1258, 808, 1276],
+  [133, 1258, 150, 1528],
+  [791, 1258, 808, 1520],
+  [133, 1560, 808, 1577],
+  [133, 1258, 171, 1299],
+  [769, 1258, 808, 1299],
+  [769, 1538, 808, 1577],
+  [353, 1464, 588, 1491],
+]) mark(bounds, () => true);
 
 // 独立花瓣及其投影来自原图；花束和左下的散焦枝叶保留。
 const staticPetals = [
@@ -132,5 +144,5 @@ await sharp(Buffer.from(mask.map(value => value * 255)), { raw: { width, height,
 const portraitRegions = [[270, 474, 456, 706], [445, 375, 645, 665], [200, 600, 795, 1240]];
 const protectedPortrait = marked.every(i => !portraitRegions.some(([left, top, right, bottom]) => i % width >= left && i % width <= right && Math.floor(i / width) >= top && Math.floor(i / width) <= bottom));
 if (!protectedPortrait) throw new Error('清理蒙版侵入人物保护区');
-await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'src/assets/cover-welcome-art.webp', modifiedPixels: marked.length, textIsLiveHtml: true, removedStaticPetals: staticPetals, protectedPortrait }, null, 2) + '\n');
+await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'src/assets/cover-welcome-art.webp', modifiedPixels: marked.length, textIsLiveHtml: true, plaqueFrameIsLiveHtml: true, removedStaticPetals: staticPetals, protectedPortrait }, null, 2) + '\n');
 console.log(JSON.stringify({ width, height, modifiedPixels: marked.length, removedStaticPetals: staticPetals.length, protectedPortrait }));

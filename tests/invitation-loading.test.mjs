@@ -374,6 +374,35 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       } finally { corruptMusic = false; await fallback.close(); }
     });
 
+    await suite.test('Welcome 在手机尺寸变化和底部安全区下为完整翻页按钮留出间距', async () => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(url);
+      await ready();
+      await page.locator('#btnEnterInvitation').click();
+      await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
+      for (const [width, height] of [[320, 568], [375, 667], [390, 844], [414, 896], [360, 640], [375, 620], [320, 740], [768, 1024], [1440, 1000]]) {
+        await page.setViewportSize({ width, height });
+        for (const safeBottom of [14, 34]) {
+          await page.locator('#app').evaluate((app, bottom) => app.style.setProperty('--page-next-bottom', `${bottom}px`), safeBottom);
+          const boxes = await page.evaluate(() => {
+            const panel = document.getElementById('welcomeGlass').getBoundingClientRect();
+            const button = document.querySelector('.page-1 .scroll-hint').getBoundingClientRect();
+            const app = document.getElementById('app').getBoundingClientRect();
+            const target = document.elementFromPoint(button.x + button.width / 2, button.y + 2);
+            return { gap: button.top - panel.bottom, buttonHeight: button.height, bottom: app.bottom - button.bottom, fits: panel.left >= app.left && panel.right <= app.right, hittable: !!target.closest('.scroll-hint') };
+          });
+          assert.ok(boxes.gap >= 9.5, `${width}×${height}, inset ${safeBottom}: gap ${boxes.gap}`);
+          assert.ok(boxes.buttonHeight >= 44 && boxes.bottom >= safeBottom - 0.5);
+          assert.equal(boxes.fits && boxes.hittable, true);
+        }
+      }
+      await page.locator('#app').evaluate(app => app.style.removeProperty('--page-next-bottom'));
+      await page.setViewportSize({ width: 375, height: 667 });
+      if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'mobile-welcome-clearance.png') });
+      await page.locator('.page-1 .scroll-hint').click();
+      assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
+    });
+
   } finally {
     releaseMusic?.();
     await browser.close();

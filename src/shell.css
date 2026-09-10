@@ -35,6 +35,8 @@
 
     /* 桌面端居中仿真机身框架 / 移动端全屏 */
     #app {
+      --page-next-bottom: max(14px, env(safe-area-inset-bottom, 0px));
+      --page-next-size: 44px;
       position: relative;
       container-type: size;
       width: 100%;

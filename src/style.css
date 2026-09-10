@@ -168,7 +168,7 @@
     /* 页面底部向下滑动提示 */
     .scroll-hint {
       position: absolute;
-      bottom: 14px;
+      bottom: var(--page-next-bottom);
       left: 0;
       right: 0;
       margin: 0 auto;
@@ -285,9 +285,12 @@
       --art-width: calc(100cqh * 941 / 1672);
       --scene-shift: 14px;
       position: absolute;
-      top: 75.65%;
-      left: calc(50% - var(--art-width) * 0.351);
-      width: calc(var(--art-width) * 0.7056);
+      /* 与翻页按钮共用底部尺寸，牌面为完整点击区域留出 10px 间距。 */
+      bottom: max(6.1%, calc(var(--page-next-bottom) + var(--page-next-size) + 10px));
+      left: 0;
+      right: 0;
+      margin-inline: auto;
+      width: min(calc(var(--art-width) * 0.7056), calc(100% - 40px));
       height: 18.25%;
       color: var(--burgundy-deep);
       text-align: center;
@@ -381,7 +384,6 @@
     }
 
     @container (max-height: 620px) {
-      .page-1 .scroll-hint { bottom: 0; }
       .cover-welcome-message { top: 78%; }
     }
 

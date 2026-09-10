@@ -103,7 +103,7 @@
 button:focus-visible, a:focus-visible, [role='button']:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 5px; }
 .btn-enter-invitation:focus-visible { outline-color: var(--burgundy); }
 .cover-names:focus { outline: none; }
-.scroll-hint { min-width: 44px; min-height: 44px; justify-content: center; border: 0; background: transparent; }
+.scroll-hint { min-width: var(--page-next-size); min-height: var(--page-next-size); justify-content: center; border: 0; background: transparent; }
 .modal-close { border: 0; background: transparent; font-family: inherit; }
 .page:not(.active) .scroll-arrow { animation-play-state: paused; }
 .calendar-button, .p3-map-btn { min-height: 44px; }

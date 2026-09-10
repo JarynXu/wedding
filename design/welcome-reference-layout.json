@@ -3,8 +3,9 @@
   "height": 1672,
   "source": "welcome-reference.png",
   "background": "src/assets/cover-welcome-art.webp",
-  "modifiedPixels": 129980,
+  "modifiedPixels": 175818,
   "textIsLiveHtml": true,
+  "plaqueFrameIsLiveHtml": true,
   "removedStaticPetals": [
     [
       813,
