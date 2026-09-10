@@ -48,6 +48,10 @@
 
 网页没有系统日历保存结果的回调。页面可见性只用于停止帮助提示，不能证明日程导入成功或失败。[MDN：Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)。
 
+日历文件的响应使用 `Content-Type: text/calendar; charset=utf-8` 和 `Content-Disposition: inline; filename="wedding.ics"`。Nginx 与 Vite 开发、预览服务均配置这两个响应头；Vite 由 `build/calendar-response.js` 设置。`node --test tests/calendar-response.test.mjs` 检查两个服务在根路径和子路径下的真实 HTTP 响应。
+
+对照来源为用户提供的 `docs/references/server.js` 中日历文件的响应配置。参考目录中的两份 HTML 相同，其微信分支仍显示操作指引；参考 ICS 与 `public/wedding.ics` 的内容相同。`inline` 表达文件的呈现方式，不能保证微信调用系统日历。线上仍出现下载时，应核对实际网址的响应头、手机系统和微信版本，不能依据配置文件或请求发出就认定导入成功。[MDN：Content-Disposition](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition)。
+
 ## 页面衔接
 
 四页共用 840ms 背景叠化与 14px 方向位移。旧页底图保持不透明，旧文字在 220ms 内退场，新文字按相同的起始延迟展开。切换以动画结束为完成条件；减少动态效果会取消位移及叠化，释放旧页。花瓣画布与音频元素位于页面容器之外，切页保持同一实例。
