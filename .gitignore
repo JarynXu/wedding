@@ -1,0 +1,12 @@
+# OS generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Local editor cache
+.claude/
+.idea/
+.vscode/
+*.tmp
+reference_wedding/
+assets/*_backup*

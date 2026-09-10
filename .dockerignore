@@ -1,0 +1,22 @@
+# Git & IDE
+.git
+.gitignore
+.claude
+.vscode
+.idea
+
+# Local dependencies & logs
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Dev scripts & heavy raw images
+*.py
+reference_wedding
+迎宾照.jpg
+参考图.png
+screenshot_*.png
+*.zip
+*.tar.gz
