@@ -8,18 +8,14 @@ export class WeddingPreloader {
     this.overlay = document.getElementById('preloaderOverlay');
     this.enterButton = document.getElementById('btnEnterInvitation');
     this.retryButton = document.getElementById('preloaderRetry');
-    this.musicButton = document.getElementById('preloaderPrepareMusic');
     this.status = document.getElementById('preloaderStatus');
     this.note = document.getElementById('preloaderLoadNote');
     this.resources = [];
     this.controllers = new Set();
     this.musicObjectUrl = null;
-    this.preparingMusicPlayback = false;
-    this.checkMusicReady = null;
     this.state = 'loading';
     this.onEnterClick = () => this.enter();
     this.onRetryClick = () => window.location.reload();
-    this.onMusicClick = () => this.prepareMusicPlayback();
   }
 
   init() {
@@ -30,7 +26,6 @@ export class WeddingPreloader {
     document.querySelector('.music-player').inert = true;
     this.enterButton.addEventListener('click', this.onEnterClick);
     this.retryButton.addEventListener('click', this.onRetryClick);
-    this.musicButton.addEventListener('click', this.onMusicClick);
 
     const images = this.collectImages();
     this.resources = [
@@ -50,7 +45,6 @@ export class WeddingPreloader {
       this.enterButton.disabled = false;
       this.overlay.classList.add('ready');
       document.getElementById('preloaderActionArea').classList.add('visible');
-      this.musicButton.hidden = true;
       this.note.textContent = '';
       // 开发预览可自动打开；生产入口始终等待全部资源，并由宾客点击。
       if (import.meta.env.DEV && new URLSearchParams(location.search).get('nopreloader') === '1') this.enter();
@@ -62,7 +56,6 @@ export class WeddingPreloader {
     for (const controller of this.controllers) controller.abort();
     this.enterButton.removeEventListener('click', this.onEnterClick);
     this.retryButton.removeEventListener('click', this.onRetryClick);
-    this.musicButton.removeEventListener('click', this.onMusicClick);
     if (this.musicObjectUrl) URL.revokeObjectURL(this.musicObjectUrl);
   }
 
@@ -157,52 +150,45 @@ export class WeddingPreloader {
     this.musicObjectUrl = URL.createObjectURL(blob);
     this.audio.preload = 'auto';
     this.audio.src = this.musicObjectUrl;
-    await new Promise((resolve, reject) => {
+    // 离线解码验证完整文件，不等待手机上可能受播放手势限制的 canplay。
+    // 校验缓冲区不用于播放，降低采样率限制其内存占用；音频仍播放原始 Blob。
+    const Decoder = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (Decoder) {
+      this.audio.load();
+      const decoder = new Decoder(1, 1, 22050);
+      const encoded = await abortable(blob.arrayBuffer(), signal);
+      const decoded = await abortable(decoder.decodeAudioData(encoded), signal);
+      if (!Number.isFinite(decoded.duration) || decoded.duration <= 0) throw new Error('音乐文件无法解码');
+    } else {
+      // 缺少 Web Audio 的宿主读取文件时长校验元数据，不要求开始缓冲或播放。
+      await this.loadMusicMetadata(signal);
+    }
+    if (signal.aborted) throw new Error('音乐下载已取消');
+    return blob;
+  }
+
+  loadMusicMetadata(signal) {
+    return new Promise((resolve, reject) => {
       const finish = error => {
-        clearTimeout(gestureHint);
-        this.audio.removeEventListener('canplay', onReady);
+        this.audio.removeEventListener('loadedmetadata', onReady);
         this.audio.removeEventListener('error', onError);
         signal.removeEventListener('abort', onAbort);
-        this.checkMusicReady = null;
-        this.musicButton.hidden = true;
         if (error) reject(error);
         else resolve();
       };
       const onReady = () => {
-        if (!this.preparingMusicPlayback && this.audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) finish();
+        if (this.audio.readyState < HTMLMediaElement.HAVE_METADATA) return;
+        finish(Number.isFinite(this.audio.duration) && this.audio.duration > 0 ? null : new Error('音乐文件没有有效时长'));
       };
       const onError = () => finish(new Error('浏览器无法读取音乐文件'));
       const onAbort = () => finish(new Error('音乐准备超时'));
-      const gestureHint = setTimeout(() => {
-        if (this.state === 'loading') this.musicButton.hidden = false;
-      }, 1800);
-      this.audio.addEventListener('canplay', onReady);
-      this.checkMusicReady = onReady;
+      this.audio.addEventListener('loadedmetadata', onReady);
       this.audio.addEventListener('error', onError);
       signal.addEventListener('abort', onAbort, { once: true });
       this.audio.load();
-      onReady();
+      if (signal.aborted) onAbort();
+      else onReady();
     });
-    return blob;
-  }
-
-  async prepareMusicPlayback() {
-    this.preparingMusicPlayback = true;
-    this.musicButton.disabled = true;
-    this.audio.muted = true;
-    try {
-      await this.audio.play();
-      this.audio.pause();
-      this.audio.currentTime = 0;
-    } catch (error) {
-      this.note.textContent = '音乐准备未完成，请重试';
-      console.warn('音乐准备需要交互', error);
-    } finally {
-      this.audio.muted = false;
-      this.preparingMusicPlayback = false;
-      this.musicButton.disabled = false;
-      this.checkMusicReady?.();
-    }
   }
 
   updateProgress() {
@@ -225,7 +211,6 @@ export class WeddingPreloader {
     this.note.textContent = '部分素材加载失败，请检查网络后重试';
     this.retryButton.hidden = false;
     this.enterButton.disabled = true;
-    this.musicButton.hidden = true;
   }
 
   enter() {

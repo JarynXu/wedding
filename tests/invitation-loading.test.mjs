@@ -117,7 +117,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       await ready();
       assert.equal(await page.locator('#preloaderPercent').innerText(), '100%');
       assert.match(await page.locator('#bgm').getAttribute('src'), /^blob:/);
-      assert.ok(await page.locator('#bgm').evaluate(audio => audio.readyState >= 3));
+      assert.equal(await page.locator('#btnEnterInvitation').isEnabled(), true);
       assert.equal(await page.locator('#preloaderOverlay').isVisible(), true, '生产环境不通过查询参数跳过入口');
     });
 
@@ -313,6 +313,67 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
       assert.deepEqual(errors, []);
     });
+
+    await suite.test('手机等待播放手势时显示开启请柬，一次点击启动原始音乐', async () => {
+      const mobile = await browser.newPage({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
+      try {
+        await mobile.addInitScript(() => {
+          const nativePlay = HTMLMediaElement.prototype.play;
+          const nativeLoad = HTMLMediaElement.prototype.load;
+          const state = Object.getOwnPropertyDescriptor(HTMLMediaElement.prototype, 'readyState');
+          let activated = false;
+          window.mobileAudioCalls = [];
+          // 模拟收到完整文件、尚未得到播放手势时不报告 canplay 的手机播放器。
+          Object.defineProperty(HTMLMediaElement.prototype, 'readyState', {
+            get() { return this.id === 'bgm' && !activated ? 0 : state.get.call(this); },
+          });
+          HTMLMediaElement.prototype.load = function () {
+            if (this.id !== 'bgm' || activated) nativeLoad.call(this);
+          };
+          HTMLMediaElement.prototype.play = function () {
+            if (this.id === 'bgm') {
+              window.mobileAudioCalls.push({ gesture: navigator.userActivation.isActive, source: this.src, muted: this.muted });
+              activated = true;
+              nativeLoad.call(this);
+            }
+            return nativePlay.call(this);
+          };
+        });
+        await mobile.goto(url);
+        await mobile.locator('#preloaderOverlay[data-state="ready"]').waitFor({ timeout: 10000 });
+        assert.equal(await mobile.locator('#preloaderPercent').innerText(), '100%');
+        assert.equal(await mobile.locator('#bgm').evaluate(audio => audio.readyState), 0);
+        assert.equal(await mobile.locator('#btnEnterInvitation').isVisible(), true);
+        assert.doesNotMatch(await mobile.locator('#preloaderOverlay').innerText(), /点按准备音乐/);
+        assert.deepEqual(await mobile.evaluate(() => window.mobileAudioCalls), []);
+        await mobile.locator('#btnEnterInvitation').tap();
+        await mobile.waitForFunction(() => document.getElementById('bgm').currentTime > 0.05);
+        const calls = await mobile.evaluate(() => window.mobileAudioCalls);
+        assert.equal(calls.length, 1);
+        assert.equal(calls[0].gesture, true);
+        assert.equal(calls[0].muted, false);
+        assert.match(calls[0].source, /^blob:/);
+      } finally { await mobile.close(); }
+    });
+
+    await suite.test('缺少离线音频解码接口时校验元数据，损坏音乐仍禁止进入', async () => {
+      const fallback = await browser.newPage();
+      try {
+        await fallback.addInitScript(() => {
+          window.OfflineAudioContext = undefined;
+          window.webkitOfflineAudioContext = undefined;
+        });
+        await fallback.goto(url);
+        await fallback.locator('#preloaderOverlay[data-state="ready"]').waitFor();
+        assert.ok(await fallback.locator('#bgm').evaluate(audio => audio.duration > 0));
+        corruptMusic = true;
+        await fallback.reload();
+        await fallback.locator('#preloaderOverlay[data-state="error"]').waitFor();
+        assert.equal(await fallback.locator('#btnEnterInvitation').isEnabled(), false);
+        assert.equal(await fallback.locator('#preloaderRetry').isVisible(), true);
+      } finally { corruptMusic = false; await fallback.close(); }
+    });
+
   } finally {
     releaseMusic?.();
     await browser.close();

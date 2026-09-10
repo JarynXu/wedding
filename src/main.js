@@ -354,12 +354,15 @@ function initializeInvitation() {
         document.querySelector('.music-player').inert = false;
         if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
         syncWelcomeGlass();
-        // 用户主动点击“开启请柬”，顺畅激活背景音乐
+        // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
         if (audio && audio.paused) {
           audio.play().then(() => {
             musicBtn.classList.add('playing');
             musicTip.classList.add('fade-out');
-          }).catch(() => {});
+          }).catch(error => {
+            musicTip.classList.remove('fade-out');
+            console.warn('背景音乐未开始播放，可点击音乐按钮重试', error);
+          });
         }
       }
     });

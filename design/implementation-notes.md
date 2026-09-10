@@ -14,11 +14,11 @@
 
 ## 素材就绪条件
 
-加载入口等待页面实际引用的图片完成解码、所用字体完成加载、音乐文件完整下载及浏览器可播放状态。120 秒等待上限触发失败状态，入口保持关闭。重试按钮重新载入页面。音乐播放需要交互的浏览器会显示“点按准备音乐”，该操作不绕过就绪条件。
+加载入口等待页面实际引用的图片完成解码、所用字体完成加载、音乐文件完整下载并通过离线解码校验。120 秒等待上限触发失败状态，入口保持关闭。重试按钮重新载入页面。资源就绪后显示“开启请柬”，点击入口时播放音乐；手机的播放手势限制不再阻塞加载完成。
 
 等待文案按实际进度的 35%、75% 节点切换为“正在装点浪漫殿堂...”“正在调校礼堂音律...”“即将开启婚礼华章...”。这些文案不改变资源完成条件。
 
-音乐完整文件保存为 Blob，入口点击后播放该 Blob。`canplaythrough` 代表浏览器对缓冲能力的估计，不能代替完整下载。[MDN：canplaythrough](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canplaythrough_event)。字体加载使用 [FontFaceSet.load](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/load)，并等待当前字体请求完成。
+音乐完整文件保存为 Blob，入口点击后播放该 Blob。`OfflineAudioContext` 校验文件，不连接扬声器，解码结果不留作播放缓冲。校验使用 22050Hz 采样率限制临时缓冲区内存，播放保留原始文件。缺少该接口的宿主读取文件元数据，要求有效时长；该兼容路径不验证全部采样帧，两条路径都等待完整文件下载。[MDN：OfflineAudioContext](https://developer.mozilla.org/en-US/docs/Web/API/OfflineAudioContext)。字体加载使用 [FontFaceSet.load](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/load)，并等待当前字体请求完成。
 
 `src/fonts.css` 保留字体的 Unicode 分段范围。字库来自 Google Fonts，已保存到 `src/assets/fonts/`，页面请求本站文件。字体授权文件位于该目录及 `public/fonts-LICENSE.txt`。中文仍保留完整分段覆盖，修改姓名或文案不需要重新裁剪字库。
 
