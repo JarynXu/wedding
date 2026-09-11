@@ -433,6 +433,27 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
           assert.equal(await mobile.locator('#preloaderOverlay').count(), 0);
           assert.equal(calendarRequests, 0, '微信内不发起日历文件下载');
           assert.deepEqual(handoffRequests, ['/calendar.html']);
+          for (const width of [320, 375, 390, 414]) {
+            await mobile.setViewportSize({ width, height: 667 });
+            const geometry = await mobile.evaluate(() => {
+              const guide = document.querySelector('.browser-guide');
+              const card = document.querySelector('.calendar-card');
+              const rect = guide.getBoundingClientRect();
+              const before = { top: card.getBoundingClientRect().top, height: document.documentElement.scrollHeight };
+              const overlapsContent = [...document.querySelectorAll('h1, .couple, .calendar-emblem, #calendarDetails, #calendarCopyLink')].some(element => {
+                const target = element.getBoundingClientRect();
+                return rect.left < target.right && rect.right > target.left && rect.top < target.bottom && rect.bottom > target.top;
+              });
+              guide.style.display = 'none';
+              const after = { top: card.getBoundingClientRect().top, height: document.documentElement.scrollHeight };
+              guide.style.removeProperty('display');
+              return { before, after, overlapsContent, rightGap: innerWidth - rect.right, top: rect.top, width: rect.width };
+            });
+            assert.deepEqual(geometry.before, geometry.after, '指引显示与隐藏均不改变正文位置或页面高度');
+            assert.equal(geometry.overlapsContent, false);
+            assert.ok(geometry.rightGap >= 9 && geometry.rightGap <= 11 && geometry.top >= 10 && geometry.width <= 190);
+          }
+          await mobile.setViewportSize({ width: 375, height: 667 });
           if (process.env.WEDDING_QA_DIR) await mobile.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'calendar-handoff-wechat.png') });
 
           // 外部浏览器使用全新上下文，不能依赖微信缓存或 localStorage 恢复流程。

@@ -24,14 +24,17 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .copy-feedback:empty { display: none; }
 .back-link { display: inline-flex; min-height: 44px; align-items: center; color: #826b4c; font-size: 12px; text-underline-offset: 4px; }
 .calendar-footnote { margin: 19px 0 0; text-align: center; color: #89704c; font-size: 11px; letter-spacing: 0.17em; }
-.browser-guide { position: relative; padding: 6px 25px 24px 0; text-align: center; color: #7a1f2b; }
-.browser-guide p { margin: 0 0 8px; font-size: 15px; line-height: 1.9; }
+.browser-guide { position: fixed; z-index: 2; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right)); width: 190px; max-width: calc(100vw - 20px); padding: 8px 12px; text-align: left; color: #7a1f2b; border: 1px solid rgba(167, 126, 71, 0.55); border-radius: 8px; background: rgba(255, 251, 243, 0.97); box-shadow: 0 4px 14px rgba(92, 62, 31, 0.1); }
+.browser-guide p { margin: 0; font-size: 11px; line-height: 1.65; }
 .browser-guide strong { font-weight: 600; }
-.browser-guide span { color: #80684a; font-size: 11px; }
-.guide-arrow { position: absolute; right: -8px; top: -13px; }
+.browser-guide span { display: block; margin-top: 3px; color: #80684a; font-size: 9px; line-height: 1.5; }
+.guide-arrow { position: absolute; right: 6px; top: 5px; width: 18px; height: 21px; }
 [data-calendar-env="browser"] [data-wechat-only], [data-calendar-env="wechat"] [data-browser-only] { display: none; }
 [data-calendar-script="pending"] button { display: none; }
 [data-calendar-env="wechat"] .primary-action { margin-top: 20px; }
+/* 顶部装饰为悬浮指引让出位置，正文和按钮保持原有排布。 */
+[data-calendar-env="wechat"] .eyebrow { visibility: hidden; }
+[data-calendar-env="wechat"] .calendar-emblem { margin-left: 0; }
 a:focus-visible, button:focus-visible { outline: 2px solid #7a1f2b; outline-offset: 5px; }
 @media (max-width: 360px) { .calendar-shell { padding-inline: 16px; } .calendar-card { padding-inline: 20px; } h1 { font-size: 22px; } }
 @media (min-height: 780px) { .calendar-shell { padding-top: max(55px, env(safe-area-inset-top)); } }
