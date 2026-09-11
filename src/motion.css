@@ -104,7 +104,26 @@ button:focus-visible, a:focus-visible, [role='button']:focus-visible { outline: 
 .btn-enter-invitation:focus-visible { outline-color: var(--burgundy); }
 .cover-names:focus { outline: none; }
 .modal-close { border: 0; background: transparent; font-family: inherit; }
-.page:not(.active) .scroll-arrow { animation-play-state: paused; }
+/* 箭头连续向下点动两次，错开的细金圈向外扩散；点击区域保持静止。 */
+@keyframes next-chevron {
+  0%, 24%, 48%, 100% { transform: translateY(-2px); }
+  12% { transform: translateY(4px); }
+  36% { transform: translateY(3px); }
+}
+@keyframes next-breathe {
+  0%, 48%, 100% { transform: scale(1); }
+  14%, 36% { transform: scale(1.08); }
+  24% { transform: scale(0.98); }
+}
+@keyframes next-ripple {
+  0% { transform: scale(0.85); opacity: 0; }
+  12% { opacity: 0.55; }
+  65%, 100% { transform: scale(1.55); opacity: 0; }
+}
+.invitation-open .page.active .scroll-arrow { animation: next-breathe 3.2s ease-in-out infinite; }
+.invitation-open .page.active .scroll-arrow svg { animation: next-chevron 3.2s ease-in-out infinite; }
+.invitation-open .page.active .scroll-hint::before { animation: next-ripple 3.2s ease-out infinite; }
+.invitation-open .page.active .scroll-hint::after { animation: next-ripple 3.2s 350ms ease-out infinite both; }
 .calendar-button, .p3-map-btn { min-height: 44px; }
 .invitation-paused *, .invitation-paused *::before, .invitation-paused *::after { animation-play-state: paused !important; }
 

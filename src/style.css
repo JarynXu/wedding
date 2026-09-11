@@ -172,53 +172,48 @@
       left: 0;
       right: 0;
       margin: 0 auto;
-      width: 132px;
-      max-width: calc(100% - 48px);
+      width: var(--page-next-size);
       height: var(--page-next-size);
       min-height: 44px;
       display: flex;
-      flex-direction: row;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 5px 15px;
-      border: 1px solid rgba(160, 117, 61, 0.72);
-      border-radius: 24px;
-      background: rgba(255, 250, 240, 0.95);
-      box-shadow: 0 3px 12px rgba(91, 54, 31, 0.12);
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
       color: var(--burgundy);
-      font-family: inherit;
-      text-align: left;
       cursor: pointer;
       z-index: 25;
-      transition: background var(--motion-detail), box-shadow var(--motion-detail);
     }
-    .scroll-hint:hover { background: #fffaf0; box-shadow: 0 4px 15px rgba(91, 54, 31, 0.2); }
-    .scroll-hint:active { background: #f3e8d5; }
+    .scroll-hint::before, .scroll-hint::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border: 1px solid rgba(166, 119, 53, 0.7);
+      border-radius: 50%;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .scroll-hint:hover .scroll-arrow { background: #fffaf0; }
+    .scroll-hint:active .scroll-arrow { background: #f1e4ce; }
 
     .scroll-arrow {
-      width: 26px;
-      height: 26px;
+      position: relative;
+      width: 32px;
+      height: 32px;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--burgundy);
-      animation: bounceDown 2s ease-in-out infinite;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      background: rgba(255, 250, 240, 0.96);
+      box-shadow: 0 3px 12px rgba(166, 119, 53, 0.25);
+      transition: background var(--motion-detail);
     }
-
-    .scroll-text {
-      font-size: 12px;
-      line-height: 1.4;
-      letter-spacing: 0.12em;
-      white-space: nowrap;
-    }
-
-    @keyframes bounceDown {
-      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-      40% { transform: translateY(7px); }
-      60% { transform: translateY(3px); }
-    }
+    .scroll-arrow svg { width: 16px; height: 16px; }
 
     /* 迎宾页沿用选定方案的照片、花艺与迎宾牌，文字为独立图层。 */
     .page-1 {

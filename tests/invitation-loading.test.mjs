@@ -488,19 +488,19 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
     });
 
-    await suite.test('前三页保留简短浏览提示，静态模式下文字与箭头均可点击', async () => {
+    await suite.test('前三页无文字箭头保持可点击，动效增强不改变点击区域', async () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(url);
       await ready();
       await page.locator('#btnEnterInvitation').click();
       await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
-      const clickTargets = ['.scroll-text', '.scroll-arrow', '.scroll-text'];
+      const clickTargets = ['.scroll-arrow', '.scroll-arrow svg', '.scroll-arrow'];
       for (let index = 0; index < clickTargets.length; index++) {
         const button = page.locator('.page.active .scroll-hint');
-        assert.equal(await button.innerText(), '向下浏览');
+        assert.equal((await button.innerText()).trim(), '');
         const fits = await button.evaluate(button => {
           const rect = button.getBoundingClientRect();
-          return rect.height >= 44 && [...button.querySelectorAll('.scroll-text, .scroll-arrow')].every(element => {
+          return rect.height >= 44 && rect.width >= 44 && [...button.querySelectorAll('.scroll-arrow')].every(element => {
             const inner = element.getBoundingClientRect();
             return inner.left >= rect.left && inner.right <= rect.right && inner.top >= rect.top && inner.bottom <= rect.bottom;
           });
@@ -511,6 +511,31 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.equal(await page.locator('.page.active').getAttribute('data-index'), String(index + 1));
       }
       assert.equal(await page.locator('.page-4 .scroll-hint').count(), 0);
+      await page.locator('.nav-dot[data-index="0"]').click();
+      await page.emulateMedia({ reducedMotion: 'no-preference' });
+      await page.locator('.page.active').evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
+      const motion = await page.locator('.page.active .scroll-hint').evaluate(button => {
+        const animations = button.getAnimations({ subtree: true }).filter(animation => animation.effect.getTiming().iterations === Infinity);
+        const sample = time => {
+          animations.forEach(animation => { animation.pause(); animation.currentTime = time; });
+          const ring = getComputedStyle(button, '::before');
+          return {
+            button: button.getBoundingClientRect().toJSON(),
+            arrowY: new DOMMatrix(getComputedStyle(button.querySelector('svg')).transform).m42,
+            ringScale: new DOMMatrix(ring.transform).m11,
+            ringOpacity: Number(ring.opacity),
+          };
+        };
+        const early = sample(350);
+        const later = sample(800);
+        animations.forEach(animation => animation.play());
+        return { early, later, count: animations.length };
+      });
+      assert.ok(motion.count >= 3);
+      assert.deepEqual(motion.early.button, motion.later.button);
+      assert.ok(Math.abs(motion.early.arrowY - motion.later.arrowY) >= 2);
+      assert.ok(motion.later.ringScale > motion.early.ringScale);
+      assert.ok(motion.early.ringOpacity > 0);
     });
 
     for (const { name, userAgent, guide } of [
