@@ -488,21 +488,19 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
     });
 
-    await suite.test('前三页文字入口说明下一页内容，静态模式下文字与箭头均可点击', async () => {
+    await suite.test('前三页保留简短浏览提示，静态模式下文字与箭头均可点击', async () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.goto(url);
       await ready();
       await page.locator('#btnEnterInvitation').click();
       await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
-      const topics = ['婚礼时间', '婚礼地点', '诚挚邀请'];
-      const clickTargets = ['.scroll-label', '.scroll-text', '.scroll-arrow'];
-      for (let index = 0; index < topics.length; index++) {
+      const clickTargets = ['.scroll-text', '.scroll-arrow', '.scroll-text'];
+      for (let index = 0; index < clickTargets.length; index++) {
         const button = page.locator('.page.active .scroll-hint');
-        assert.equal(await button.locator('.scroll-label').innerText(), `下一页 · ${topics[index]}`);
-        assert.equal(await button.locator('.scroll-text').innerText(), '向上滑动，或点此继续');
+        assert.equal(await button.innerText(), '向下浏览');
         const fits = await button.evaluate(button => {
           const rect = button.getBoundingClientRect();
-          return rect.height >= 44 && [...button.querySelectorAll('.scroll-copy, .scroll-arrow')].every(element => {
+          return rect.height >= 44 && [...button.querySelectorAll('.scroll-text, .scroll-arrow')].every(element => {
             const inner = element.getBoundingClientRect();
             return inner.left >= rect.left && inner.right <= rect.right && inner.top >= rect.top && inner.bottom <= rect.bottom;
           });
