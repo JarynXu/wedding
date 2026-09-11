@@ -6,6 +6,7 @@ import './motion.css';
 import { RosePetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WEDDING_CONFIG } from './config.js';
+import { getFamilyInvitation } from './family-invitation.js';
 import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
 
@@ -113,8 +114,24 @@ function initializeInvitation() {
       if (p3Address && config.venue?.shortAddress) p3Address.textContent = config.venue.shortAddress;
 
       // Page 4
-      const p4Couples = document.getElementById('p4Couples');
-      if (p4Couples && config.coupleNamesZh) p4Couples.textContent = config.coupleNamesZh;
+      const family = getFamilyInvitation(config, location.search);
+      const p4Invitation = document.querySelector('.p4-invitation');
+      p4Invitation.classList.toggle('p4-family', Boolean(family));
+      p4Invitation.classList.toggle('p4-long-signature', Boolean(family && [...family.parents].length > 16));
+      document.getElementById('p4Inviters').textContent = family ? family.parents : config.coupleNamesZh;
+      document.getElementById('p4InvitationBadge').textContent = family ? config.texts.familyInvitation.badge : config.texts.invitationBadge;
+      document.getElementById('p4InvitationIntro').hidden = Boolean(family);
+      document.getElementById('p4InvitationIntro').textContent = family ? '' : config.texts.invitationIntro;
+      document.getElementById('p4InvitationWish').textContent = family ? config.texts.familyInvitation.wish : config.texts.invitationWish;
+      document.getElementById('p4Footnote').textContent = `✦ ${family ? config.texts.familyInvitation.footnote : config.texts.footnote} ✦`;
+      document.getElementById('p4FamilyWedding').hidden = !family;
+      if (family) {
+        document.getElementById('p4ChildRole').textContent = family.child.role;
+        document.getElementById('p4ChildName').textContent = family.child.name;
+        document.getElementById('p4PartnerRole').textContent = family.partner.role;
+        document.getElementById('p4PartnerName').textContent = family.partner.name;
+        document.getElementById('p4FamilyOccasion').textContent = config.texts.familyInvitation.occasion;
+      }
       const p4PoemTime = document.getElementById('p4PoemTime');
       if (p4PoemTime && config.date) {
         const dText = config.date.formattedFullZh || '2026年10月17日';

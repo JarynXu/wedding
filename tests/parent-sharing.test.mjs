@@ -58,7 +58,7 @@ for (const mode of ['dev', 'preview', 'production']) {
 
       const plain = await (await fetch(origin + '/')).text();
       const parent = await (await fetch(origin + '/?' + groomQuery)).text();
-      assert.equal(parent.slice(parent.indexOf('<body')), plain.slice(plain.indexOf('<body')), '父母署名仅改变分享信息，不改请柬正文');
+      assert.equal(parent.slice(parent.indexOf('<body')), plain.slice(plain.indexOf('<body')), '原始 HTML 共用页面模板，最后一页在入口初始化时按家长参数渲染');
       const invalid = await fetch(origin + '/?side=groom');
       assert.equal(invalid.status, 400);
       assert.match(await invalid.text(), /side.*parents/);

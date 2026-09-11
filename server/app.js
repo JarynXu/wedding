@@ -3,7 +3,8 @@ import compression from 'compression';
 import { readFileSync } from 'node:fs';
 import { resolve, extname } from 'node:path';
 import { WEDDING_CONFIG } from '../src/config.js';
-import { getShareMetadata, InvalidInvitationLinkError } from '../src/share-metadata.js';
+import { getShareMetadata } from '../src/share-metadata.js';
+import { InvalidInvitationLinkError } from '../src/family-invitation.js';
 import { renderShareMetadata } from '../src/share-html.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */

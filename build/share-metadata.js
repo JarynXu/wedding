@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { WEDDING_CONFIG } from '../src/config.js';
-import { getShareMetadata, InvalidInvitationLinkError } from '../src/share-metadata.js';
+import { getShareMetadata } from '../src/share-metadata.js';
+import { InvalidInvitationLinkError } from '../src/family-invitation.js';
 import { renderShareMetadata } from '../src/share-html.js';
 
 /** 分享标签进入原始 HTML，抓取方无需执行页面脚本。 */

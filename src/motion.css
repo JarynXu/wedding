@@ -88,10 +88,11 @@
 .invitation-open .page-3:is(.active, .is-leaving) .p3-hotel-en { animation: inscription-reveal 1000ms calc(var(--page-copy-delay) + 730ms) var(--ease-reveal) both; }
 .invitation-open .page-3:is(.active, .is-leaving) .p3-address { animation: entry-arrive 750ms calc(var(--page-copy-delay) + 820ms) var(--ease-reveal) both; }
 .invitation-open .page-3:is(.active, .is-leaving) .p3-map-btn-wrap { animation: entry-arrive 650ms calc(var(--page-copy-delay) + 1000ms) var(--ease-reveal) both; }
-.invitation-open .page-4:is(.active, .is-leaving) :is(.p4-header-badge, .p4-header-en) { animation: inscription-reveal 850ms calc(var(--page-copy-delay) + 180ms) var(--ease-reveal) both; }
-.invitation-open .page-4:is(.active, .is-leaving) .p4-couples { animation: date-unfold 1000ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-inviters { animation: date-unfold 1000ms calc(var(--page-copy-delay) + 180ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-header-badge { animation: inscription-reveal 850ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
 .invitation-open .page-4:is(.active, .is-leaving) .p4-ornament-line { animation: rule-extend 1000ms calc(var(--page-copy-delay) + 500ms) var(--ease-reveal) both; }
-.invitation-open .page-4:is(.active, .is-leaving) .p4-poem p { animation: invitation-appear 850ms calc(var(--page-copy-delay) + 500ms + var(--line-index, 0) * 130ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) :is(.p4-intro, .p4-family-wedding) { animation: invitation-appear 850ms calc(var(--page-copy-delay) + 600ms) var(--ease-reveal) both; }
+.invitation-open .page-4:is(.active, .is-leaving) .p4-poem p { animation: invitation-appear 850ms calc(var(--page-copy-delay) + 800ms + var(--line-index, 0) * 130ms) var(--ease-reveal) both; }
 .p4-poem p:nth-child(2) { --line-index: 1; }
 .p4-poem p:nth-child(3) { --line-index: 2; }
 .p4-poem p:nth-child(4) { --line-index: 3; }

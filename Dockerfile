@@ -16,7 +16,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY server ./server
-COPY src/config.js src/share-metadata.js src/share-html.js ./src/
+COPY src/config.js src/share-metadata.js src/share-html.js src/family-invitation.js ./src/
 USER node
 
 EXPOSE 8080

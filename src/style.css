@@ -819,17 +819,7 @@
       margin-bottom: 2px;
     }
 
-    .p4-header-en {
-      font-family: "Cinzel", serif;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.35em;
-      color: #6d4414;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-
-    .p4-couples {
+    .p4-inviters {
       font-family: "Noto Serif SC", serif;
       font-size: 21.5px;
       font-weight: 700;
@@ -838,11 +828,41 @@
       background: linear-gradient(135deg, #240c06 0%, #5a2e12 26%, #966929 50%, #52270e 74%, #1e0904 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      line-height: 1.2;
+      line-height: 1.5;
       filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 5px rgba(50, 20, 8, 0.22));
-      margin: 3px 0 4px;
-      white-space: nowrap;
+      width: 100%;
+      margin: 0 0 12px;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
     }
+
+    .p4-long-signature .p4-inviters {
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      line-height: 1.35;
+    }
+
+    .p4-intro, .p4-family-wedding {
+      font-size: 13px;
+      line-height: 1.8;
+      letter-spacing: 0.08em;
+      color: #40231b;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .p4-intro { margin-bottom: 12px; }
+    .p4-family-wedding { width: 100%; margin-bottom: 12px; }
+    .p4-family-couple {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 5px;
+    }
+    .p4-newlywed { display: flex; align-items: baseline; flex-wrap: wrap; justify-content: center; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+    .p4-relation { font-size: 11px; color: #724915; letter-spacing: 0.08em; }
+    .p4-newlywed strong { font-size: 18px; font-weight: 600; color: var(--burgundy-deep); }
+    .p4-family-and { font-size: 12px; color: #724915; }
 
     .p4-ornament {
       display: flex;
@@ -868,7 +888,9 @@
       letter-spacing: 0.06em;
       margin-bottom: 14px;
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95);
-      white-space: nowrap;
+      width: 100%;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
     }
 
     .p4-poem p {
@@ -976,8 +998,9 @@
       .p4-invitation {
         top: 23.5%;
       }
-      .p4-couples {
+      .p4-inviters {
         font-size: 19.5px;
+        margin-bottom: 9px;
       }
       .p4-poem {
         font-size: 12px;
@@ -990,10 +1013,15 @@
       .p4-footnote {
         font-size: 10px;
       }
+      .p4-family .p4-footnote { display: none; }
+      .p4-family-wedding { margin-bottom: 8px; }
+      .p4-family-couple { gap: 8px; }
+      .p4-newlywed strong { font-size: 17px; }
+      .p4-long-signature .p4-inviters { font-size: 12px; }
     }
 
     @media (max-width: 360px) {
-      .p4-couples {
+      .p4-inviters {
         font-size: 18.5px;
       }
       .p4-poem {
@@ -1004,6 +1032,8 @@
 @media (max-height: 620px) {
   .p4-invitation { top: 23%; }
   .p4-ornament { margin-bottom: 6px; }
+  .p4-intro, .p4-family-wedding { font-size: 12px; margin-bottom: 7px; }
+  .p4-newlywed strong { font-size: 17px; }
   .p4-poem { font-size: 12px; line-height: 1.8; margin-bottom: 8px; }
   .p4-poem strong { font-size: 12.5px; }
   .p4-footnote { display: none; }

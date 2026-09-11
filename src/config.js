@@ -79,15 +79,15 @@ export const WEDDING_CONFIG = {
   },
 
   texts: {
-    invitationBadge: '诚挚邀请',
-    invitationEn: 'INVITATION',
-    poem: [
-      '我们将于 2026年10月17日',
-      '在 东海嘉臣国际大酒店',
-      '举行神圣浪漫的婚礼与午宴',
-      '诚挚邀请您与我们一同见证',
-      '并分享这份喜悦与幸福',
-    ],
+    invitationBadge: '诚挚邀请您',
+    invitationIntro: '参加我们的婚礼与喜宴',
+    invitationWish: '与我们共享喜悦与幸福',
     footnote: '愿与您共赴良辰 · 见证一生所爱',
+    familyInvitation: {
+      badge: '诚邀您参加',
+      occasion: '的婚礼暨喜宴',
+      wish: '敬备喜宴，恭候莅临',
+      footnote: '愿与您共赴良辰 · 见证幸福时刻',
+    },
   },
 };
