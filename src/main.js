@@ -272,7 +272,8 @@ function initializeInvitation() {
     touchSurface.addEventListener('touchstart', event => {
       swipe = null;
       if (event.touches.length !== 1 || isAnimating || navigationBlocked()) return;
-      if (event.target.closest('button, a, input, textarea')) return;
+      const control = event.target.closest('button, a, input, textarea');
+      if (control && !control.matches('.scroll-hint')) return;
       const touch = event.touches[0];
       swipe = { id: touch.identifier, x: touch.clientX, y: touch.clientY, page: currentPage };
     }, { passive: true, signal: touchEvents.signal });

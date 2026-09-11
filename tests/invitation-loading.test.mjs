@@ -336,13 +336,20 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         await mobile.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
         await mobile.evaluate(() => {
           window.touchMoves = [];
+          window.swipeButtonClicks = 0;
           document.addEventListener('touchmove', event => {
             if (event.target.closest('#app')) window.touchMoves.push({ prevented: event.defaultPrevented, cancelable: event.cancelable, trusted: event.isTrusted });
           }, { passive: true });
+          document.addEventListener('click', event => {
+            if (event.target.closest('.scroll-hint')) window.swipeButtonClicks++;
+          });
         });
         let current = 0;
         for (const target of [1, 2, 3, 2, 1, 0]) {
-          await drag({ x: 70, y: target > current ? 590 : 260 }, { x: 70, y: target > current ? 260 : 590 });
+          if (current === 0 && target === 1) {
+            const button = await mobile.locator('.page-1 .scroll-hint').boundingBox();
+            await drag({ x: button.x + button.width / 2, y: button.y + button.height / 2 }, { x: button.x + button.width / 2, y: 450 });
+          } else await drag({ x: 70, y: target > current ? 590 : 260 }, { x: 70, y: target > current ? 260 : 590 });
           await mobile.waitForFunction(target => document.querySelector('.page.active').dataset.index === String(target), target, { timeout: 3000 });
           await idle();
           const viewport = await mobile.evaluate(() => ({ top: document.getElementById('app').getBoundingClientRect().top, scroll: scrollY, visualTop: visualViewport.offsetTop }));
@@ -353,6 +360,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.ok(moves.length > 0 && moves.every(move => move.trusted));
         assert.ok(moves.some(move => move.cancelable));
         assert.ok(moves.filter(move => move.cancelable).every(move => move.prevented), '在移动阶段取消浏览器默认下拉行为');
+        assert.equal(await mobile.evaluate(() => window.swipeButtonClicks), 0, '从翻页按钮开始上滑不额外产生点击');
         assert.equal(await mobile.locator('html').evaluate(element => getComputedStyle(element).overscrollBehaviorY), 'none');
         assert.equal(await mobile.locator('#app').evaluate(element => getComputedStyle(element).touchAction), 'none');
         await drag({ x: 70, y: 260 }, { x: 70, y: 590 });
@@ -478,6 +486,33 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'mobile-welcome-clearance.png') });
       await page.locator('.page-1 .scroll-hint').click();
       assert.equal(await page.locator('.page.active').getAttribute('data-index'), '1');
+    });
+
+    await suite.test('前三页文字入口说明下一页内容，静态模式下文字与箭头均可点击', async () => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await page.goto(url);
+      await ready();
+      await page.locator('#btnEnterInvitation').click();
+      await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
+      const topics = ['婚礼时间', '婚礼地点', '诚挚邀请'];
+      const clickTargets = ['.scroll-label', '.scroll-text', '.scroll-arrow'];
+      for (let index = 0; index < topics.length; index++) {
+        const button = page.locator('.page.active .scroll-hint');
+        assert.equal(await button.locator('.scroll-label').innerText(), `下一页 · ${topics[index]}`);
+        assert.equal(await button.locator('.scroll-text').innerText(), '向上滑动，或点此继续');
+        const fits = await button.evaluate(button => {
+          const rect = button.getBoundingClientRect();
+          return rect.height >= 44 && [...button.querySelectorAll('.scroll-copy, .scroll-arrow')].every(element => {
+            const inner = element.getBoundingClientRect();
+            return inner.left >= rect.left && inner.right <= rect.right && inner.top >= rect.top && inner.bottom <= rect.bottom;
+          });
+        });
+        assert.equal(fits, true);
+        if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, `next-page-hint-${index + 1}.png`) });
+        await button.locator(clickTargets[index]).click();
+        assert.equal(await page.locator('.page.active').getAttribute('data-index'), String(index + 1));
+      }
+      assert.equal(await page.locator('.page-4 .scroll-hint').count(), 0);
     });
 
     for (const { name, userAgent, guide } of [
