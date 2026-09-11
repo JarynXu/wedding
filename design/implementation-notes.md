@@ -10,7 +10,7 @@
 
 加载页保留英文花体、邀请短句与开启按钮，不显示“婚礼请柬”四字及新人、日期、地点。迎宾页展示新人照片与姓名；第二页展示日期、流程和日历入口；第三页展示场地与地址；末页汇总新人、时间和地点。日历弹窗提供完整日程，供宾客在时间页主动查看和保存。
 
-网页标题和浏览器图标保留新人信息，用于页面识别与分享场景。该信息不受正文的分步呈现约束。标题为“新郎❤️新娘”，OG、页面描述和 Twitter 标签由配置生成并写入原始 HTML。`side` 与 `parents` 参数生成双方家长版副标题，由生产 Node 服务按请求渲染；请柬正文不随家长署名变化。600 × 600 的分享缩略图由迎宾照裁切，处理入口为 `design/prepare-share-image.mjs`。
+网页标题和浏览器图标保留新人信息，用于页面识别与分享场景。该信息不受正文的分步呈现约束。标题为“新郎❤️新娘”，OG、页面描述和 Twitter 标签由配置生成并写入原始 HTML。`side` 与 `parents` 参数生成双方家长版副标题，由生产 Node 服务按请求渲染；末页按家长身份显示邀请者与新人称谓。600 × 600 的分享缩略图由迎宾照裁切，处理入口为 `design/prepare-share-image.mjs`。
 
 微信自定义分享的前端接入位于 `src/wechat-share.js`。签名接口为空时不加载 SDK；当前未配置公众号签名服务，不能保证微信卡片的实际显示。接入步骤和验证范围见 [微信分享配置](../docs/wechat-sharing.md)。
 
@@ -26,11 +26,15 @@
 
 ## 迎宾参考图
 
-选定方案保存为 `design/welcome-reference.png`，分辨率为 941 × 1672。`design/prepare-welcome-reference.mjs` 清理原图文字及八片独立花瓣的笔画、投影，并修补受影响的金框，导出 `src/assets/cover-welcome-art.webp`。新人面部与上半身设为保护区域，花束与左下散焦枝叶保留。清理蒙版保存在 `design/welcome-cleanup-mask.png`，区域坐标位于 `design/welcome-reference-layout.json`。
+选定方案保存为 `design/welcome-reference.png`，分辨率为 941 × 1672。`design/prepare-welcome-reference.mjs` 清理原图文字及八片独立花瓣的笔画、投影，并修补受影响的金框。清理阶段避开设计稿中的人像，花束与左下散焦枝叶保留。清理蒙版保存在 `design/welcome-cleanup-mask.png`，区域坐标位于 `design/welcome-reference-layout.json`。
+
+清理完成后，脚本调用 `design/restore-classic-portrait.mjs`，从 `design/迎宾照.jpg` 的 5787 × 8185 婚纱原照恢复面部。两人各自按眼距等比缩放、眼睛中点平移；轮廓羽化，五官内部保持不透明，保留原照像素。发型、头纱与服装沿用迎宾设计，最终导出无损 `src/assets/cover-welcome-art.webp`。此步骤区别于清理阶段的“保护设计稿人像”，重新生成素材也会执行。原照哈希、定位坐标和面部掩膜位于 `design/classic/`。
 
 姓名和迎宾牌文字使用 HTML 排版。姓名读取 `src/config.js`；迎宾页展示姓名、合影、“TOGETHER FOREVER”及“Welcome”。文字坐标跟随参考图等比裁切。窄长屏补齐边框，角花从参考图提取至 `src/assets/cover-frame-corner.webp`。
 
-素材处理脚本使用 Sharp，运行入口为 `node design/prepare-welcome-reference.mjs`。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。旧版纸面合成保留在 `design/compose-cover.mjs`，不再作为当前迎宾页资源。
+素材处理脚本使用 Sharp，运行入口为 `node design/prepare-welcome-reference.mjs`，随后运行 `node design/prepare-share-image.mjs` 更新分享缩略图。分享地址携带图片版本参数，减少旧卡片图像缓存的影响。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。两个主题的原照合成共用 `design/portrait-composite.mjs`，各自维护定位与轮廓；中式版保留原有红底和旧发丝的连通清理。旧版纸面合成保留在 `design/compose-cover.mjs`，不再作为当前迎宾页资源。
+
+运行 `node --test tests/classic-portrait.test.mjs tests/chinese-portrait.test.mjs` 核对面部像素。默认主题检查同时使用原设计稿作为反例，避免把设计稿五官的原样保留误判为恢复原照。
 
 ## 毛玻璃面板
 

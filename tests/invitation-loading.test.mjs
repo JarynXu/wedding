@@ -376,6 +376,8 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '1', '多指手势不翻页');
 
         await mobile.locator('.nav-dot[data-index="2"]').tap();
+        // 先确认点击已切到目标页，避免旧页的 idle 让尺寸切换提前发生。
+        await mobile.waitForFunction(() => document.querySelector('.page.active').dataset.index === '2');
         await idle();
         await mobile.setViewportSize({ width: 360, height: 520 });
         await mobile.locator('.p3-map-btn').tap();

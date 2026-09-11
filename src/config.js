@@ -27,7 +27,7 @@ export const WEDDING_CONFIG = {
   share: {
     siteUrl: 'https://wedding.jaryn.com.cn',
     description: '良辰已定，佳期将至。诚邀您见证我们的婚礼，与我们共享这一份喜悦。',
-    image: '/share/wedding-portrait.jpg',
+    image: '/share/wedding-portrait.jpg?v=original-faces',
     chineseImage: '/share/chinese-wedding-portrait.jpg',
     imageWidth: 600,
     imageHeight: 600,

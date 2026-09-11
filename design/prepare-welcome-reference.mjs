@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { writeFile } from 'node:fs/promises';
+import { restoreClassicPortrait } from './restore-classic-portrait.mjs';
 
 const require = createRequire(import.meta.url);
 const sharp = require(process.env.SHARP_MODULE_PATH || 'sharp');
@@ -139,10 +140,11 @@ for (let y = 0; y < corner.height; y++) for (let x = 0; x < corner.width; x++) {
   restoreGold(corner.width - 1 - x, height - 1 - y, cornerPixels[(y * corner.width + x) * 4 + 3] / 255);
   restoreGold(width - corner.width + x, height - 1 - y, cornerPixels[(y * corner.width + x) * 4 + 3] / 255);
 }
-await sharp(output, { raw: { width, height, channels: 3 } }).webp({ quality: 94 }).toFile(asset('cover-welcome-art.webp'));
-await sharp(Buffer.from(mask.map(value => value * 255)), { raw: { width, height, channels: 1 } }).png().toFile(fileURLToPath(new URL('./welcome-cleanup-mask.png', import.meta.url)));
 const portraitRegions = [[270, 474, 456, 706], [445, 375, 645, 665], [200, 600, 795, 1240]];
-const protectedPortrait = marked.every(i => !portraitRegions.some(([left, top, right, bottom]) => i % width >= left && i % width <= right && Math.floor(i / width) >= top && Math.floor(i / width) <= bottom));
-if (!protectedPortrait) throw new Error('清理蒙版侵入人物保护区');
-await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'src/assets/cover-welcome-art.webp', modifiedPixels: marked.length, textIsLiveHtml: true, plaqueFrameIsLiveHtml: true, removedStaticPetals: staticPetals, protectedPortrait }, null, 2) + '\n');
-console.log(JSON.stringify({ width, height, modifiedPixels: marked.length, removedStaticPetals: staticPetals.length, protectedPortrait }));
+const cleanupPreservesReferencePortrait = marked.every(i => !portraitRegions.some(([left, top, right, bottom]) => i % width >= left && i % width <= right && Math.floor(i / width) >= top && Math.floor(i / width) <= bottom));
+if (!cleanupPreservesReferencePortrait) throw new Error('清理蒙版侵入人物保护区');
+const cleanedBackground = await sharp(output, { raw: { width, height, channels: 3 } }).png().toBuffer();
+await writeFile(asset('cover-welcome-art.webp'), await restoreClassicPortrait(sharp, cleanedBackground));
+await sharp(Buffer.from(mask.map(value => value * 255)), { raw: { width, height, channels: 1 } }).png().toFile(fileURLToPath(new URL('./welcome-cleanup-mask.png', import.meta.url)));
+await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'src/assets/cover-welcome-art.webp', modifiedPixels: marked.length, textIsLiveHtml: true, plaqueFrameIsLiveHtml: true, removedStaticPetals: staticPetals, cleanupPreservesReferencePortrait, portraitSource: 'design/迎宾照.jpg', portraitRestoredFromOriginal: true }, null, 2) + '\n');
+console.log(JSON.stringify({ width, height, modifiedPixels: marked.length, removedStaticPetals: staticPetals.length, cleanupPreservesReferencePortrait, portraitRestoredFromOriginal: true }));

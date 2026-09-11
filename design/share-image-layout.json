@@ -1,6 +1,7 @@
 {
   "source": "src/assets/cover-welcome-art.webp",
   "output": "public/share/wedding-portrait.jpg",
+  "url": "/share/wedding-portrait.jpg?v=original-faces",
   "crop": {
     "left": 135,
     "top": 330,
@@ -9,6 +10,6 @@
   },
   "width": 600,
   "height": 600,
-  "bytes": 52031,
-  "method": "原照裁切与缩放，未重绘人物或调整肤色"
+  "bytes": 52480,
+  "method": "由已恢复原照五官的迎宾图裁切与缩放，未重绘人物或调整肤色"
 }

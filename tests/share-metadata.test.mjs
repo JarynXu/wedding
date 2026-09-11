@@ -20,7 +20,7 @@ test('分享地址与新人姓名来自配置，修改域名可更新页面和�
   const changed = getShareMetadata(config);
   assert.equal(changed.title, '新郎❤️新娘');
   assert.equal(changed.url, 'https://invitation.example.com/');
-  assert.equal(changed.image, 'https://invitation.example.com/share/wedding-portrait.jpg');
+  assert.equal(changed.image, 'https://invitation.example.com/share/wedding-portrait.jpg?v=original-faces');
   for (const siteUrl of ['http://example.com', 'https://example.com/?guest=1', 'https://example.com/#page', 'https://name:secret@example.com']) {
     config.share.siteUrl = siteUrl;
     assert.throws(() => getShareMetadata(config));
@@ -89,7 +89,7 @@ test('生产 HTML 含完整分享信息，微信配置使用当前地址签名',
       assert.equal(data.pageDescription, data.description);
       assert.equal(data.url, 'https://wedding.jaryn.com.cn/');
       assert.equal(data.canonical, data.url);
-      assert.equal(data.image, data.url + 'share/wedding-portrait.jpg');
+      assert.equal(data.image, data.url + 'share/wedding-portrait.jpg?v=original-faces');
       assert.equal(data.type, 'website');
       const image = await readFile(new URL('../dist/share/wedding-portrait.jpg', import.meta.url));
       const size = await page.evaluate(async base64 => {

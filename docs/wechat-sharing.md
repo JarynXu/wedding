@@ -15,7 +15,7 @@
 
 `build/share-metadata.js` 在构建时写入普通版标题、OG、Twitter summary、canonical 和图片信息。运行时由 `server/app.js` 按请求参数生成家长版标签，抓取方不需要执行页面脚本。构建与服务共用 `src/share-html.js`，URL 署名按文本编码。`public/share/wedding-portrait.jpg` 是 600 × 600 JPEG，由当前迎宾照裁切，未重绘人物；裁切参数位于 `design/share-image-layout.json`。
 
-修改缩略图时运行 `node design/prepare-share-image.mjs`，脚本需要 Sharp，可通过 `SHARP_MODULE_PATH` 指定工具环境的模块路径。图片更新后如遇客户端缓存，可修改图片文件名与 `share.image`。
+修改缩略图时运行 `node design/prepare-share-image.mjs`，脚本需要 Sharp，可通过 `SHARP_MODULE_PATH` 指定工具环境的模块路径。默认迎宾图的五官由 `design/迎宾照.jpg` 恢复，合成记录见 `design/classic/portrait-provenance.json`。当前默认缩略图使用 `?v=original-faces` 版本参数；生成脚本仅用 URL 路径写入文件。图片更新后如遇客户端缓存，可修改图片文件名或地址版本参数与 `share.image`。
 
 ## 家长邀请链接
 
