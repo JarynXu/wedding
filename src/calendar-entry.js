@@ -4,6 +4,26 @@
   const status = document.getElementById('calendarStatus');
   const feedback = document.getElementById('calendarFeedback');
   const calendarLink = document.getElementById('calendarOpen');
+  const browserLink = document.getElementById('calendarOpenBrowser');
+  const continuation = new URL(location.href);
+  continuation.search = '?open=1';
+  continuation.hash = '';
+
+  // 公开网页没有宿主放行的保证，只提供由宾客点击的尝试；不使用计时器轮番唤起应用。
+  if (isWechat) {
+    const isAppleMobile = /iPhone|iPad|iPod/.test(navigator.userAgent)
+      || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    if (isAppleMobile && continuation.protocol === 'https:') {
+      browserLink.href = `x-safari-https:${continuation.href.slice('https:'.length)}`;
+      browserLink.textContent = '尝试在 Safari 中继续';
+    } else if (/Android/.test(navigator.userAgent) && ['http:', 'https:'].includes(continuation.protocol)) {
+      browserLink.href = `intent:${continuation.href.slice(continuation.protocol.length)}#Intent;scheme=${continuation.protocol.slice(0, -1)};action=android.intent.action.VIEW;category=android.intent.category.BROWSABLE;S.browser_fallback_url=${encodeURIComponent(continuation.href)};end`;
+    }
+    browserLink.hidden = !browserLink.hasAttribute('href');
+  }
+  browserLink.addEventListener('click', () => {
+    feedback.textContent = '若未打开，请使用右上角指引或复制链接。';
+  });
 
   async function copy(text) {
     try {
@@ -25,10 +45,7 @@
   }
 
   document.getElementById('calendarCopyLink').addEventListener('click', () => {
-    const url = new URL(location.href);
-    url.search = '?open=1';
-    url.hash = '';
-    copy(url.href);
+    copy(continuation.href);
   });
   document.getElementById('calendarCopyDetails').addEventListener('click', () => {
     const details = [...document.querySelectorAll('#calendarDetails > div')]
