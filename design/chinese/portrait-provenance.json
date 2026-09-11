@@ -1,0 +1,37 @@
+{
+  "originalSha256": "a617a44c6340f4191023a6dbf302126c4200ef191005d01f3ac6dc403ba4c4f1",
+  "output": "src/assets/chinese/portrait.webp",
+  "method": "中式礼服与盘发使用图像工具制作；脸部由原始合照等比缩放并平移合成，轮廓清除与边界连通的红底和旧发丝，仅轮廓边缘羽化，未调整五官或肤色；最终肖像使用无损 WebP。",
+  "faces": [
+    {
+      "name": "bride",
+      "scale": 0.40869565217391307,
+      "offset": [
+        92.35652173913041,
+        271.86956521739125
+      ],
+      "position": {
+        "left": 286,
+        "top": 411
+      },
+      "croppedWidth": 292,
+      "renderedWidth": 119,
+      "cleanedBackgroundPixels": 35052
+    },
+    {
+      "name": "groom",
+      "scale": 0.40183816970230335,
+      "offset": [
+        40.19769244786505,
+        246.3566406041938
+      ],
+      "position": {
+        "left": 474,
+        "top": 327
+      },
+      "croppedWidth": 335,
+      "renderedWidth": 135,
+      "cleanedBackgroundPixels": 42645
+    }
+  ]
+}

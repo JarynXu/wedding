@@ -1,0 +1,52 @@
+/* 首帧只依赖内嵌预览图、字形和此处样式。 */
+:root[data-theme='chinese'] {
+  --burgundy: #861520;
+  --burgundy-deep: #681018;
+  --gold: #bd873f;
+  --gold-dark: #9c6226;
+  --paper-cream: #fff3dc;
+}
+:root[data-theme='chinese'] body { background: #570b0a; }
+:root[data-theme='chinese'] .welcome-background { inset: 0; }
+:root[data-theme='chinese'] .preloader-frame-border { display: none; }
+:root[data-theme='chinese'] .preloader-content {
+  --glass-background: rgba(255, 248, 230, 0.12);
+  --glass-backdrop: blur(4px);
+  position: absolute;
+  top: 57%;
+  left: 7%;
+  right: 0;
+  margin: 0 auto;
+  width: 62%;
+  max-width: 290px;
+  padding: 14px 0;
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+}
+:root[data-theme='chinese'] :is(.welcome-eyebrow, .welcome-emblem, .preloader-title-box, .welcome-rule) { display: none; }
+:root[data-theme='chinese'] .welcome-message { font-size: 14px; color: #75121b; line-height: 2.2; letter-spacing: 0.14em; }
+:root[data-theme='chinese'] .preloader-progress-section { width: 91%; margin-top: 22px; }
+:root[data-theme='chinese'] .preloader-bar-bg { background: #dbc395; }
+:root[data-theme='chinese'] .preloader-bar-fill { background: #9b1b23; }
+:root[data-theme='chinese'] .preloader-meta { color: #8a501e; font-size: 10px; }
+:root[data-theme='chinese'] .preloader-action-area { margin-top: 22px; }
+:root[data-theme='chinese'] .btn-enter-invitation {
+  width: 96%;
+  min-height: 54px;
+  border-radius: 30px;
+  border: 2px solid #b68643;
+  outline: 1px solid #edcf91;
+  outline-offset: -5px;
+  background: linear-gradient(115deg, #6a0a10, #a02622 56%, #711119);
+  box-shadow: 0 4px 12px #811a1826;
+}
+:root[data-theme='chinese'] .btn-enter-text { font-size: 17px; }
+:root[data-theme='chinese'] .btn-enter-sub { font-size: 8px; }
+:root[data-theme='chinese'] .welcome-footnote { bottom: 6%; color: #efd39e; text-shadow: 0 1px 3px #580c09; }
+:root[data-theme='chinese'] .preloader-overlay[data-state='error'] .preloader-content { top: 54%; }
+@media (max-height: 620px) {
+  :root[data-theme='chinese'] .preloader-content { top: 57%; padding: 4px 0; }
+  :root[data-theme='chinese'] .welcome-message { font-size: 12px; }
+  :root[data-theme='chinese'] :is(.preloader-progress-section, .preloader-action-area) { margin-top: 13px; }
+}

@@ -4,6 +4,12 @@
   const status = document.getElementById('calendarStatus');
   const feedback = document.getElementById('calendarFeedback');
   const calendarLink = document.getElementById('calendarOpen');
+  const invitationParams = new URLSearchParams(location.search);
+  const returnUrl = new URL('./', location.href);
+  for (const key of ['theme', 'side', 'parents']) {
+    if (invitationParams.has(key)) returnUrl.searchParams.set(key, invitationParams.get(key));
+  }
+  document.querySelector('.back-link').href = returnUrl.href;
 
   async function copy(text) {
     try {
@@ -26,7 +32,8 @@
 
   document.getElementById('calendarCopyLink').addEventListener('click', () => {
     const url = new URL(location.href);
-    url.search = '?open=1';
+    url.search = returnUrl.search;
+    url.searchParams.set('open', '1');
     url.hash = '';
     copy(url.href);
   });

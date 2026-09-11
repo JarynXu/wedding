@@ -19,6 +19,7 @@ export function renderShareMetadata(html, share) {
     `<link rel="canonical" href="${escape(share.url)}">`,
     `<link rel="image_src" href="${escape(share.image)}">`,
   ];
-  return html.replace(/<title>.*?<\/title>/, () => `<title>${escape(share.title)}</title>`)
+  return html.replace(/<html\b[^>]*>/, tag => tag.replace(/\sdata-theme="[^"]*"/, '').replace('>', ` data-theme="${share.theme}">`))
+    .replace(/<title>.*?<\/title>/, () => `<title>${escape(share.title)}</title>`)
     .replace(SHARE_BLOCK, () => `<!-- share-metadata:start -->\n${tags.join('\n')}\n<!-- share-metadata:end -->`);
 }

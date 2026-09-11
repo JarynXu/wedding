@@ -4,10 +4,13 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: url('./assets/welcome-silk-roses.webp') center / cover no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
   opacity: 0;
   transition: opacity 450ms ease;
 }
+:root:not([data-theme='chinese']) .welcome-background::after { background-image: url('./assets/welcome-silk-roses.webp'); }
 .preloader-overlay.art-ready .welcome-background::after { opacity: 1; }
 
 /* 页面共用叠化节奏；旧页底图覆盖整个过渡，避免露出浅色空底。 */

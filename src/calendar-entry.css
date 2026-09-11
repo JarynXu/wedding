@@ -38,3 +38,8 @@ dd { margin: 0; overflow-wrap: anywhere; }
 a:focus-visible, button:focus-visible { outline: 2px solid #7a1f2b; outline-offset: 5px; }
 @media (max-width: 360px) { .calendar-shell { padding-inline: 16px; } .calendar-card { padding-inline: 20px; } h1 { font-size: 22px; } }
 @media (min-height: 780px) { .calendar-shell { padding-top: max(55px, env(safe-area-inset-top)); } }
+
+[data-theme='chinese'] body { background: radial-gradient(ellipse at 20% 0%, #b23628, transparent 65%), #6e1014; }
+[data-theme='chinese'] .calendar-card { background: #fff4df; border-color: #bd8a47; border-radius: 20px; outline-color: #bc883b; }
+[data-theme='chinese'] .primary-action { border-radius: 26px; background: #8b1820; }
+[data-theme='chinese'] .calendar-footnote { color: #edcf99; }

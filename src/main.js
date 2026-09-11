@@ -3,10 +3,13 @@ import './shell.css';
 import './glass.css';
 import './style.css';
 import './motion.css';
+import './themes/chinese.css';
 import { RosePetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WEDDING_CONFIG } from './config.js';
 import { getFamilyInvitation } from './family-invitation.js';
+import { resolveInvitationTheme } from './invitation-theme.js';
+import { applyChineseTheme } from './themes/chinese.js';
 import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
 
@@ -34,6 +37,8 @@ stylesReady.then(initializeInvitation).catch(error => {
 const coverOption1Url = new URL('./assets/cover_option_1_french_clean.jpg', import.meta.url).href;
 const coverOption2Url = new URL('./assets/cover_option_2_burgundy_velvet.jpg', import.meta.url).href;
 const defaultCoverUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
+const defaultHotelIconUrl = new URL('./assets/manor_castle.svg', import.meta.url).href;
+const invitationTheme = resolveInvitationTheme(location.search);
 const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
 
 function initializeInvitation() {
@@ -70,14 +75,9 @@ function initializeInvitation() {
       const coverBgPhoto = document.getElementById('coverBgPhoto');
       const coverParam = currentUrlParams.get('cover');
 
-      if (coverParam === 'opt1' && coverBgPhoto) {
-        coverBgPhoto.src = coverOption1Url;
-      } else if (coverParam === 'opt2' && coverBgPhoto) {
-        coverBgPhoto.src = coverOption2Url;
-      } else {
-        if (coverBgPhoto) {
-          coverBgPhoto.src = (config.assets && config.assets.coverBg) || defaultCoverUrl;
-        }
+      if (coverBgPhoto && invitationTheme === 'classic') {
+        coverBgPhoto.src = coverParam === 'opt1' ? coverOption1Url : coverParam === 'opt2' ? coverOption2Url : config.assets?.coverBg || defaultCoverUrl;
+        document.querySelector('.p3-castle-img').src = defaultHotelIconUrl;
       }
 
       // Page 2
@@ -381,6 +381,7 @@ function initializeInvitation() {
     // 全局配置渲染与开场仪式感预加载引擎启动
     // ==========================================
     renderConfigData();
+    if (invitationTheme === 'chinese') applyChineseTheme();
 
     const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
     const weddingPreloader = new WeddingPreloader({
@@ -549,6 +550,7 @@ function initializeInvitation() {
     function handleSystemCalendar() {
       if (/MicroMessenger/i.test(navigator.userAgent)) {
         const entry = new URL(`${import.meta.env.BASE_URL}calendar.html`, location.href);
+        entry.search = new URL(getShareMetadata(config, location.search).url).search;
         entry.searchParams.set('open', '1');
         location.assign(entry.href);
         return;
