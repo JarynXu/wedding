@@ -1082,8 +1082,8 @@
     }
 
     .modal-card.glass-surface { background: var(--glass-background); }
-    .modal-card.glass-surface :is(.map-stationery-card, .calendar-event-card) { background: rgba(255, 249, 236, 0.2); }
-    .modal-card.glass-surface :is(.map-copy-pill-btn, .map-app-btn, .calendar-option-btn.secondary) { background: rgba(255, 251, 242, 0.4); }
+    .modal-card.glass-surface :is(.map-stationery-card, .calendar-event-card) { background: rgba(255, 249, 236, 0.3); }
+    .modal-card.glass-surface :is(.map-copy-pill-btn, .map-app-btn, .calendar-option-btn.secondary) { background: rgba(255, 251, 242, 0.55); }
 
     .modal-close {
       position: absolute;
