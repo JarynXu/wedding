@@ -61,7 +61,7 @@
   letter-spacing: 0.16em;
 }
 .chinese-cover-title p { font: 8px/1.8 'Cinzel', serif; letter-spacing: 0.24em; margin-top: 3px; }
-.chinese-cover-title > span { display: inline-grid; place-items: center; font: 15px/1 'Noto Serif SC', serif; width: 21px; height: 23px; border: 1px solid #ae853e; margin-top: 7px; border-radius: 3px; }
+.chinese-cover-title > span { display: inline-grid; place-items: center; font: 15px/1 'Noto Serif SC', serif; letter-spacing: 0; width: 21px; height: 23px; border: 1px solid #ae853e; margin-top: 7px; border-radius: 3px; }
 .chinese-cover-blessing { position: absolute; z-index: 4; top: 19%; right: 7%; writing-mode: vertical-rl; font-size: 11px; letter-spacing: 0.18em; color: #7c201a; }
 
 :root[data-theme='chinese'] .p2-header-pediment { top: 17.5%; }
