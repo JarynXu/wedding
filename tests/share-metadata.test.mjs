@@ -27,6 +27,23 @@ test('分享地址与新人姓名来自配置，修改域名可更新页面和�
   }
 });
 
+test('家长署名按双方身份生成副标题，分享地址保留参数', () => {
+  const groom = getShareMetadata(WEDDING_CONFIG, new URLSearchParams({ side: 'groom', parents: '张先生、李女士', revision: 'test' }));
+  assert.equal(groom.description, '张先生、李女士敬邀亲朋，莅临儿子徐旨越与儿媳赵荣蓉的婚礼，共享良辰喜悦。');
+  const bride = getShareMetadata(WEDDING_CONFIG, new URLSearchParams({ side: 'bride', parents: '陈女士' }));
+  assert.equal(bride.description, '陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。');
+  assert.equal(groom.title, bride.title);
+  assert.equal(groom.image, bride.image);
+  assert.equal(new URL(groom.url).searchParams.get('parents'), '张先生、李女士');
+  assert.equal(new URL(groom.url).searchParams.get('side'), 'groom');
+  assert.equal(new URL(groom.url).searchParams.has('revision'), false);
+  assert.equal(getShareMetadata(WEDDING_CONFIG, '?from=singlemessage').description, WEDDING_CONFIG.share.description);
+  for (const search of ['?side=groom', '?parents=张先生', '?side=unknown&parents=张先生', '?side=groom&parents=', '?side=groom&side=bride&parents=张先生', '?side=groom&parents=张先生&parents=李女士', '?side=groom&parents=%3Cscript%3E', '?side=groom&parents=%0A张先生']) {
+    assert.throws(() => getShareMetadata(WEDDING_CONFIG, search));
+  }
+  assert.throws(() => getShareMetadata(WEDDING_CONFIG, new URLSearchParams({ side: 'bride', parents: '名'.repeat(61) })));
+});
+
 test('生产 HTML 含完整分享信息，微信配置使用当前地址签名', { timeout: 30000 }, async suite => {
   const html = await readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
   const moduleSource = await readFile(new URL('../src/wechat-share.js', import.meta.url));
@@ -121,6 +138,29 @@ test('生产 HTML 含完整分享信息，微信配置使用当前地址签名',
       assert.equal(result.calls[0].link, share.url);
       assert.equal(result.calls[0].imgUrl, share.image);
       assert.equal('desc' in result.calls[1], false, '朋友圈接口不传不存在的副标题字段');
+    });
+
+    await suite.test('微信家长版描述与链接一起设置，签名保留当前完整查询参数', async () => {
+      const search = new URLSearchParams({ side: 'bride', parents: '陈女士', revision: 'test' });
+      await page.evaluate(search => {
+        history.replaceState(null, '', '/invitation?' + search + '#date');
+        window.shareCalls = [];
+      }, search.toString());
+      const metadata = getShareMetadata(WEDDING_CONFIG, search);
+      const status = await page.evaluate(async metadata => {
+        const { configureWechatShare } = await import('/wechat-share.js');
+        return configureWechatShare(metadata, '/signature');
+      }, metadata);
+      assert.equal(status, 'configured');
+      assert.equal(signatureRequests.at(-1), origin + '/invitation?' + search);
+      const friend = await page.evaluate(() => {
+        const { success, fail, ...data } = window.shareCalls.find(call => call.target === 'friend');
+        return data;
+      });
+      assert.equal(friend.desc, '陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。');
+      assert.equal(new URL(friend.link).searchParams.get('parents'), '陈女士');
+      assert.equal(new URL(friend.link).searchParams.get('side'), 'bride');
+      assert.equal(new URL(friend.link).searchParams.has('revision'), false);
     });
 
     await suite.test('签名与 SDK 失败返回错误，保留页面内容', async () => {

@@ -12,9 +12,43 @@
 | `imageWidth` / `imageHeight` | 分享图片尺寸，与素材保持一致 |
 | `wechatSignatureEndpoint` | 同站的公众号签名接口；默认留空 |
 
-`build/share-metadata.js` 将标题、OG、Twitter summary、canonical 和图片信息写入原始 HTML。抓取方不需要执行页面脚本。`public/share/wedding-portrait.jpg` 是 600 × 600 JPEG，由当前迎宾照裁切，未重绘人物；裁切参数位于 `design/share-image-layout.json`。
+`build/share-metadata.js` 在构建时写入普通版标题、OG、Twitter summary、canonical 和图片信息。运行时由 `server/app.js` 按请求参数生成家长版标签，抓取方不需要执行页面脚本。构建与服务共用 `src/share-html.js`，URL 署名按文本编码。`public/share/wedding-portrait.jpg` 是 600 × 600 JPEG，由当前迎宾照裁切，未重绘人物；裁切参数位于 `design/share-image-layout.json`。
 
 修改缩略图时运行 `node design/prepare-share-image.mjs`，脚本需要 Sharp，可通过 `SHARP_MODULE_PATH` 指定工具环境的模块路径。图片更新后如遇客户端缓存，可修改图片文件名与 `share.image`。
+
+## 家长邀请链接
+
+在首页地址后添加 `side` 和 `parents`。`side=groom` 表示新郎家，`side=bride` 表示新娘家。`parents` 是署名，可填写一位或两位家长，程序不追加“夫妇”等称谓。以下姓名为示例，请替换为实际署名：
+
+```text
+?side=groom&parents=张先生、李女士
+?side=bride&parents=陈女士
+```
+
+对应副标题：
+
+- 新郎家：张先生、李女士敬邀亲朋，莅临儿子徐旨越与儿媳赵荣蓉的婚礼，共享良辰喜悦。
+- 新娘家：陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。
+
+标题、缩略图和请柬正文沿用普通版。分享链接和 canonical 保留两项家长参数，便于再次转发。调试参数及微信附加的来源参数不进入生成的分享链接；JS-SDK 签名仍使用当前实际访问地址的完整查询参数。
+
+署名上限为 60 字。缺少一项参数、重复参数、无效的 `side`、空署名、控制字符或尖括号会返回 HTTP 400。姓名中的引号、`&` 等字符按 HTML 文本编码，不作为标签执行。包含 `&` 或 `+` 的姓名应使用 URL 编码，建议通过 `URLSearchParams` 生成链接：
+
+```js
+const link = new URL('https://wedding-310889-6-1484253371.sh.run.tcloudbase.com/');
+link.search = new URLSearchParams({ side: 'groom', parents: '张先生、李女士' });
+console.log(link.href);
+```
+
+不携带家长参数的链接使用配置中的普通邀请文案。
+
+## 部署与运行
+
+执行 `npm ci`、`npm run build` 后，用 `npm start` 启动生产服务，默认监听 `8080`，健康检查为 `/healthz`。Docker 镜像采用 Node 22，保持原有服务端口。
+
+家长版需要当前 Node 服务或等价的动态 HTML 服务。只托管 `dist` 静态文件不会按 URL 参数生成原始 HTML 标签。原来的纯静态 Nginx 入口已移除。
+
+主页响应使用 `Cache-Control: no-store`，避免缓存混用家长文案。带内容哈希的媒体和字体继续使用静态缓存与范围请求，日历文件保留 `text/calendar; charset=utf-8` 和 `Content-Disposition: inline`。
 
 ## 微信接入边界
 
@@ -22,13 +56,13 @@ OG 描述网页内容，不保证微信把粘贴的链接生成指定卡片。�
 
 好友接口 `updateAppMessageShareData` 支持标题、描述、链接和图片。朋友圈接口 `updateTimelineShareData` 支持标题、链接和图片，没有独立描述字段。接口的成功回调表示分享内容设置完成，不表示宾客已发送分享。
 
-当前仓库已包含前端接入，未提供公众号凭据或签名服务。`wechatSignatureEndpoint` 留空时，仅使用静态元信息；不请求 SDK、不显示错误弹框、不阻塞请柬加载。
+当前仓库已包含前端接入，未提供公众号凭据或签名服务。`wechatSignatureEndpoint` 留空时，仅使用 HTML 元信息；不请求 SDK、不显示错误弹框、不阻塞请柬加载。家长参数不改变微信的接口权限要求。
 
 ## 配置签名服务
 
 1. 在公众号后台核对分享接口权限，将访问域名加入 JS 接口安全域名，并按后台要求提供域名验证文件。
 2. 在服务端保存 AppID、AppSecret；按微信要求获取并缓存 `access_token`、`jsapi_ticket`。不要把 AppSecret 或 ticket 放进前端配置、`VITE_*` 环境变量或 Git。
-3. 部署同站签名接口，例如 `/api/wechat-signature`，并配置 Nginx 将该路径转发到签名服务。当前静态 Nginx 没有该接口，不能只填写地址就启用。
+3. 部署同站签名接口，例如 `/api/wechat-signature`。可在 Node 服务中接入该路由，或由托管平台转发到签名服务。当前服务没有该接口，不能只填写地址就启用。
 4. 接口接收 GET 参数 `url`，返回 JSON 对象，字段为 `appId`（字符串）、`timestamp`（整数秒）、`nonceStr`（字符串）、`signature`（40 位 SHA-1 十六进制字符串）。仅允许为本站合法访问地址签名；不向前端返回 AppSecret、access_token 或 ticket。
 5. 将接口路径填入 `share.wechatSignatureEndpoint`。前端只在微信环境内调用它，随后从微信官方地址加载 JS-SDK 1.6.0，配置好友和朋友圈分享内容。
 
@@ -38,9 +72,9 @@ OG 描述网页内容，不保证微信把粘贴的链接生成指定卡片。�
 
 ## 验证
 
-构建后运行 `node --test tests/share-metadata.test.mjs`。测试需要 Playwright，可通过 `PLAYWRIGHT_MODULE_PATH` 与 `PLAYWRIGHT_CHANNEL` 指定工具环境。
+构建后运行 `node --test tests/share-metadata.test.mjs tests/parent-sharing.test.mjs`。测试需要 Playwright，可通过 `PLAYWRIGHT_MODULE_PATH` 与 `PLAYWRIGHT_CHANNEL` 指定工具环境。
 
-检查覆盖原始 HTML 的元信息、域名替换、缩略图尺寸、签名地址、SDK 接口参数及失败处理。SDK 参数检查使用测试替身，不属于微信真机验证。
+检查覆盖原始 HTML 的元信息、双方家长和单人署名、异常参数、HTML 编码、并发响应、域名替换、缩略图尺寸、签名地址、SDK 接口参数及失败处理。SDK 参数检查使用测试替身，不属于微信真机验证。服务检查覆盖健康检查、静态文件、音乐范围下载、缓存与压缩。
 
 上线后须验证图片链接无需登录即可返回 JPEG，并在微信里打开请柬，使用右上角菜单分别分享给好友和朋友圈，检查实际标题、缩略图与好友副标题。若域名变化，还需更新公众号的接口安全域名及服务端签名允许范围。
 

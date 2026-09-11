@@ -10,7 +10,7 @@
 
 加载页保留英文花体、邀请短句与开启按钮，不显示“婚礼请柬”四字及新人、日期、地点。迎宾页展示新人照片与姓名；第二页展示日期、流程和日历入口；第三页展示场地与地址；末页汇总新人、时间和地点。日历弹窗提供完整日程，供宾客在时间页主动查看和保存。
 
-网页标题和浏览器图标保留新人信息，用于页面识别与分享场景。该信息不受正文的分步呈现约束。标题为“新郎❤️新娘”，OG、页面描述和 Twitter 标签由配置生成并写入原始 HTML。600 × 600 的分享缩略图由迎宾照裁切，处理入口为 `design/prepare-share-image.mjs`。
+网页标题和浏览器图标保留新人信息，用于页面识别与分享场景。该信息不受正文的分步呈现约束。标题为“新郎❤️新娘”，OG、页面描述和 Twitter 标签由配置生成并写入原始 HTML。`side` 与 `parents` 参数生成双方家长版副标题，由生产 Node 服务按请求渲染；请柬正文不随家长署名变化。600 × 600 的分享缩略图由迎宾照裁切，处理入口为 `design/prepare-share-image.mjs`。
 
 微信自定义分享的前端接入位于 `src/wechat-share.js`。签名接口为空时不加载 SDK；当前未配置公众号签名服务，不能保证微信卡片的实际显示。接入步骤和验证范围见 [微信分享配置](../docs/wechat-sharing.md)。
 
@@ -54,7 +54,7 @@
 
 网页不判断系统是否已保存日程。日历入口不使用等待计时器，不根据页面停留时间报告成功或失败。
 
-日历文件的响应使用 `Content-Type: text/calendar; charset=utf-8` 和 `Content-Disposition: inline; filename="wedding.ics"`。Nginx 与 Vite 开发、预览服务均配置这两个响应头；Vite 由 `build/calendar-response.js` 设置。`node --test tests/calendar-response.test.mjs` 检查两个服务在根路径和子路径下的真实 HTTP 响应。
+日历文件的响应使用 `Content-Type: text/calendar; charset=utf-8` 和 `Content-Disposition: inline; filename="wedding.ics"`。生产 Node 服务与 Vite 开发、预览服务均配置这两个响应头；Vite 由 `build/calendar-response.js` 设置。`node --test tests/calendar-response.test.mjs tests/parent-sharing.test.mjs` 检查开发、预览及生产服务的真实 HTTP 响应。
 
 对照来源为用户提供的 `docs/references/server.js` 中日历文件的响应配置。参考目录中的两份 HTML 相同，其微信分支仍显示操作指引；参考 ICS 与 `public/wedding.ics` 的内容相同。`inline` 表达文件的呈现方式，不能保证微信调用系统日历。线上仍出现下载时，应核对实际网址的响应头、手机系统和微信版本，不能依据配置文件或请求发出就认定导入成功。[MDN：Content-Disposition](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Disposition)。
 

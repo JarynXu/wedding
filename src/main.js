@@ -10,7 +10,7 @@ import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
 
 // 分享配置独立于请柬素材加载，不阻塞开场或音乐。
-configureWechatShare(getShareMetadata(WEDDING_CONFIG), WEDDING_CONFIG.share.wechatSignatureEndpoint).then(state => {
+configureWechatShare(getShareMetadata(WEDDING_CONFIG, location.search), WEDDING_CONFIG.share.wechatSignatureEndpoint).then(state => {
   document.documentElement.dataset.wechatShare = state;
 }).catch(error => {
   document.documentElement.dataset.wechatShare = 'failed';
@@ -45,7 +45,7 @@ function initializeInvitation() {
     function renderConfigData() {
       if (!config) return;
 
-      document.title = getShareMetadata(config).title;
+      document.title = getShareMetadata(config, location.search).title;
 
       // Page 1
       const p1Names = document.getElementById('p1CouplesNames');
