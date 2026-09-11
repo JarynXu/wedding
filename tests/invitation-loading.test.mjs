@@ -424,21 +424,93 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.equal(await mobile.locator('#calendarHelp').count(), 0);
         if (process.env.WEDDING_QA_DIR) await mobile.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'mobile-calendar.png') });
         if (guide) {
+          const handoffRequests = [];
+          mobile.on('request', request => handoffRequests.push(new URL(request.url()).pathname));
           await mobile.locator('[data-action="system-calendar"]').tap();
-          await mobile.locator('#wechatGuideOverlay').waitFor({ state: 'visible' });
-          assert.match(await mobile.locator('.wechat-guide-text').innerText(), /在默认浏览器打开/);
-          await mobile.locator('.wechat-guide-btn').tap();
-          assert.equal(await mobile.locator('#wechatGuideOverlay').isVisible(), false);
-          assert.equal(await mobile.locator('#calendarModal').isVisible(), true);
+          await mobile.waitForURL('**/calendar.html?open=1');
+          assert.match(await mobile.locator('.browser-guide').innerText(), /在默认浏览器打开/);
+          assert.equal(await mobile.locator('#calendarOpen').isVisible(), false);
+          assert.equal(await mobile.locator('#preloaderOverlay').count(), 0);
           assert.equal(calendarRequests, 0, '微信内不发起日历文件下载');
+          assert.deepEqual(handoffRequests, ['/calendar.html']);
+          if (process.env.WEDDING_QA_DIR) await mobile.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'calendar-handoff-wechat.png') });
+
+          // 外部浏览器使用全新上下文，不能依赖微信缓存或 localStorage 恢复流程。
+          const external = await browser.newPage({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
+          try {
+            const requests = [];
+            external.on('request', request => requests.push(new URL(request.url()).pathname));
+            await external.route('**/wedding.ics', route => route.fulfill({ status: 204 }));
+            const opened = external.waitForResponse('**/wedding.ics');
+            await external.goto(mobile.url(), { waitUntil: 'commit' });
+            await opened;
+            assert.equal(await external.locator('#calendarOpen').isVisible(), true);
+            assert.equal(await external.locator('.browser-guide').isVisible(), false);
+            assert.equal(await external.locator('#preloaderOverlay').count(), 0);
+            assert.deepEqual(requests, ['/calendar.html', '/wedding.ics'], '不加载请柬脚本、字体、照片或音乐');
+            if (process.env.WEDDING_QA_DIR) await external.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'calendar-handoff-browser.png') });
+            const retry = external.waitForResponse('**/wedding.ics');
+            await external.locator('#calendarOpen').tap();
+            await retry;
+            await external.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+            assert.equal(requests.filter(path => path === '/wedding.ics').length, 2, '手动重试一次，从日历返回时不循环打开');
+          } finally { await external.close(); }
         } else {
           const request = mobile.waitForResponse('**/wedding.ics');
           await mobile.locator('[data-action="system-calendar"]').tap();
           await request;
           assert.equal(calendarRequests, 1);
-          assert.equal(await mobile.locator('#wechatGuideOverlay').isVisible(), false);
+          assert.equal(await mobile.locator('#wechatGuideOverlay').count(), 0);
         }
       } finally { await mobile.close(); }
+    });
+
+    await suite.test('日历直达页无脚本时保留原生添加链接，手机布局可滚动且不溢出', async () => {
+      const simple = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 568 } });
+      try {
+        let requests = 0;
+        await simple.route('**/wedding.ics', route => { requests++; return route.fulfill({ status: 204 }); });
+        await simple.goto(url + 'calendar.html?open=1');
+        assert.equal(requests, 0);
+        assert.equal(await simple.locator('#calendarCopyDetails').isVisible(), false);
+        for (const [width, height] of [[320, 568], [375, 667], [390, 844], [768, 1024]]) {
+          await simple.setViewportSize({ width, height });
+          const fits = await simple.evaluate(() => ({
+            horizontal: document.documentElement.scrollWidth <= innerWidth,
+            button: document.getElementById('calendarOpen').getBoundingClientRect().height,
+          }));
+          assert.equal(fits.horizontal, true);
+          assert.ok(fits.button >= 44);
+        }
+        const opened = simple.waitForResponse('**/wedding.ics');
+        await simple.locator('#calendarOpen').click();
+        await opened;
+        assert.equal(requests, 1);
+      } finally { await simple.close(); }
+    });
+
+    await suite.test('日历直达页复制可继续添加的地址与当前日程，失败不报告已复制', async () => {
+      const copyPage = await browser.newPage({ userAgent: 'Mozilla/5.0 MicroMessenger/8.0', viewport: { width: 375, height: 667 } });
+      try {
+        await copyPage.addInitScript(() => {
+          Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { window.copiedCalendarText = text; } } });
+        });
+        await copyPage.goto(url + 'calendar.html?open=1&revision=test#calendar');
+        await copyPage.locator('#calendarCopyLink').click();
+        assert.equal(await copyPage.evaluate(() => window.copiedCalendarText), url + 'calendar.html?open=1');
+        await copyPage.locator('#calendarCopyDetails').click();
+        const text = await copyPage.evaluate(() => window.copiedCalendarText);
+        assert.match(text, /徐旨越.*赵荣蓉/);
+        assert.match(text, /2026年10月17日/);
+        assert.match(text, /11:30/);
+        assert.match(text, /晶都大道99号/);
+        await copyPage.evaluate(() => {
+          navigator.clipboard.writeText = async () => { throw new Error('test denied'); };
+          document.execCommand = () => { throw new Error('test denied'); };
+        });
+        await copyPage.locator('#calendarCopyDetails').click();
+        assert.match(await copyPage.locator('#calendarFeedback').innerText(), /未能复制/);
+      } finally { await copyPage.close(); }
     });
   } finally {
     releaseMusic?.();

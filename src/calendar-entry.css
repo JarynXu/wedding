@@ -1,0 +1,37 @@
+:root { color-scheme: light; font-family: "Songti SC", "STSong", "SimSun", Georgia, serif; color: #513c31; background: #f4ede1; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; background: radial-gradient(ellipse at 15% 8%, #fffaf0 0, transparent 55%), linear-gradient(135deg, #f4eddf, #ebe0cf); }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { font: inherit; cursor: pointer; }
+.calendar-shell { width: min(100%, 430px); margin: auto; padding: max(30px, env(safe-area-inset-top)) 22px max(20px, env(safe-area-inset-bottom)); }
+.calendar-card { padding: 30px 24px 21px; text-align: center; background: rgba(255, 252, 246, 0.8); border: 1px solid #b79765; outline: 1px solid rgba(185, 151, 101, 0.3); outline-offset: -6px; box-shadow: 0 12px 36px rgba(92, 62, 31, 0.08); }
+.eyebrow { font: 10px/1.5 Georgia, serif; letter-spacing: 0.32em; color: #8b693e; }
+.calendar-emblem { width: 48px; height: 48px; margin: 16px auto; }
+.calendar-emblem svg { width: 100%; height: 100%; }
+h1 { margin: 0; color: #7a1f2b; font-size: 24px; font-weight: 400; letter-spacing: 0.12em; }
+.couple { margin: 13px 0 0; font-size: 17px; line-height: 1.7; letter-spacing: 0.07em; }
+.rule { display: flex; align-items: center; justify-content: center; gap: 9px; width: 95px; margin: 20px auto; color: #a5804d; font-size: 9px; }
+.rule span { flex: 1; height: 1px; background: #bea174; }
+.event-details { margin: 0; padding: 0 0 18px; border-bottom: 1px solid #ded0bb; font-size: 13px; line-height: 1.8; text-align: left; }
+.event-details > div { display: grid; grid-template-columns: 2.5em 1fr; gap: 12px; margin: 9px 0; }
+dt { color: #90754f; }
+dd { margin: 0; overflow-wrap: anywhere; }
+.calendar-status { margin: 18px 0 14px; font-size: 12px; line-height: 1.9; }
+.primary-action { display: flex; min-height: 48px; width: 100%; align-items: center; justify-content: center; padding: 12px 8px; background: #7a1f2b; border: 1px solid #9d7444; color: #fff4df; outline: 1px solid rgba(237, 204, 154, 0.4); outline-offset: -4px; text-decoration: none; font-size: 15px; letter-spacing: 0.08em; }
+.primary-action:active { background: #591421; }
+.secondary-action { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 8px; color: #7a1f2b; background: transparent; border: 0; font-size: 13px; }
+.copy-feedback { margin: 0; font-size: 12px; line-height: 1.8; color: #6b5036; }
+.copy-feedback:empty { display: none; }
+.back-link { display: inline-flex; min-height: 44px; align-items: center; color: #826b4c; font-size: 12px; text-underline-offset: 4px; }
+.calendar-footnote { margin: 19px 0 0; text-align: center; color: #89704c; font-size: 11px; letter-spacing: 0.17em; }
+.browser-guide { position: relative; padding: 6px 25px 24px 0; text-align: center; color: #7a1f2b; }
+.browser-guide p { margin: 0 0 8px; font-size: 15px; line-height: 1.9; }
+.browser-guide strong { font-weight: 600; }
+.browser-guide span { color: #80684a; font-size: 11px; }
+.guide-arrow { position: absolute; right: -8px; top: -13px; }
+[data-calendar-env="browser"] [data-wechat-only], [data-calendar-env="wechat"] [data-browser-only] { display: none; }
+[data-calendar-script="pending"] button { display: none; }
+[data-calendar-env="wechat"] .primary-action { margin-top: 20px; }
+a:focus-visible, button:focus-visible { outline: 2px solid #7a1f2b; outline-offset: 5px; }
+@media (max-width: 360px) { .calendar-shell { padding-inline: 16px; } .calendar-card { padding-inline: 20px; } h1 { font-size: 22px; } }
+@media (min-height: 780px) { .calendar-shell { padding-top: max(55px, env(safe-area-inset-top)); } }

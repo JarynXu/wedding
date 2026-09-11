@@ -27,6 +27,17 @@ for (const mode of ['dev', 'preview']) {
         assert.match(home.headers.get('content-type'), /^text\/html/);
         assert.equal(home.headers.get('content-disposition'), null);
         await home.arrayBuffer();
+        const entry = await fetch(url + 'calendar.html?open=1');
+        assert.equal(entry.status, 200);
+        assert.match(entry.headers.get('content-type'), /^text\/html/);
+        const html = await entry.text();
+        assert.match(html, /<h1>保存婚礼日程<\/h1>/);
+        assert.match(html, /2026年10月17日/);
+        assert.match(html, /href="\.\/wedding\.ics"/);
+        assert.doesNotMatch(html, /preloaderOverlay|rel="stylesheet"|\.mp3|\.woff2/);
+        const scripts = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(match => match[1]);
+        assert.deepEqual(scripts, mode === 'dev' ? [base + '@vite/client'] : [], '开发服务仅允许 Vite 自身的调试脚本');
+        assert.ok(Buffer.byteLength(html) < 20000, '直达页内嵌资源预算为 20KB');
       } finally {
         if (mode === 'dev') await server.close();
         else {

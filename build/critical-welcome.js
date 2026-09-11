@@ -10,6 +10,7 @@ export function criticalWelcome() {
     transformIndexHtml: {
       order: 'post',
       handler(html) {
+        if (!html.includes('<!-- critical-welcome -->')) return html;
         const fonts = [
           ['Welcome Serif', 'welcome-serif.woff2'],
           ['Welcome Capitals', 'welcome-capitals.woff2'],

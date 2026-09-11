@@ -6,6 +6,7 @@ export function shareMetadata() {
   return {
     name: 'share-metadata',
     transformIndexHtml(html) {
+      if (html.includes('<!-- calendar-entry -->')) return html;
       const share = getShareMetadata(WEDDING_CONFIG);
       const property = (name, content) => ({ tag: 'meta', attrs: { property: name, content: String(content) }, injectTo: 'head' });
       const meta = (name, content) => ({ tag: 'meta', attrs: { name, content }, injectTo: 'head' });

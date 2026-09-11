@@ -256,7 +256,7 @@ function initializeInvitation() {
 
     function navigationBlocked() {
       return !document.body.classList.contains('invitation-open')
-        || !!document.querySelector('.modal-backdrop.open, .wechat-guide-overlay.show');
+        || !!document.querySelector('.modal-backdrop.open');
     }
 
     function nextPage() {
@@ -478,7 +478,6 @@ function initializeInvitation() {
         'copy-address': copyAddress,
         'system-calendar': handleSystemCalendar,
         'copy-calendar': copyCalendarInfo,
-        'close-wechat-guide': closeWechatGuide,
       };
 
       actions[target.dataset.action]?.();
@@ -517,7 +516,9 @@ function initializeInvitation() {
 
     function handleSystemCalendar() {
       if (/MicroMessenger/i.test(navigator.userAgent)) {
-        showWechatGuide();
+        const entry = new URL(`${import.meta.env.BASE_URL}calendar.html`, location.href);
+        entry.searchParams.set('open', '1');
+        location.assign(entry.href);
         return;
       }
       try {
@@ -611,13 +612,4 @@ END:VCALENDAR`;
       window.open(url, '_blank');
     }
 
-    function showWechatGuide() {
-      const overlay = document.getElementById('wechatGuideOverlay');
-      if (overlay) overlay.classList.add('show');
-    }
-
-    function closeWechatGuide() {
-      const overlay = document.getElementById('wechatGuideOverlay');
-      if (overlay) overlay.classList.remove('show');
-    }
 }

@@ -1,0 +1,50 @@
+(() => {
+  const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+  document.documentElement.dataset.calendarEnv = isWechat ? 'wechat' : 'browser';
+  const status = document.getElementById('calendarStatus');
+  const feedback = document.getElementById('calendarFeedback');
+  const calendarLink = document.getElementById('calendarOpen');
+
+  async function copy(text) {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('当前浏览器没有剪贴板接口');
+      await navigator.clipboard.writeText(text);
+      feedback.textContent = '已复制';
+    } catch {
+      const field = document.createElement('textarea');
+      field.value = text;
+      field.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+      document.body.append(field);
+      field.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); }
+      catch { copied = false; }
+      finally { field.remove(); }
+      feedback.textContent = copied ? '已复制' : '未能复制，请选择页面文字后复制';
+    }
+  }
+
+  document.getElementById('calendarCopyLink').addEventListener('click', () => {
+    const url = new URL(location.href);
+    url.search = '?open=1';
+    url.hash = '';
+    copy(url.href);
+  });
+  document.getElementById('calendarCopyDetails').addEventListener('click', () => {
+    const details = [...document.querySelectorAll('#calendarDetails > div')]
+      .map(row => `${row.querySelector('dt').textContent}：${row.querySelector('dd').textContent}`);
+    copy(`【婚礼日程】\n${document.querySelector('.couple').textContent}\n${details.join('\n')}`);
+  });
+  calendarLink.addEventListener('click', () => {
+    status.textContent = '请在日历窗口中确认添加。';
+  });
+  document.documentElement.dataset.calendarScript = 'ready';
+
+  // 每次打开直达地址只尝试一次；从日历返回页面时不在 pageshow 中重复发起。
+  // 自动导航被浏览器限制时，原生链接仍可通过一次点击打开。
+  if (!isWechat && new URLSearchParams(location.search).get('open') === '1') {
+    status.textContent = '请在日历窗口中确认添加；未出现窗口时，可点击下方按钮。';
+    try { location.assign(calendarLink.href); }
+    catch { status.textContent = '日程未能打开，请点击下方按钮继续。'; }
+  }
+})();

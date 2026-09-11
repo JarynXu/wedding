@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN" data-calendar-env="browser" data-calendar-script="pending">
+<head>
+  <!-- calendar-entry -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>婚礼日程 · {{couple}}</title>
+  <!-- calendar-icon -->
+  <!-- calendar-style -->
+</head>
+<body>
+  <div class="calendar-shell">
+    <aside class="browser-guide" data-wechat-only>
+      <svg class="guide-arrow" width="46" height="52" viewBox="0 0 46 52" fill="none" aria-hidden="true"><path d="M8 46C12 24 24 18 38 8M23 10L39 7L38 25" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>点击右上角 <strong>···</strong><br>选择 <strong>在默认浏览器打开</strong></p>
+      <span>浏览器打开后将继续添加日程</span>
+    </aside>
+    <main class="calendar-card">
+      <div class="eyebrow">SAVE THE DATE</div>
+      <div class="calendar-emblem" aria-hidden="true"><!-- invitation-mark --></div>
+      <h1>保存婚礼日程</h1>
+      <p class="couple">{{couple}}</p>
+      <div class="rule" aria-hidden="true"><span></span>✦<span></span></div>
+      <dl class="event-details" id="calendarDetails">
+        <div><dt>日期</dt><dd>{{date}}</dd></div>
+        <div><dt>入场</dt><dd>{{arrival}}</dd></div>
+        <div><dt>地点</dt><dd>{{venue}}</dd></div>
+        <div><dt>地址</dt><dd>{{address}}</dd></div>
+      </dl>
+      <p class="calendar-status" id="calendarStatus" data-browser-only>点击下方按钮，在日历窗口中确认添加。</p>
+      <a class="primary-action" id="calendarOpen" href="./wedding.ics" data-browser-only>继续添加日程</a>
+      <button class="primary-action" id="calendarCopyLink" type="button" data-wechat-only>复制日历直达链接</button>
+      <button class="secondary-action" id="calendarCopyDetails" type="button">复制婚礼日程</button>
+      <p class="copy-feedback" id="calendarFeedback" role="status"></p>
+      <a class="back-link" href="./">返回请柬</a>
+    </main>
+    <p class="calendar-footnote">愿与您共赴良辰</p>
+  </div>
+  <!-- calendar-script -->
+</body>
+</html>
