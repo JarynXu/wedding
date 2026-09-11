@@ -533,47 +533,6 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.match(await copyPage.locator('#calendarFeedback').innerText(), /未能复制/);
       } finally { await copyPage.close(); }
     });
-
-    await suite.test('页内浏览器尝试保留日历地址，只在真实点击时触发，不声称已经打开', async () => {
-      const entryHtml = await readFile(path.join(dist, 'calendar.html'), 'utf8');
-      for (const [userAgent, protocol, label] of [
-        ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) MicroMessenger/8.0', 'x-safari-https:', 'Safari'],
-        ['Mozilla/5.0 (Linux; Android 14) MicroMessenger/8.0', 'intent:', '浏览器'],
-      ]) {
-        const probe = await browser.newPage({ userAgent, viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true });
-        try {
-          // 只校验页面输出与用户手势，不把桌面浏览器测试当成微信放行外部应用。
-          const requests = [];
-          probe.on('request', request => requests.push(request.url()));
-          await probe.route('https://calendar.example.test/calendar.html*', route => route.fulfill({ contentType: 'text/html; charset=utf-8', body: entryHtml }));
-          await probe.goto('https://calendar.example.test/calendar.html?open=1&revision=test#details');
-          const link = probe.locator('#calendarOpenBrowser');
-          assert.equal(await link.isVisible(), true);
-          assert.match(await link.innerText(), new RegExp(`尝试在 ${label}|尝试在${label}`));
-          const href = await link.getAttribute('href');
-          const target = 'https://calendar.example.test/calendar.html?open=1';
-          assert.ok(href.startsWith(protocol));
-          assert.doesNotMatch(href, /revision=test|#details/);
-          if (protocol === 'x-safari-https:') assert.equal(href, 'x-safari-https://calendar.example.test/calendar.html?open=1');
-          else {
-            assert.match(href, /action=android.intent.action.VIEW;/);
-            assert.match(href, /category=android.intent.category.BROWSABLE;/);
-            assert.ok(href.includes(`S.browser_fallback_url=${encodeURIComponent(target)};`));
-            assert.doesNotMatch(href, /package=|component=|SEL;/);
-          }
-          assert.equal(requests.length, 1, '页面打开时不自动试探外部应用');
-          await link.evaluate(element => element.addEventListener('click', event => {
-            window.browserAttemptGesture = { trusted: event.isTrusted, active: navigator.userActivation.isActive };
-            event.preventDefault();
-          }));
-          await link.tap();
-          assert.deepEqual(await probe.evaluate(() => window.browserAttemptGesture), { trusted: true, active: true });
-          assert.match(await probe.locator('#calendarFeedback').innerText(), /若未打开/);
-          assert.equal(await probe.locator('.browser-guide').isVisible(), true);
-          if (process.env.WEDDING_QA_DIR) await probe.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, `calendar-browser-attempt-${protocol === 'intent:' ? 'android' : 'ios'}.png`) });
-        } finally { await probe.close(); }
-      }
-    });
   } finally {
     releaseMusic?.();
     await browser.close();

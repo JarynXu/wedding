@@ -19,8 +19,6 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .calendar-status { margin: 18px 0 14px; font-size: 12px; line-height: 1.9; }
 .primary-action { display: flex; min-height: 48px; width: 100%; align-items: center; justify-content: center; padding: 12px 8px; background: #7a1f2b; border: 1px solid #9d7444; color: #fff4df; outline: 1px solid rgba(237, 204, 154, 0.4); outline-offset: -4px; text-decoration: none; font-size: 15px; letter-spacing: 0.08em; }
 .primary-action:active { background: #591421; }
-.primary-action[hidden] { display: none; }
-.secondary-actions { display: flex; gap: 8px; }
 .secondary-action { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 8px; color: #7a1f2b; background: transparent; border: 0; font-size: 13px; }
 .copy-feedback { margin: 0; font-size: 12px; line-height: 1.8; color: #6b5036; }
 .copy-feedback:empty { display: none; }

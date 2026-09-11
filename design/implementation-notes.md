@@ -52,10 +52,6 @@
 
 直达页提供日程和链接复制、返回请柬入口。普通浏览器中从请柬点击日历按钮仍打开 `wedding.ics`，无需经过直达页。原请柬的完整素材加载条件保持不变。
 
-微信直达页提供“尝试在浏览器中继续”的原生链接。iPhone / iPad 的 HTTPS 地址使用 `x-safari-https:`，Android 使用不指定浏览器包名的 `intent:` 链接，保留相同日历直达地址作为 fallback。链接只由宾客点击触发，不自动试探应用，不根据计时器或失焦事件报告成功。复制按钮并列排列，右上角指引保留。
-
-这些链接不是微信官方保证的跳转接口。Safari URL Scheme 的实际使用可见 [WebKit 讨论](https://bugs.webkit.org/show_bug.cgi?id=240025)；Android 规则见 [Chrome Intent 文档](https://developer.chrome.com/docs/android/intents)。[InAppDebugger 的真机记录](https://github.com/shalanah/inapp-debugger) 将微信的 Safari 与浏览器 Scheme 标为不支持，因此该入口按试用功能呈现，尚未验证当前微信版本能否放行。不能将浏览器里的 URL 构造测试当成微信跳转成功。普通 HTTP 的 iPhone 预览不显示 Safari 尝试入口，避免擅自将目标升级成错误的 HTTPS 地址。
-
 网页不判断系统是否已保存日程。日历入口不使用等待计时器，不根据页面停留时间报告成功或失败。
 
 日历文件的响应使用 `Content-Type: text/calendar; charset=utf-8` 和 `Content-Disposition: inline; filename="wedding.ics"`。Nginx 与 Vite 开发、预览服务均配置这两个响应头；Vite 由 `build/calendar-response.js` 设置。`node --test tests/calendar-response.test.mjs` 检查两个服务在根路径和子路径下的真实 HTTP 响应。
