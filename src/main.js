@@ -430,7 +430,6 @@ function initializeInvitation() {
     function closeModal(id) {
       const modal = document.getElementById(id);
       if (!modal) return;
-      if (id === 'calendarModal') finishCalendarAttempt();
       modal.classList.remove('open');
       modal.inert = true;
       modalTriggers.get(modal)?.focus({ preventScroll: true });
@@ -469,7 +468,6 @@ function initializeInvitation() {
         'copy-address': copyAddress,
         'system-calendar': handleSystemCalendar,
         'copy-calendar': copyCalendarInfo,
-        'calendar-help': showCalendarHelp,
         'close-wechat-guide': closeWechatGuide,
       };
 
@@ -501,50 +499,25 @@ function initializeInvitation() {
 
 
     // ==========================================
-    // 日历先交给浏览器处理；网页不判断系统是否已保存日程。
+    // 微信内由宾客选择外部浏览器；其他浏览器打开日历文件。
     // ==========================================
-    const calendarHelp = document.getElementById('calendarHelp');
-    let calendarAttemptController = null;
-    let calendarAttemptTimer = null;
-
     function addToCalendar() {
-      finishCalendarAttempt();
       openModal('calendarModal');
     }
 
-    function finishCalendarAttempt(offerHelp = false) {
-      clearTimeout(calendarAttemptTimer);
-      calendarAttemptController?.abort();
-      calendarAttemptController = null;
-      calendarHelp.hidden = !offerHelp;
-    }
-
     function handleSystemCalendar() {
-      finishCalendarAttempt();
-      calendarAttemptController = new AbortController();
-      const { signal } = calendarAttemptController;
-      document.addEventListener('visibilitychange', () => {
-        if (document.hidden) finishCalendarAttempt();
-      }, { signal });
-      window.addEventListener('pagehide', () => finishCalendarAttempt(), { signal });
-
-      // 停留在网页不等于调用失败；等待后提供可选帮助，不自动弹出遮罩。
-      calendarAttemptTimer = setTimeout(() => finishCalendarAttempt(true), 2500);
+      if (/MicroMessenger/i.test(navigator.userAgent)) {
+        showWechatGuide();
+        return;
+      }
       try {
         if (window.location.protocol.startsWith('http')) window.location.assign(weddingCalendarUrl);
         else downloadIcsBlob();
       } catch (error) {
         console.warn('日历文件打开未完成', error);
-        finishCalendarAttempt(true);
+        showToast('日程链接未打开，请重试或复制婚礼日程');
       }
     }
-
-    function showCalendarHelp() {
-      if (/MicroMessenger/i.test(navigator.userAgent)) showWechatGuide();
-      else showToast('请在下载列表中打开 wedding.ics 文件，或复制婚礼日程');
-    }
-
-    if (import.meta.hot) import.meta.hot.dispose(() => finishCalendarAttempt());
 
     function downloadIcsBlob() {
       const icsContent =

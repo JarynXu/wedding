@@ -1396,21 +1396,6 @@
     .copy-toast.show { opacity: 1; }
 
     /* 日历提醒弹窗专属样式：纯双语高定排版 */
-    .calendar-help {
-      min-height: 44px;
-      padding: 6px 10px;
-      border: 0;
-      background: transparent;
-      color: var(--burgundy);
-      font-size: 12px;
-      line-height: 1.6;
-      font-family: inherit;
-      text-decoration: underline;
-      text-underline-offset: 4px;
-      cursor: pointer;
-    }
-    .calendar-help[hidden] { display: none; }
-
     .calendar-event-card {
       background: rgba(250, 246, 240, 0.95);
       border: 1px solid rgba(185, 147, 95, 0.35);

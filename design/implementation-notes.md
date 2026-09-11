@@ -44,9 +44,9 @@
 
 ## 手机日历入口
 
-日历弹窗不预先显示微信操作说明。点击“添加至手机系统日历”时请求 `wedding.ics`，由浏览器和系统处理。页面隐藏、跳转或弹窗关闭时取消等待；2.5 秒后仍停留在弹窗的宾客可点击“未打开日历？查看打开方式”。微信操作遮罩由该帮助入口打开。
+日历弹窗不预先显示微信操作说明。微信内点击“添加至手机系统日历”时显示右上角“在默认浏览器打开”的指引，不发起 ICS 请求。其他浏览器点击该按钮时打开 `wedding.ics`。复制日程入口保留。
 
-网页没有系统日历保存结果的回调。页面可见性只用于停止帮助提示，不能证明日程导入成功或失败。[MDN：Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API)。
+网页不判断系统是否已保存日程。日历入口不使用等待计时器，不根据页面停留时间报告成功或失败。
 
 日历文件的响应使用 `Content-Type: text/calendar; charset=utf-8` 和 `Content-Disposition: inline; filename="wedding.ics"`。Nginx 与 Vite 开发、预览服务均配置这两个响应头；Vite 由 `build/calendar-response.js` 设置。`node --test tests/calendar-response.test.mjs` 检查两个服务在根路径和子路径下的真实 HTTP 响应。
 
