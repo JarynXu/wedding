@@ -1074,6 +1074,8 @@
       transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
       max-height: 85vh;
       overflow-y: auto;
+      touch-action: pan-y;
+      overscroll-behavior-y: contain;
     }
 
     .modal-backdrop.open .modal-card {

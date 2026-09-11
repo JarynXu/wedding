@@ -314,6 +314,83 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.deepEqual(errors, []);
     });
 
+    await suite.test('安卓触摸可往返四页，拦截下拉默认行为并保留弹窗和日历页滚动', async () => {
+      const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36 MicroMessenger/8.0' });
+      const input = await mobile.context().newCDPSession(mobile);
+      let navigations = 0;
+      mobile.on('framenavigated', frame => { if (frame === mobile.mainFrame()) navigations++; });
+      const idle = () => mobile.waitForFunction(() => document.getElementById('swiperWrapper').dataset.transition === 'idle');
+      const drag = async (from, to, ending = 'touchEnd', fingers = 1) => {
+        const points = (x, y) => Array.from({ length: fingers }, (_, id) => ({ x: x + id * 80, y, id }));
+        await input.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points(from.x, from.y) });
+        for (let step = 1; step <= 8; step++) {
+          await input.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points(from.x + (to.x - from.x) * step / 8, from.y + (to.y - from.y) * step / 8) });
+          await mobile.waitForTimeout(16);
+        }
+        await input.send('Input.dispatchTouchEvent', { type: ending, touchPoints: [] });
+      };
+      try {
+        await mobile.goto(url);
+        await mobile.locator('#preloaderOverlay[data-state="ready"]').waitFor();
+        await mobile.locator('#btnEnterInvitation').tap();
+        await mobile.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
+        await mobile.evaluate(() => {
+          window.touchMoves = [];
+          document.addEventListener('touchmove', event => {
+            if (event.target.closest('#app')) window.touchMoves.push({ prevented: event.defaultPrevented, cancelable: event.cancelable, trusted: event.isTrusted });
+          }, { passive: true });
+        });
+        let current = 0;
+        for (const target of [1, 2, 3, 2, 1, 0]) {
+          await drag({ x: 70, y: target > current ? 590 : 260 }, { x: 70, y: target > current ? 260 : 590 });
+          await mobile.waitForFunction(target => document.querySelector('.page.active').dataset.index === String(target), target, { timeout: 3000 });
+          await idle();
+          const viewport = await mobile.evaluate(() => ({ top: document.getElementById('app').getBoundingClientRect().top, scroll: scrollY, visualTop: visualViewport.offsetTop }));
+          assert.deepEqual(viewport, { top: 0, scroll: 0, visualTop: 0 });
+          current = target;
+        }
+        const moves = await mobile.evaluate(() => window.touchMoves);
+        assert.ok(moves.length > 0 && moves.every(move => move.trusted));
+        assert.ok(moves.some(move => move.cancelable));
+        assert.ok(moves.filter(move => move.cancelable).every(move => move.prevented), '在移动阶段取消浏览器默认下拉行为');
+        assert.equal(await mobile.locator('html').evaluate(element => getComputedStyle(element).overscrollBehaviorY), 'none');
+        assert.equal(await mobile.locator('#app').evaluate(element => getComputedStyle(element).touchAction), 'none');
+        await drag({ x: 70, y: 260 }, { x: 70, y: 590 });
+        assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '0', '第一页下拉不刷新或越界');
+
+        await mobile.locator('.nav-dot[data-index="1"]').tap();
+        await idle();
+        await drag({ x: 70, y: 360 }, { x: 300, y: 450 });
+        assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '1', '横向为主的手势不翻页');
+        await drag({ x: 70, y: 260 }, { x: 70, y: 590 }, 'touchCancel');
+        assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '1', '取消手势不翻页');
+        await drag({ x: 70, y: 260 }, { x: 70, y: 590 }, 'touchEnd', 2);
+        assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '1', '多指手势不翻页');
+
+        await mobile.locator('.nav-dot[data-index="2"]').tap();
+        await idle();
+        await mobile.setViewportSize({ width: 360, height: 520 });
+        await mobile.locator('.p3-map-btn').tap();
+        const card = mobile.locator('#mapModal .modal-card');
+        await card.evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
+        assert.ok(await card.evaluate(element => element.scrollHeight > element.clientHeight), '小屏弹窗具有可滚动内容');
+        const rect = await card.boundingBox();
+        await drag({ x: rect.x + 24, y: rect.y + rect.height - 65 }, { x: rect.x + 24, y: rect.y + 100 });
+        await mobile.waitForFunction(() => document.querySelector('#mapModal .modal-card').scrollTop > 0);
+        assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '2', '弹窗滚动不翻页');
+        assert.equal(navigations, 1, '手势不刷新或重载请柬');
+        await mobile.locator('[data-close-modal="mapModal"]').tap();
+        await drag({ x: 70, y: 150 }, { x: 70, y: 380 });
+        await mobile.waitForFunction(() => document.querySelector('.page.active').dataset.index === '1');
+        await idle();
+
+        await mobile.goto(url + 'calendar.html');
+        await drag({ x: 65, y: 380 }, { x: 65, y: 140 });
+        await mobile.waitForFunction(() => scrollY > 0);
+        assert.equal(await mobile.locator('#calendarOpenBrowser').count(), 0, '已撤掉浏览器唤起试用入口');
+      } finally { await input.detach(); await mobile.close(); }
+    });
+
     await suite.test('手机等待播放手势时显示开启请柬，一次点击启动原始音乐', async () => {
       const mobile = await browser.newPage({ viewport: { width: 375, height: 667 }, isMobile: true, hasTouch: true });
       try {

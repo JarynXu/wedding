@@ -62,6 +62,8 @@
 
 四页共用 840ms 背景叠化与 14px 方向位移。旧页底图保持不透明，旧文字在 220ms 内退场，新文字按相同的起始延迟展开。切换以动画结束为完成条件；减少动态效果会取消位移及叠化，释放旧页。花瓣画布与音频元素位于页面容器之外，切页保持同一实例。
 
+主请柬的根节点禁止纵向边界回弹，`#app` 使用 `touch-action: none`。触摸监听限定在请柬区域，非被动 `touchmove` 监听阻止默认下拉行为；单指纵向位移超过 45px 时翻页，横向、取消和多指手势不触发翻页。按钮和链接的起始触摸不进入翻页识别。弹窗位于请柬触摸区域之外，保留 `pan-y` 滚动并限制滚动传递；独立日历页继续使用普通文档滚动。[Chrome：下拉刷新与边界回弹](https://developer.chrome.com/blog/overscroll-behavior)。
+
 ## 回归验证
 
 运行 `npm run build` 后，使用 `node --test tests/invitation-loading.test.mjs`。测试使用 Playwright；独立工具环境可通过 `PLAYWRIGHT_MODULE_PATH` 指定模块路径，通过 `PLAYWRIGHT_CHANNEL` 选择已安装的浏览器，例如 `msedge`。

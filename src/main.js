@@ -212,8 +212,7 @@ function initializeInvitation() {
     const welcomeGlass = document.getElementById('welcomeGlass');
     const dots = document.querySelectorAll('.nav-dot');
     let isAnimating = false;
-    let touchStartY = 0;
-    let touchEndY = 0;
+    let swipe = null;
 
     function goToPage(index) {
       if (index < 0 || index >= totalPages || index === currentPage || isAnimating || navigationBlocked()) return;
@@ -267,22 +266,37 @@ function initializeInvitation() {
       }
     }
 
-    // 触摸滑动
-    document.addEventListener('touchstart', (e) => {
-      touchStartY = e.touches[0].clientY;
-    }, { passive: true });
+    // 请柬接管触摸手势；弹窗位于 #app 之外，继续使用自身的原生滚动。
+    const touchSurface = document.getElementById('app');
+    const touchEvents = new AbortController();
+    touchSurface.addEventListener('touchstart', event => {
+      swipe = null;
+      if (event.touches.length !== 1 || isAnimating || navigationBlocked()) return;
+      if (event.target.closest('button, a, input, textarea')) return;
+      const touch = event.touches[0];
+      swipe = { id: touch.identifier, x: touch.clientX, y: touch.clientY, page: currentPage };
+    }, { passive: true, signal: touchEvents.signal });
 
-    document.addEventListener('touchend', (e) => {
-      touchEndY = e.changedTouches[0].clientY;
-      const diff = touchStartY - touchEndY;
-      if (Math.abs(diff) > 45) {
-        if (diff > 0 && currentPage < totalPages - 1) {
-          goToPage(currentPage + 1);
-        } else if (diff < 0 && currentPage > 0) {
-          goToPage(currentPage - 1);
-        }
+    touchSurface.addEventListener('touchmove', event => {
+      if (event.touches.length !== 1) { swipe = null; return; }
+      // 兼容未应用 touch-action 的宿主；在移动阶段阻止下拉刷新，而非等待 touchend。
+      if (event.cancelable) event.preventDefault();
+    }, { passive: false, signal: touchEvents.signal });
+
+    touchSurface.addEventListener('touchend', event => {
+      const gesture = swipe;
+      swipe = null;
+      if (!gesture || event.touches.length || gesture.page !== currentPage) return;
+      const touch = [...event.changedTouches].find(point => point.identifier === gesture.id);
+      if (!touch) return;
+      const vertical = gesture.y - touch.clientY;
+      const horizontal = gesture.x - touch.clientX;
+      if (Math.abs(vertical) > 45 && Math.abs(vertical) > Math.abs(horizontal)) {
+        goToPage(currentPage + (vertical > 0 ? 1 : -1));
       }
-    }, { passive: true });
+    }, { passive: true, signal: touchEvents.signal });
+    touchSurface.addEventListener('touchcancel', () => { swipe = null; }, { passive: true, signal: touchEvents.signal });
+    if (import.meta.hot) import.meta.hot.dispose(() => touchEvents.abort());
 
     // 鼠标滚轮防抖
     let wheelTimer = null;

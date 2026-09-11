@@ -25,6 +25,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
+      overscroll-behavior-y: none;
       background: #241d1a;
       background-image: radial-gradient(circle at 50% 30%, #3a2a24 0%, #1a1412 100%);
       font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
@@ -45,6 +46,8 @@
       max-height: 920px;
       margin: 0 auto;
       overflow: hidden;
+      touch-action: none;
+      overscroll-behavior-y: none;
       background: var(--paper-cream);
       box-shadow: 0 0 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(185, 147, 95, 0.35);
     }
