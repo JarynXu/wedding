@@ -10,10 +10,8 @@ export function getShareMetadata(config, search = '') {
   if (family) {
     url.searchParams.set('side', family.side);
     url.searchParams.set('parents', family.parents);
-    const children = family.side === 'groom'
-      ? `儿子${config.groom.name}与儿媳${config.bride.name}`
-      : `女儿${config.bride.name}与女婿${config.groom.name}`;
-    description = `${family.parents}敬邀亲朋，莅临${children}的婚礼，共享良辰喜悦。`;
+    const children = family.side === 'groom' ? '爱子与儿媳' : '爱女与女婿';
+    description = `${family.parents}敬邀亲朋参加${children}的婚礼，共享良辰喜悦。`;
   }
   return {
     title: `${config.groom.name}❤️${config.bride.name}`,

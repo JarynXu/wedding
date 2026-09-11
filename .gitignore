@@ -15,3 +15,7 @@ Desktop.ini
 *.tmp
 reference_wedding/
 assets/*_backup*
+
+docs/references
+pnpm-lock.yaml
+pnpm-workspace.yaml

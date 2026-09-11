@@ -29,9 +29,9 @@ test('分享地址与新人姓名来自配置，修改域名可更新页面和�
 
 test('家长署名按双方身份生成副标题，分享地址保留参数', () => {
   const groom = getShareMetadata(WEDDING_CONFIG, new URLSearchParams({ side: 'groom', parents: '张先生、李女士', revision: 'test' }));
-  assert.equal(groom.description, '张先生、李女士敬邀亲朋，莅临儿子徐旨越与儿媳赵荣蓉的婚礼，共享良辰喜悦。');
+  assert.equal(groom.description, '张先生、李女士敬邀亲朋参加爱子与儿媳的婚礼，共享良辰喜悦。');
   const bride = getShareMetadata(WEDDING_CONFIG, new URLSearchParams({ side: 'bride', parents: '陈女士' }));
-  assert.equal(bride.description, '陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。');
+  assert.equal(bride.description, '陈女士敬邀亲朋参加爱女与女婿的婚礼，共享良辰喜悦。');
   assert.equal(groom.title, bride.title);
   assert.equal(groom.image, bride.image);
   assert.equal(new URL(groom.url).searchParams.get('parents'), '张先生、李女士');
@@ -157,7 +157,7 @@ test('生产 HTML 含完整分享信息，微信配置使用当前地址签名',
         const { success, fail, ...data } = window.shareCalls.find(call => call.target === 'friend');
         return data;
       });
-      assert.equal(friend.desc, '陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。');
+      assert.equal(friend.desc, '陈女士敬邀亲朋参加爱女与女婿的婚礼，共享良辰喜悦。');
       assert.equal(new URL(friend.link).searchParams.get('parents'), '陈女士');
       assert.equal(new URL(friend.link).searchParams.get('side'), 'bride');
       assert.equal(new URL(friend.link).searchParams.has('revision'), false);

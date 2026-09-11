@@ -36,8 +36,8 @@ for (const mode of ['dev', 'preview', 'production']) {
     try {
       const page = await browser.newPage({ javaScriptEnabled: false });
       for (const [query, expected] of [
-        [groomQuery, '张先生、李女士敬邀亲朋，莅临儿子徐旨越与儿媳赵荣蓉的婚礼，共享良辰喜悦。'],
-        [brideQuery, '陈女士敬邀亲朋，莅临女儿赵荣蓉与女婿徐旨越的婚礼，共享良辰喜悦。'],
+        [groomQuery, '张先生、李女士敬邀亲朋参加爱子与儿媳的婚礼，共享良辰喜悦。'],
+        [brideQuery, '陈女士敬邀亲朋参加爱女与女婿的婚礼，共享良辰喜悦。'],
       ]) {
         const response = await page.goto(`${origin}/?${query}`, { waitUntil: 'domcontentloaded' });
         assert.equal(response.status(), 200);
