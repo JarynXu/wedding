@@ -6,6 +6,16 @@ import './motion.css';
 import { RosePetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WEDDING_CONFIG } from './config.js';
+import { getShareMetadata } from './share-metadata.js';
+import { configureWechatShare } from './wechat-share.js';
+
+// 分享配置独立于请柬素材加载，不阻塞开场或音乐。
+configureWechatShare(getShareMetadata(WEDDING_CONFIG), WEDDING_CONFIG.share.wechatSignatureEndpoint).then(state => {
+  document.documentElement.dataset.wechatShare = state;
+}).catch(error => {
+  document.documentElement.dataset.wechatShare = 'failed';
+  console.warn('微信自定义分享未启用', error);
+});
 
 // 生产样式非阻塞加载；资源清单须在样式可读后收集。
 const stylesReady = Promise.all([...document.querySelectorAll('link[data-invitation-styles]')].map(link => new Promise((resolve, reject) => {
@@ -35,7 +45,7 @@ function initializeInvitation() {
     function renderConfigData() {
       if (!config) return;
 
-      if (config.coupleNamesZh) document.title = `${config.coupleNamesZh} · 婚礼请柬`;
+      document.title = getShareMetadata(config).title;
 
       // Page 1
       const p1Names = document.getElementById('p1CouplesNames');

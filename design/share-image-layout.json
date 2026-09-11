@@ -1,0 +1,14 @@
+{
+  "source": "src/assets/cover-welcome-art.webp",
+  "output": "public/share/wedding-portrait.jpg",
+  "crop": {
+    "left": 135,
+    "top": 330,
+    "width": 670,
+    "height": 670
+  },
+  "width": 600,
+  "height": 600,
+  "bytes": 52031,
+  "method": "原照裁切与缩放，未重绘人物或调整肤色"
+}

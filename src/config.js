@@ -24,6 +24,14 @@ export const WEDDING_CONFIG = {
   coupleNamesZh: '徐旨越 & 赵荣蓉',
   coupleNamesEn: 'ZHIYUE & RONGRONG',
   coupleScript: 'Zhiyue & Rongrong',
+  share: {
+    siteUrl: 'https://wedding-310889-6-1484253371.sh.run.tcloudbase.com',
+    description: '良辰已定，佳期将至。诚邀您见证我们的婚礼，与我们共享这一份喜悦。',
+    image: '/share/wedding-portrait.jpg',
+    imageWidth: 600,
+    imageHeight: 600,
+    wechatSignatureEndpoint: '', // 配置同站签名接口后启用微信自定义分享；密钥保存在服务端。
+  },
   monogram: 'XZ',
   monogramImg: monogramImgUrl,
 
