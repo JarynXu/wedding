@@ -25,7 +25,7 @@ export const WEDDING_CONFIG = {
   coupleNamesEn: 'ZHIYUE & RONGRONG',
   coupleScript: 'Zhiyue & Rongrong',
   share: {
-    siteUrl: 'https://wedding-310889-6-1484253371.sh.run.tcloudbase.com',
+    siteUrl: 'https://wedding.jaryn.com.cn',
     description: '良辰已定，佳期将至。诚邀您见证我们的婚礼，与我们共享这一份喜悦。',
     image: '/share/wedding-portrait.jpg',
     imageWidth: 600,

@@ -13,7 +13,7 @@ test('分享地址与新人姓名来自配置，修改域名可更新页面和�
   const config = structuredClone(WEDDING_CONFIG);
   const share = getShareMetadata(config);
   assert.equal(share.title, '徐旨越❤️赵荣蓉');
-  assert.equal(share.url, 'https://wedding-310889-6-1484253371.sh.run.tcloudbase.com/');
+  assert.equal(share.url, 'https://wedding.jaryn.com.cn/');
   config.share.siteUrl = 'https://invitation.example.com';
   config.groom.name = '新郎';
   config.bride.name = '新娘';
@@ -87,7 +87,7 @@ test('生产 HTML 含完整分享信息，微信配置使用当前地址签名',
       assert.equal(data.count, 1);
       assert.equal(data.description, WEDDING_CONFIG.share.description);
       assert.equal(data.pageDescription, data.description);
-      assert.equal(data.url, 'https://wedding-310889-6-1484253371.sh.run.tcloudbase.com/');
+      assert.equal(data.url, 'https://wedding.jaryn.com.cn/');
       assert.equal(data.canonical, data.url);
       assert.equal(data.image, data.url + 'share/wedding-portrait.jpg');
       assert.equal(data.type, 'website');

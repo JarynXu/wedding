@@ -35,7 +35,7 @@
 署名上限为 60 字。缺少一项参数、重复参数、无效的 `side`、空署名、控制字符或尖括号会返回 HTTP 400。姓名中的引号、`&` 等字符按 HTML 文本编码，不作为标签执行。包含 `&` 或 `+` 的姓名应使用 URL 编码，建议通过 `URLSearchParams` 生成链接：
 
 ```js
-const link = new URL('https://wedding-310889-6-1484253371.sh.run.tcloudbase.com/');
+const link = new URL('https://wedding.jaryn.com.cn/');
 link.search = new URLSearchParams({ side: 'groom', parents: '张先生、李女士' });
 console.log(link.href);
 ```
