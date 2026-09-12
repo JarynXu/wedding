@@ -19,7 +19,7 @@ test('手机授权弹窗、分段规则、称呼同步与AI写祝福草稿',{ski
     const page=await context.newPage();
     await page.goto(origin+'/');
     await page.evaluate(()=>localStorage.setItem('wedding.blessings.name',JSON.stringify('先前的称呼')));
-    await page.goto(origin+'/game.html');await page.locator('#gameLogin').waitFor();
+    await page.goto(origin+'/game.html');await page.locator('#gameLogin').waitFor();await page.locator('dialog[data-kind=first-rules][open]').waitFor();await page.locator('.dialog-primary').click();
     assert.equal(await page.locator('[name=name]').inputValue(),'先前的称呼');
     assert.equal(await page.locator('[name=name]').isVisible(),false);
     assert.equal(await page.locator('.game-page-header,h1,.game-facts,#gameFeedback').count(),0);
@@ -35,6 +35,9 @@ test('手机授权弹窗、分段规则、称呼同步与AI写祝福草稿',{ski
     await page.locator('.dialog-secondary').click();assert.equal(await page.locator('[name=consent]').isChecked(),false);
     await page.locator('#getGameCode').click();await page.locator('.dialog-primary').click();
     await waitFor(()=>g.sms.calls.length===1);assert.equal(await page.locator('[name=consent]').isChecked(),true);
+    await page.waitForFunction(()=>document.activeElement?.name==='code');
+    const focusStyle=await page.locator('[name=code]').evaluate(node=>({outline:getComputedStyle(node).outlineStyle,shadow:getComputedStyle(node).boxShadow}));
+    assert.equal(focusStyle.outline,'none');assert.match(focusStyle.shadow,/inset/);
     await page.locator('.game-known-name button').click();await page.locator('[name=name]').fill('注册的新称呼');
     const actualCode=g.codes.get('+8613900000777');
     await page.locator('[name=code]').fill(actualCode==='000000'?'111111':'000000');await page.getByRole('button',{name:'请主持人开场',exact:true}).click();

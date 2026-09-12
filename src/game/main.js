@@ -1,3 +1,4 @@
+import { LeaderboardView } from './leaderboard.js';
 import '../fonts.css';
 import './style.css';
 import '../glass.css';
@@ -20,7 +21,7 @@ const app = document.getElementById('gameApp');
 const view = document.getElementById('gameContent');
 const dialogs = new InvitationDialogs();
 const tabs = document.querySelectorAll('[data-game-tab]');
-const state = { config: null, me: null, tab: 'play', busy: false, current: null, draft: '', pending: null, challenge: null, phone: '', name: guestName(), consent: false, countdown: 0, identityGeneration:0, refreshing:false, boardGeneration:0 };
+const state = { config: null, me: null, tab: history.state?.gameView==='board'?'board':'play', busy: false, current: null, draft: '', pending: null, challenge: null, phone: '', name: guestName(), consent: false, countdown: 0, identityGeneration:0, refreshing:false, boardGeneration:0 };
 try { const saved = JSON.parse(sessionStorage.getItem('wedding.game.pending') || 'null'); if (saved?.requestId && saved?.questionId) state.pending = saved; } catch { /* 存储不可用时保留当前页面内存。 */ }
 const el = (tag, className = '', content = '') => { const node = document.createElement(tag); node.className = className; node.textContent = content; return node; };
 const button = (label, action, className = 'game-button') => { const node = el('button', className, label); node.type = 'button'; node.onclick = action; return node; };
@@ -35,6 +36,22 @@ function reconcilePending(me) {
 }
 const notice = message => { if (message) return dialogs.alert(message); };
 const menu = document.getElementById('gameMenu'), menuToggle = document.getElementById('gameMenuToggle');
+function selectView(tab) {
+  closeMenu();
+  if(tab===state.tab)return;
+  if(tab==='play'&&history.state?.gameView==='board'){history.back();return;}
+  state.tab=tab;history.pushState({...history.state,gameView:tab},'');render();
+}
+window.addEventListener('popstate',event=>{dialogs.finish(false);state.tab=event.state?.gameView==='board'?'board':'play';render();});
+function updateNavigation(){
+  const board=state.tab==='board',back=document.getElementById('backToInvitation'),rank=document.getElementById('gameLiveRank');
+  back.setAttribute('aria-label',board?'回到聊天':'返回请柬');back.querySelector('span').textContent=board?'聊天':'请柬';
+  document.getElementById('gameBoardHeading').hidden=!board;document.getElementById('refreshGameBoard').hidden=!board;
+  rank.hidden=board||!state.me?.participant.rank;rank.textContent=state.me?.participant.rank?(state.config?.phase==='settled'?'第 ':'暂列第 ')+state.me.participant.rank+' 名':'';
+  document.querySelector('.game-header-mark').hidden=board||!rank.hidden;
+}
+document.getElementById('gameLiveRank').onclick=()=>selectView('board');
+document.getElementById('refreshGameBoard').onclick=()=>{closeMenu();renderBoard();};
 function closeMenu() { menu.hidden = true; menuToggle.setAttribute('aria-expanded', 'false'); }
 menuToggle.onclick = () => { menu.hidden = !menu.hidden; menuToggle.setAttribute('aria-expanded', String(!menu.hidden)); };
 document.addEventListener('pointerdown', event => { if (!event.target.closest('.game-menu-wrap')) closeMenu(); });
@@ -62,6 +79,7 @@ function labelledInput(label, name, value, attributes = {}) {
   Object.assign(input, attributes); wrapper.append(input); return wrapper;
 }
 function render() {
+  updateNavigation();
   app.dataset.view = state.tab === 'board' ? 'board' : state.me ? 'chat' : 'login';
   tabs.forEach(tab => { tab.setAttribute('aria-pressed', String(tab.dataset.gameTab === state.tab)); tab.hidden = tab.dataset.gameTab === 'play' && state.tab !== 'board'; });
   view.dataset.mode = state.tab === 'play' && state.me ? 'chat' : state.tab;
@@ -87,22 +105,26 @@ function renderLogin() {
   row.append(labelledInput('短信验证码','code','',{type:'text',inputMode:'numeric',autoComplete:'one-time-code',maxLength:6,placeholder:'输入验证码'}));
   const ensureConsent=async()=>{
     if(form.elements.consent.checked)return true;
-    const agreed=await dialogs.show({title:'记住这份默契',content:'用手机号记住你的进度，方便婚礼当天领取礼物。手机号不会公开，这台设备会为你保留30天登录。同意继续吗？',confirmText:'同意并继续',cancelText:'暂不同意',kind:'consent'});
+    const agreed=await dialogs.show({title:'记住这份默契',content:'用手机号记住你的进度，方便婚礼当天领取礼物。手机号不会公开，这台设备会为你保留30天登录。同意继续吗？',confirmText:'同意并继续',cancelText:'暂不同意',kind:'consent',focusAfter:form.elements.code});
     if(agreed){form.elements.consent.checked=true;state.consent=true;}
     return agreed;
   };
   const getCode=button('获取验证码',async()=>{
     if(state.busy||state.countdown>Date.now())return;
+    // 在按钮手势内取得真实输入焦点；短信响应后继续保留，避免首次聚焦晚于网络请求。
+    if(form.elements.consent.checked&&/^(?:\+86)?1\d{10}$/.test(form.elements.phone.value.replace(/[ -]/g,'')))form.elements.code.focus({preventScroll:true});
     state.busy=true;getCode.disabled=true;
     let requested=false;
     try {
       if(!await ensureConsent())return;
       if(!/^(?:\+86)?1\d{10}$/.test(form.elements.phone.value.replace(/[ -]/g,''))){await notice('请填写11位手机号，用于游戏兑奖。');form.elements.phone.focus();return;}
       state.phone=form.elements.phone.value;state.name=form.elements.name.value;state.challenge=id();
-      const captcha=await getCaptchaProof(state.config.captchaId);requested=true;
+      const focusCode=()=>{if(form.isConnected)form.elements.code.focus({preventScroll:true});};
+      const captcha=await getCaptchaProof(state.config.captchaId,focusCode);requested=true;
+      form.elements.code.placeholder='正在发送验证码…';
       const result=await request('/auth/code',{phone:state.phone,requestId:state.challenge,captcha});
       state.challenge=result.challengeId;state.countdown=Date.now()+result.retryAfter*1000;
-      form.elements.code.placeholder='验证码已发送';form.elements.code.focus();
+      form.elements.code.placeholder=result.delivery==='sent'?'验证码已发送':'请输入收到的验证码';focusCode();
       if(result.delivery!=='sent')await notice('发送结果待确认，请查看是否收到短信。');
     }catch(error){notice(error.message);if(requested&&(!error.status||error.status>=500||error.status===429))state.countdown=Date.now()+60000;}
     finally{state.busy=false;getCode.disabled=state.countdown>Date.now();}
@@ -127,6 +149,7 @@ function renderLogin() {
   view.append(form);
 }
 function renderPlay() {
+  updateNavigation();
   const person=state.me.participant;
   if(!state.chat||state.chat.owner!==person.id){
     state.chat?.destroy();
@@ -144,23 +167,21 @@ function showClaim(){
   const copy=button('复制兑奖码',async()=>{try{await navigator.clipboard.writeText(claim.code);copy.textContent='已复制';}catch{notice('没能复制，现场出示手机上的凭证也可以。');}},'game-small-button');
   content.append(copy);dialogs.show({title:claim.prize,content});
 }
-async function renderBoard(background = false) {
+async function renderBoard(background=false) {
   const generation=++state.boardGeneration;
-  if (!background) view.replaceChildren(el('p', 'game-empty', '正在展开默契榜…'));
+  state.board ||= new LeaderboardView();
+  if(!view.contains(state.board.root))view.replaceChildren(state.board.root);
+  const refreshButton=document.getElementById('refreshGameBoard');refreshButton.disabled=true;
+  if(!background)document.getElementById('gameBoardPhase').textContent='更新中';
   try {
-    const board = await request('/leaderboard'); if (state.tab !== 'board'||generation!==state.boardGeneration) return;
-    state.boardErrorShown=false;
-    view.replaceChildren(el('p', 'game-board-note', board.provisional ? '当前默契榜 · 活动结束后公布获奖名单' : '这场默契的获奖来宾'));
-    const list = el('ol', 'game-leaderboard');
-    board.entries.forEach(row => { const item = el('li', ''); item.append(el('span', 'game-rank', String(row.rank).padStart(2, '0')), el('span', 'game-rank-name', row.name), el('strong', '', `${row.score} 题`)); if (row.prize) item.append(el('small', '', row.prize)); list.append(item); });
-    if (!board.entries.length) view.append(el('p', 'game-empty', '默契榜等待第一份达标成绩。'));
-    else view.append(list);
-    view.append(button('刷新默契榜', () => renderBoard(), 'game-small-button'));
-  } catch (error) { if (state.tab === 'board'&&generation===state.boardGeneration) {
-    if(!background)view.replaceChildren(el('p','game-empty','默契榜暂时未展开'),button('重新查看',()=>renderBoard(),'game-small-button'));
-    else {const note=view.querySelector('.game-board-note');if(note)note.textContent='上次读取的排名 · 尚未更新';}
+    const board=await request('/leaderboard');if(state.tab!=='board'||generation!==state.boardGeneration)return;
+    state.board.update(board);state.boardErrorShown=false;
+    document.getElementById('gameBoardPhase').textContent=board.provisional?'暂定':'已揭晓';
+  }catch(error){if(state.tab==='board'&&generation===state.boardGeneration){
+    document.getElementById('gameBoardPhase').textContent='待更新';
+    if(!state.board.rows.size)state.board.empty.textContent='榜单暂时没能展开。';
     if(!background||!state.boardErrorShown){state.boardErrorShown=true;notice(error.message);}
-  } }
+  }}finally{refreshButton.disabled=false;}
 }
 async function refresh() {
   if (!active || document.hidden || state.busy || state.refreshing || !state.config?.enabled) return;
@@ -182,7 +203,7 @@ async function refresh() {
   } catch (error) { if (error.status === 401&&identity===state.identityGeneration) { state.me = null; render(); notice('请重新验证手机号。'); } else if(!state.pollErrorShown){state.pollErrorShown=true;notice(error.message);} }
   finally {state.refreshing=false;state.lastRefresh=Date.now();}
 }
-tabs.forEach(tab => { tab.onclick = () => { state.tab = tab.dataset.gameTab; closeMenu(); render(); }; });
+tabs.forEach(tab=>{tab.onclick=()=>selectView(tab.dataset.gameTab);});
 let timer,refreshTimer;
 function startTimers() {
   clearInterval(timer);clearInterval(refreshTimer);
@@ -198,23 +219,31 @@ window.addEventListener('pageshow', event => { if(event.persisted){startTimers()
 document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
 const back = document.getElementById('backToInvitation');
 const target = new URL('./', location.href); for (const key of ['theme', 'side', 'parents']) { const value = new URLSearchParams(location.search).get(key); if (value) target.searchParams.set(key, value); } back.href = target.href;
+function showFirstRules(){
+  if(!state.config?.enabled||state.firstRulesShown)return;
+  const signature=JSON.stringify([state.config.closesAt,state.config.requiredCorrect,state.config.participationLimit,'six-perfect']);
+  try{if(localStorage.getItem('wedding.game.rules.seen')===signature)return;localStorage.setItem('wedding.game.rules.seen',signature);}catch{}
+  state.firstRulesShown=true;dialogs.show({title:'先看看怎么玩',content:gameRules(state.config),kind:'first-rules',confirmText:'来试试'});
+}
 async function initialize() {
   try { state.config = await request('/config'); if (state.config.enabled) { try { state.me = await request('/me'); rememberRegisteredGuest(state.me.participant); reconcilePending(state.me); } catch (error) { if (error.status !== 401) throw error; } } render(); }
   catch (error) { view.replaceChildren(el('p', 'game-empty', '这场小聚暂时没能打开'), button('重新打开', () => location.reload())); notice(error.message); }
   app.dataset.state = 'ready';
   if (embedded) parent.postMessage({type:'wedding-game-ready'}, location.origin);
+  else showFirstRules();
 }
+back.onclick=event=>{if(dialogs.active){event.preventDefault();dialogs.finish(false);}else if(state.tab==='board'){event.preventDefault();selectView('play');}else if(embedded){event.preventDefault();parent.postMessage({type:'wedding-game-back'},location.origin);}};
 if (embedded) {
-  back.onclick = event => { event.preventDefault(); parent.postMessage({type:'wedding-game-back'}, location.origin); };
   window.addEventListener('message', event => {
     if (event.origin !== location.origin || event.source !== parent || event.data?.type !== 'wedding-game-visibility') return;
     active = event.data.visible === true; petals.hold(active ? null : petals.elapsed);
-    if (active) { state.name = guestName(); if (!state.me && app.dataset.state === 'ready') render(); refresh(); state.chat?.refresh(); }
+    if (active) { showFirstRules(); state.name = guestName(); if (!state.me && app.dataset.state === 'ready') render(); refresh(); state.chat?.refresh(); }
   });
 }
 const fitViewport = () => {
-  app.style.setProperty('--game-viewport-height', (window.visualViewport?.height || innerHeight) + 'px');
-  app.style.setProperty('--game-viewport-top', (window.visualViewport?.offsetTop || 0) + 'px');
+  // 内嵌时由请柬外层负责避让键盘；子页面只使用获得的窗口尺寸。
+  app.style.setProperty('--game-viewport-height', (embedded ? document.documentElement.clientHeight : window.visualViewport?.height || innerHeight) + 'px');
+  app.style.setProperty('--game-viewport-top', (embedded ? 0 : window.visualViewport?.offsetTop || 0) + 'px');
 };
 window.visualViewport?.addEventListener('resize', fitViewport);
 window.visualViewport?.addEventListener('scroll', fitViewport);

@@ -13,7 +13,10 @@ export class GameStore {
   async event(client = this.pool) {
     const { rows } = await client.query('SELECT *,clock_timestamp() AS now FROM wedding_games WHERE room_id=$1', [this.room]);
     if (!rows.length) throw new GameError('GAME_UNAVAILABLE', '游戏正在准备中', 503);
-    return rows[0];
+    const event=rows[0];
+    event.config.participationLimit ??= event.config.maxWinners;
+    delete event.config.maxWinners;
+    return event;
   }
   transaction(operation) { return gameTransaction(this.pool, this.room, operation); }
   async prepareQuestionVoice(client) {
@@ -41,7 +44,12 @@ export class GameStore {
   async ranking(client = this.pool, event) {
     const participants = await client.query('SELECT id,name,phone_last4,created_at FROM wedding_game_participants WHERE room_id=$1', [this.room]);
     const answers = await client.query('SELECT id,participant_id,status,received_at FROM wedding_game_answers WHERE room_id=$1', [this.room]);
-    return rankGame(participants.rows, answers.rows, (event || await this.event(client)).config);
+    const current=event || await this.event(client),ranking=rankGame(participants.rows,answers.rows,current.config);
+    if(current.settled_at){
+      const issued=(await client.query('SELECT slot,participant_id,rank,name FROM wedding_game_prizes WHERE room_id=$1 ORDER BY slot',[this.room])).rows;
+      ranking.candidates=issued.map(prize=>({...ranking.standings.find(person=>person.id===prize.participant_id),slot:prize.slot,rank:prize.rank,prize:prize.name,award:prize.slot<=3?'podium':'participation'}));
+    }
+    return ranking;
   }
   async overview(integrations) {
     const event = await this.event(), ranking = await this.ranking(this.pool, event);
@@ -159,7 +167,8 @@ export class GameStore {
     if (!row) throw new GameError('NOT_FOUND', '参赛记录不存在', 404);
     const prize = (await this.pool.query('SELECT * FROM wedding_game_prizes WHERE room_id=$1 AND participant_id=$2', [this.room, id])).rows[0];
     const answers = (await this.pool.query('SELECT * FROM wedding_game_answers WHERE room_id=$1 AND participant_id=$2 ORDER BY id', [this.room, id])).rows;
-    const standing=rankGame([row],answers,(await this.event()).config).standings[0];
+    const ranking=await this.ranking();
+    const standing=ranking.standings.find(person=>person.id===id);
     const history=includePrivate?(await this.pool.query('SELECT r.* FROM wedding_game_reviews r JOIN wedding_game_answers a ON a.id=r.answer_id WHERE a.room_id=$1 AND a.participant_id=$2 ORDER BY r.id',[this.room,id])).rows:[];
     const conversation=includePrivate?(await this.pool.query('SELECT id,input,reply,audit,state,created_at FROM wedding_game_chat_turns WHERE room_id=$1 AND participant_id=$2 ORDER BY id',[this.room,id])).rows:undefined;
     return { participant: participantDto(standing, prize), answers: answers.map(answer => includePrivate ? { ...publicAnswer(answer), reason: answer.reason, questionTitle: answer.question.title,
@@ -176,7 +185,7 @@ export class GameStore {
       (SELECT count(*) FROM wedding_game_chat_turns WHERE room_id=$1 AND (state<>'complete' OR reply->>'retryable'='true') AND kind='message' AND question_id IS NOT NULL AND created_at<$2::timestamptz))::int AS count`, [this.room,event.config.closesAt])).rows[0].count;
     const phase = gamePhase(event, event.now.getTime());
     const ballot = (await client.query('SELECT id,version,status FROM wedding_game_answers WHERE room_id=$1 ORDER BY id', [this.room])).rows;
-    const proposed = candidates.map(row => ({ participantId: row.id, name: row.name, phoneMasked: '*******' + row.phone_last4, score: row.score, qualificationOrder: row.qualificationOrder, rank: row.rank, prize: row.prize }));
+    const proposed = candidates.map(row => ({ participantId: row.id, name: row.name, phoneMasked: '*******' + row.phone_last4, score: row.score, qualificationOrder: row.qualificationOrder, rank: row.rank, slot: row.slot, award: row.award, prize: row.prize }));
     const previewToken = this.secrets.digest('settlement', JSON.stringify({ version: event.version, ballot, proposed }));
     return { ready: phase === 'closed' && unresolved === 0, reason: phase === 'settled' ? '活动已结算' : phase !== 'closed' ? '请在截止后结算' : unresolved ? `还有 ${unresolved} 项互动待处理` : '请核对候选答卷与奖项后确认结算', configVersion: event.version, previewToken, candidates: proposed };
   }
@@ -191,8 +200,8 @@ export class GameStore {
       for (const candidate of preview.candidates) {
         const code = randomBytes(10).toString('hex').toUpperCase();
         const insertion = await client.query(`INSERT INTO wedding_game_prizes(room_id,slot,participant_id,rank,name,code_hash,code_cipher)
-          SELECT $1::varchar,$2::integer,$3::uuid,$2::integer,$4::varchar,$5::char(64),$6::text WHERE (SELECT count(*) FROM wedding_game_prizes WHERE room_id=$1::varchar)<$7::integer`,
-        [this.room, candidate.rank, candidate.participantId, candidate.prize, this.secrets.digest('prize', code), this.secrets.seal('prize', code), event.config.maxWinners]);
+          SELECT $1::varchar,$2::integer,$3::uuid,$8::integer,$4::varchar,$5::char(64),$6::text WHERE (SELECT count(*) FROM wedding_game_prizes WHERE room_id=$1::varchar)<$7::integer`,
+        [this.room, candidate.slot, candidate.participantId, candidate.prize, this.secrets.digest('prize', code), this.secrets.seal('prize', code), event.config.participationLimit+3,candidate.rank]);
         if (insertion.rowCount !== 1) throw new GameError('STOCK_CONFLICT', '奖位数量不一致，尚未完成结算', 409);
       }
       await client.query('UPDATE wedding_games SET settled_at=clock_timestamp(),settled_by=$2 WHERE room_id=$1', [this.room,actor||'unknown']);
@@ -217,7 +226,7 @@ export class GameStore {
   }
 }
 export function publicAnswer(row) { return { id: String(row.id), requestId: row.request_id, questionId: row.question_id, text: row.text, status: row.status, progress: row.processing_stage || null, reply: row.host_result?.outcome === row.status ? row.host_result.message : answerReply(row.status), version: row.version, receivedAt: row.received_at }; }
-function participantDto(row, prize) { return { id: row.id, name: row.name, phoneMasked: '*******' + row.phone_last4, score: row.score, answered: row.answered, qualifiedAt: row.qualifiedAt, prize: prize?.name || null, redeemedAt: prize?.redeemed_at || null }; }
+function participantDto(row, prize) { return { id: row.id, name: row.name, phoneMasked: '*******' + row.phone_last4, score: row.score, rank: row.rank || null, podiumPlace: row.podiumPlace || null, answered: row.answered, qualifiedAt: row.qualifiedAt, prize: prize?.name || null, redeemedAt: prize?.redeemed_at || null }; }
 function checkVersion(actual, expected) { if (actual !== expected) throw new GameError('VERSION_CONFLICT', '配置或答卷已更新，请刷新后再操作', 409); }
 function checkQuestions(config) { if (config.questions.some(question => !question.title || !question.answer)) throw new GameError('INCOMPLETE_QUESTIONS', '请填写六道题及标准答案'); }
 function sameQuestion(left, right) {

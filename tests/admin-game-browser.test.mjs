@@ -29,6 +29,7 @@ test('手机后台与真实隔离数据库完成规则保存、复核、结算�
     await page.locator('[data-admin-view="game"]').click();
     await page.locator('#gameContent:not([hidden])').waitFor();
     assert.equal(await page.locator('.question-card').count(), 6);
+    const knowledge=page.locator('#gameKnowledgeEditor');await knowledge.locator('textarea[name=question]').fill('婚礼现场的小暗号');await knowledge.locator('textarea[name=answer]').fill('同心同行');await knowledge.locator('textarea[name=teaser]').fill('现场有一句同心的小暗号。');await knowledge.locator('[name=enabled]').check();await knowledge.locator('[type=submit]').click();await knowledge.locator('[role=status]').filter({hasText:'资料已保存并向宾客开放'}).waitFor();assert.equal((await f.service.knowledge.forHost())[0].answer,'同心同行');
     await page.locator('[data-question-field="answer"]').first().fill('隔离验收的新标准');
     await page.locator('#saveGameButton').click();
     await page.locator('#gameSaveMessage').filter({ hasText: '规则已保存' }).waitFor();

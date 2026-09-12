@@ -10,7 +10,7 @@ export function gamePublicRouter(service, origin) {
     const event = await service.store.event();
     if (!event.published) return response.json({ enabled: false, phase: 'draft' });
     response.json({ enabled: true, phase: gamePhase(event, event.now.getTime()), version: event.version, closesAt: event.config.closesAt,
-      maxWinners: event.config.maxWinners, requiredCorrect: event.config.requiredCorrect, questions: await service.store.publicQuestions(event), prizes: event.config.prizes, captchaId:service.runtime.captcha?.appId||null });
+      participationLimit: event.config.participationLimit, maxWinners:event.config.participationLimit+3, requiredCorrect: event.config.requiredCorrect, questions: await service.store.publicQuestions(event), prizes: event.config.prizes, captchaId:service.runtime.captcha?.appId||null });
   });
   router.use(ready(service));
   router.use((request, _response, next) => {
@@ -28,8 +28,8 @@ export function gamePublicRouter(service, origin) {
   router.get('/leaderboard', async (_request, response) => {
     const event = await service.store.event();
     if (!event.published) throw new GameError('NOT_OPEN', '活动尚未开放', 409);
-    const { candidates, standings } = await service.store.ranking();
-    response.json({ provisional: !event.settled_at, qualifiedCount: standings.filter(row => row.qualifiedAt).length, entries: candidates.map(row => ({ rank: row.rank, name: row.name, score: row.score, ...(event.settled_at ? { prize: row.prize } : {}) })) });
+    const { ordered, standings, candidates } = await service.store.ranking();
+    response.json({ provisional: !event.settled_at, qualifiedCount: standings.filter(row => row.qualifiedAt).length, entries: ordered.map(row => ({ id:row.id, rank:row.rank, name:row.name, score:row.score, podiumPlace:row.podiumPlace||null, ...(event.settled_at ? { prize:candidates.find(candidate=>candidate.id===row.id)?.prize||null } : {}) })) });
   });
   router.use(async (request, _response, next) => {
     const id = await service.identity.session(request.get('Cookie'));
@@ -54,6 +54,8 @@ export function gameAdminRouter(service, actor) {
   const router = express.Router(); router.use(noCache, ready(service), express.json({ limit: '48kb', strict: true }));
   const overview = () => service.store.overview(service.integrations);
   router.get('/', async (_request, response) => response.json(await overview()));
+  router.get('/knowledge',async(_request,response)=>response.json(await service.knowledge.read()));
+  router.put('/knowledge',async(request,response)=>response.json(await service.knowledge.save(request.body,actor)));
   router.put('/config', async (request, response) => { await service.store.saveConfig(request.body, actor); response.json(await overview()); service.tick(); });
   router.post('/publish', async (request, response) => { await service.store.publish(request.body.expectedVersion, service.integrations); response.json(await overview()); });
   router.get('/participants', async (request, response) => response.json(await service.store.participants(request.query.before)));

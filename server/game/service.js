@@ -11,6 +11,7 @@ import { GameConversation } from './conversation.js';
 import { ConversationIntent } from './conversation-intent.js';
 import { ShowHost } from './show-host.js';
 import { QuestionDeck } from './question-deck.js';
+import { GameKnowledge } from './knowledge.js';
 
 /** 活动持久化与判题工作由服务拥有；判题租约可由其他实例恢复。 */
 export function createGameService({ database, room, runtime, wedding = {}, sms = new AliyunGameSms(runtime?.sms), captcha = new AliyunGameCaptcha(runtime?.captcha), judge = new GameJudge(runtime?.ai), intent = new ConversationIntent(runtime?.ai), host = new ShowHost(runtime?.ai), deck = new QuestionDeck(runtime?.ai,judge) }) {
@@ -19,7 +20,8 @@ export function createGameService({ database, room, runtime, wedding = {}, sms =
   const pool = new pg.Pool({ ...database, application_name: 'wedding-game' });
   pool.on('error', error => console.error('游戏数据库连接中断', error.code || error.name));
   const secrets = new GameSecrets(runtime), store = new GameStore(pool, room, secrets), identity = new GameIdentity(pool, room, secrets, sms, runtime,captcha);
-  const conversation=new ConversationStore(store),show=new GameConversation({store:conversation,game:store,intent,judge,host,wedding});
+  const knowledge=new GameKnowledge(store);
+  const conversation=new ConversationStore(store),show=new GameConversation({store:conversation,game:store,intent,judge,host,wedding,knowledge});
   const jobs = new Set(); let initializing, ticking = false, stopped = false, closing, loggedFailure = false;
   let tickFinished=Promise.resolve();
   const integrations = { sms: { configured: sms.configured }, captcha:{configured:captcha.configured}, ai: { configured: judge.configured } };
@@ -56,7 +58,7 @@ export function createGameService({ database, room, runtime, wedding = {}, sms =
     finally { ticking = false;finishTick(); }
   }
   const timer = setInterval(tick, 2000); timer.unref(); tick();
-  return { store, identity, integrations, runtime, conversation, ensure, tick,
+  return { store, identity, integrations, runtime, conversation, knowledge, ensure, tick,
     close() {
       closing ??= (async () => { stopped = true; clearInterval(timer); for (const job of jobs) job.controller.abort(); await Promise.allSettled([...jobs].map(job => job.promise)); await tickFinished;await initializing?.catch(() => {}); await pool.end(); })();
       return closing;

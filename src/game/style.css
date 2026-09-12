@@ -4,7 +4,7 @@
 html,body { margin:0; width:100%; height:100%; overflow:hidden; overscroll-behavior-y:none; color:#533c2f; font-family:"Noto Serif SC","Songti SC",serif; }
 body { background:#31221c; }
 body::before { content:''; position:fixed; inset:0; max-width:450px; margin:auto; background:linear-gradient(#3b261b1a,#3b261b47),url('../assets/welcome-silk-roses.webp') center/cover; z-index:0; pointer-events:none; }
-#gameApp { position:relative; top:var(--game-viewport-top,0px); z-index:1; width:min(100%,450px); height:var(--game-viewport-height,100dvh); margin:auto; padding:max(30px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+#gameApp { position:fixed; left:0; right:0; top:var(--game-viewport-top,0px); z-index:1; width:min(100%,450px); height:var(--game-viewport-height,100dvh); margin:auto; padding:max(30px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
 .game-atmosphere { position:fixed; inset:0; max-width:450px; margin:auto; z-index:0; pointer-events:none; overflow:hidden; }
 .game-atmosphere canvas { width:100%;height:100%; }
 .game-paper { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; border:1px solid #fce7c5bf; border-radius:20px 20px 8px 8px; padding:0; box-shadow:inset 0 1px #ffffffe0,0 12px 38px #30140c30; }
@@ -25,6 +25,9 @@ body::before { content:''; position:fixed; inset:0; max-width:450px; margin:auto
 .game-header-mark { position:absolute; left:50%; transform:translateX(-50%); color:#a47743; pointer-events:none; }
 .game-mark-classic { display:block; width:40px; height:24px; }
 .game-mark-chinese { display:none; }
+.game-header-state { position:absolute; left:50%; transform:translateX(-50%); border:0; background:none; padding:5px 8px; color:var(--game-ink); font:12px/1.6 "Noto Serif SC",serif; white-space:nowrap; }
+button.game-header-state { min-height:44px; }
+.game-header-state small { color:#947048; font-size:9px; margin-left:5px; }
 .game-menu-wrap { position:relative; }
 .game-menu.glass-surface { position:absolute; right:0; top:48px; width:146px; padding:7px; border:1px solid #cba36b96; border-radius:12px 3px 12px 12px; box-shadow:0 8px 26px #33130c30; --glass-background:linear-gradient(120deg,#fffaede8,#f9eddad9); --glass-backdrop:blur(16px); }
 .game-menu::before { content:''; position:absolute; right:17px; top:-5px; width:8px; height:8px; border-left:1px solid #cba36b96; border-top:1px solid #cba36b96; transform:rotate(45deg); background:#fff7e8; }
@@ -33,12 +36,13 @@ body::before { content:''; position:fixed; inset:0; max-width:450px; margin:auto
 .game-menu [aria-pressed=true] { background:#7a1f2b0b; }
 .game-known-name { display:flex; justify-content:space-between; gap:12px; align-items:center; color:var(--game-ink); font-size:13px; line-height:1.8; overflow-wrap:anywhere; }
 .game-text-button { border:0; background:none; min-height:44px; color:var(--game-ink); font:11px "Noto Serif SC",serif; text-decoration:underline; text-underline-offset:4px; cursor:pointer; }
-.game-label { display:flex; flex-direction:column; gap:7px; font-size:12px; color:#795c39; margin:15px 0; }
+.game-label { display:flex; min-width:0; flex-direction:column; gap:7px; font-size:12px; color:#795c39; margin:15px 0; }
 input,textarea { min-width:0; width:100%; border:1px solid #b9935f7a; border-radius:6px; background:#fffdf4a6; padding:11px; color:#533329; font:16px/1.6 "Noto Serif SC",serif; }
 textarea { resize:vertical; min-height:102px; }
 input::placeholder,textarea::placeholder { font-size:12px; color:#95836b; }
 button,a { -webkit-tap-highlight-color:transparent; cursor:pointer; }
-button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible { outline:2px solid var(--game-ink); outline-offset:3px; }
+button:focus-visible,a:focus-visible { outline:1px solid var(--game-ink); outline-offset:-3px; }
+input:focus,textarea:focus { outline:none; border-color:#a77452; box-shadow:inset 0 0 0 1px #a7745266; }
 .game-button { width:100%; min-height:48px; border:1px solid var(--game-gold); border-radius:24px; outline:1px solid #e4c59977; outline-offset:-4px; background:var(--game-ink); color:#fff2d8; font:14px "Noto Serif SC",serif; letter-spacing:.1em; padding:10px 15px; margin-top:12px; }
 .game-button:disabled,.game-code-button:disabled { opacity:.6; cursor:wait; }
 .game-code-row { display:flex; gap:9px; align-items:end; }
@@ -50,8 +54,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible 
 .game-empty { padding:30px 5px; text-align:center; line-height:2; font-size:13px; }
 .game-small-button,.game-logout { display:block; min-height:44px; border:0; background:none; color:var(--game-ink); font:12px "Noto Serif SC",serif; padding:10px 0; }
 .game-logout { margin:15px auto 0; font-size:10px; color:#877258; }
-.game-board-note { font-size:11px; color:#82663d; line-height:1.9; text-align:center; }
-.game-leaderboard { margin:20px 0; padding:0; list-style:none; }
+.leaderboard-room { display:flex; flex-direction:column; flex:1; min-height:0; }
+#gameContent[data-mode=board] { overflow:hidden; }
+.game-leaderboard { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin; scrollbar-color:#b9935f80 transparent; margin:6px 0; padding:0 9px 0 0; list-style:none; }
 .game-leaderboard li { display:grid; grid-template-columns:35px 1fr auto; gap:7px; padding:16px 0; border-bottom:1px solid #b9935f33; font-size:13px; }
 .game-rank { color:#b1894d; font:17px Georgia,serif; }
 .game-rank-name { overflow-wrap:anywhere; }
@@ -78,7 +83,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible 
 .conversation-typing { flex-shrink:0; min-height:24px; padding:2px 8px 5px; color:#765336; font-size:11px; line-height:1.7; }
 .conversation-composer { flex-shrink:0; display:flex; align-items:flex-end; gap:8px; padding:7px; border:1px solid #b9935f52; border-radius:12px; background:linear-gradient(115deg,#fffaf0a8,#fffaf047); box-shadow:inset 0 1px #fffdf4b0; }
 .conversation-composer textarea { flex:1; min-height:44px; max-height:108px; resize:none; padding:9px 5px; border:0; border-radius:5px; background:transparent; font-size:16px; }
-.conversation-composer textarea:focus-visible { outline:1px solid #b9935f77; outline-offset:0; }
+.conversation-composer textarea:focus-visible { outline:none; box-shadow:none; }
+.conversation-composer:focus-within { border-color:#a77452; box-shadow:inset 0 0 0 1px #a7745233; }
 .conversation-composer button { flex:0 0 48px; min-height:44px; border:1px solid #bd925d; border-radius:8px; background:var(--game-ink); color:#fff4de; font:12px "Noto Serif SC",serif; }
 .conversation-composer button:disabled { opacity:.6; }
 .conversation-claim { align-self:center; }

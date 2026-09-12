@@ -1,7 +1,8 @@
 .invitation-dialog { color:#593b30; width:min(350px,calc(100vw - 36px)); max-height:calc(100dvh - 48px); margin:auto; padding:25px 22px 18px; border:1px solid #b9935fcc; outline:1px solid #e9d0a477; outline-offset:-5px; border-radius:15px; background:linear-gradient(115deg,#fff8eacf,#fffdf5b8 55%,#f6e6ccca); backdrop-filter:blur(12px) saturate(.85); -webkit-backdrop-filter:blur(12px) saturate(.85); box-shadow:0 16px 60px #351b173d; font-family:"Noto Serif SC","Songti SC",serif; box-sizing:border-box; }
 .invitation-dialog::backdrop { background:#28130c38; }
 .invitation-dialog h2 { margin:0 26px 16px 0; font-size:18px; font-weight:500; color:#7a1f2b; line-height:1.6; }
-.dialog-close { position:absolute; top:3px; right:3px; width:44px; height:44px; border:0; background:none; font:25px Georgia,serif; color:#9d7746; cursor:pointer; }
+.dialog-close { position:absolute; top:5px; right:5px; width:44px; height:44px; display:grid; place-items:center; padding:12px; border:0; border-radius:12px; background:none; color:#9d7746; cursor:pointer; }
+.dialog-close svg { width:20px; height:20px; }
 .dialog-content { font-size:13px; line-height:1.95; overflow-wrap:anywhere; max-height:calc(100dvh - 225px); overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin; scrollbar-color:#b9935f80 transparent; }
 .dialog-content h3 { margin:19px 0 7px; font-size:14px; font-weight:600; color:#7a1f2b; }
 .dialog-content h3:first-child { margin-top:0; }
@@ -11,7 +12,8 @@
 .dialog-actions button { flex:1; min-width:0; min-height:44px; padding:9px; border:1px solid #ba935d; border-radius:22px; font:12px "Noto Serif SC",serif; cursor:pointer; }
 .dialog-primary { background:#7a1f2b; color:#fff3de; }
 .dialog-secondary { background:#fff8e97a; color:#785735; }
-.invitation-dialog :focus-visible { outline:2px solid #7a1f2b; outline-offset:2px; }
+.invitation-dialog :focus-visible { outline:1px solid #7a1f2b; outline-offset:-3px; }
+.invitation-dialog .dialog-close:focus-visible { outline-offset:-8px; }
 :root[data-theme=chinese] .invitation-dialog { border-radius:5px 19px; border-color:#c29557; }
 :root[data-theme=chinese] .dialog-primary { background:#8b171b; }
 :root[data-theme=chinese] .dialog-actions button { border-radius:5px 16px; }

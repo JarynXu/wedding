@@ -138,7 +138,7 @@
                 <legend class="sr-only">游戏规则配置</legend>
                 <div class="rule-grid">
                   <label class="field-group"><span>截止时间</span><input id="gameClosesAt" type="datetime-local"><small>按北京时间（UTC+8）填写，和操作设备时区无关。</small></label>
-                  <label class="field-group"><span>获奖名额</span><input id="gameMaxWinners" type="number" min="3" step="1" inputmode="numeric"><small id="prizeComposition">未知</small></label>
+                  <label class="field-group"><span>参与奖名额</span><input id="gameMaxWinners" type="number" min="0" step="1" inputmode="numeric"><small id="prizeComposition">未知</small></label>
                   <label class="field-group"><span>答对题数</span><input id="gameRequiredCorrect" type="number" min="1" step="1" inputmode="numeric"><small>达到此题数后进入达标名单。</small></label>
                 </div>
                 <div class="prize-grid">
@@ -162,6 +162,7 @@
               </div>
             </form>
 
+            <section class="game-card" id="gameKnowledgeEditor"></section>
             <section class="game-card" aria-labelledby="participantsTitle">
               <div class="section-heading">
                 <div><p class="section-kicker">ENTRIES</p><h3 id="participantsTitle">参与者与答卷</h3></div>

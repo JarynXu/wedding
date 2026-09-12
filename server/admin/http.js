@@ -49,6 +49,7 @@ export function adminRouter({ config = null, blessings = null, game = null, star
 
   router.get(['/', '/index.html'], sendStatic('index.html'));
   router.get('/admin.js', sendStatic('admin.js'));
+  router.get('/knowledge.js', sendStatic('knowledge.js'));
   router.get('/admin.css', sendStatic('admin.css'));
   router.use((error, _request, response, next) => {
     if (response.headersSent) return next(error);

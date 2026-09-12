@@ -27,7 +27,7 @@ export class ConversationView {
     this.typing.textContent='主持人正在过来…';
     try{await this.request('/conversation/start',{requestId:this.uuid()});await this.refresh();}catch(error){this.notice(error.message);}finally{this.starting=false;this.render();}
   }
-  update(me,config){this.me=me;this.config=config;this.claim.hidden=!me.claim;this.render();}
+  update(me,config){this.me=me;this.config=config;this.claim.hidden=!me.claim;this.input.placeholder=me.participant.answered>=config.questions.length||config.phase!=='open'?'婚礼时间、地点，都可以问我…':'说说你的答案…';this.render();}
   get waiting(){return this.snapshot.turns.some(turn=>turn.state!=='complete');}
   atBottom(){return this.log.scrollHeight-this.log.scrollTop-this.log.clientHeight<70;}
   savePending(){try{sessionStorage.setItem('wedding.game.chat.pending',JSON.stringify(this.pending||null));}catch{}}

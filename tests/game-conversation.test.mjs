@@ -70,7 +70,7 @@ test('连续闲聊带回当前题目，暂停保留题目且不主动催答',{sk
   try{
     const person=await f.participant(79),id=person.participantId;
     const send=async(text,kind='message')=>{await f.service.conversation.enqueue(id,{requestId:randomUUID(),text},kind);await f.service.tick();return (await f.service.conversation.snapshot(id)).turns.at(-1).reply;};
-    const opening=await send('','start');assert.match(opening.messages.join(''),/答对 2 题.*前 20 位/s);
+    const opening=await send('','start');assert.match(opening.messages.join(''),/答对 2 题.*另有 20 份/s);
     await send('你好呀，我有点紧张');const guided=await send('你好呀，今天心情不错');
     assert.equal(guided.questionText,'隔离测试题 1');assert.equal((await f.store.participant(id)).answers.length,0);
     const pause=await send('暂时不玩，等会再答');assert.equal(pause.questionText,null);assert.doesNotMatch(pause.messages.join(''),/隔离测试题/);

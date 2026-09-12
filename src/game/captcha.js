@@ -11,14 +11,14 @@ function loadSdk() {
 }
 
 /** 宾客主动申请验证码后才加载认证 SDK；客户端成功结果仍须服务端核验。 */
-export async function getCaptchaProof(captchaId) {
+export async function getCaptchaProof(captchaId, onVerified) {
   if(!captchaId)throw new Error('图形认证正在准备中，请稍后再试');
   await loadSdk();
   return new Promise((resolve,reject)=>{
     let instance,finished=false;
     const finish=(error,result)=>{
       if(finished)return;finished=true;clearTimeout(timeout);window.removeEventListener('pagehide',leave);instance?.destroy();
-      if(error)reject(error);else resolve(result);
+      if(error)reject(error);else { onVerified?.(); resolve(result); }
     };
     const leave=()=>finish(new Error('已取消图形验证'));
     const timeout=setTimeout(()=>finish(new Error('图形验证未完成，请重新尝试')),90000);

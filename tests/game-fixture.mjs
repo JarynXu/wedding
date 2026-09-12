@@ -12,6 +12,7 @@ import { WEDDING_CONFIG } from '../src/config.js';
 import { ConversationStore } from '../server/game/conversation-store.js';
 import { GameConversation } from '../server/game/conversation.js';
 import { ShowHost } from '../server/game/show-host.js';
+import { GameKnowledge } from '../server/game/knowledge.js';
 export const gameTestDatabase=process.env.BLESSINGS_TEST_DATABASE_URL;
 export async function gameFixture() {
   const pool=new pg.Pool({connectionString:gameTestDatabase,ssl:false,max:5});
@@ -29,11 +30,11 @@ export async function gameFixture() {
   config.questions.forEach((q,i)=>{q.title=`隔离测试题 ${i+1}`;q.answer=`测试答案 ${i+1}`;});
   await store.saveConfig({expectedVersion:1,config},'test-admin');
   await store.publish(2,integrations);
-  const conversation=new ConversationStore(store);
+  const conversation=new ConversationStore(store),knowledge=new GameKnowledge(store);
   const intent={async classify(question,input){const kind=/暂时不玩|等会再/.test(input)?'pause':/忽略|发奖|改分/.test(input)?'injection':/答对|成绩/.test(input)?'score':/提示/.test(input)?'hint':/选项/.test(input)?'options':/继续|开始/.test(input)?'continue':/你好|紧张/.test(input)?'chat':'answer';return {intent:kind,summary:kind==='chat'?'宾客向主持人问好':'',reason:'隔离测试分类'};}};
   const judge={config:{model:'test'},async evaluate(_model,answer){return {verdict:answer.text.includes(answer.question.answer)?'correct':'incorrect',reason:'隔离测试判定',evidence:answer.text};}};
-  const show=new GameConversation({store:conversation,game:store,intent,judge,host:new ShowHost(null)});let chatting;
-  const service={store,identity,runtime,integrations,conversation,ensure:async()=>{},tick(){chatting??=(async()=>{let turn;while((turn=await conversation.claim()))await show.process(turn,new AbortController().signal);})().finally(()=>{chatting=null;});return chatting;}};
+  const show=new GameConversation({store:conversation,game:store,intent,judge,host:new ShowHost(null),knowledge});let chatting;
+  const service={store,identity,runtime,integrations,conversation,knowledge,ensure:async()=>{},tick(){chatting??=(async()=>{let turn;while((turn=await conversation.claim()))await show.process(turn,new AbortController().signal);})().finally(()=>{chatting=null;});return chatting;}};
   const servers=[];
   async function server({blessings=null}={}) {
     let handler;const node=createServer((req,res)=>handler(req,res));node.listen(0,'127.0.0.1');await new Promise(resolve=>node.once('listening',resolve));
@@ -55,7 +56,7 @@ export async function gameFixture() {
       for(const server of servers){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
       await pool.query('DELETE FROM wedding_game_sessions WHERE participant_id IN (SELECT id FROM wedding_game_participants WHERE room_id=$1)',[room]);
       await pool.query('DELETE FROM wedding_game_reviews WHERE answer_id IN (SELECT id FROM wedding_game_answers WHERE room_id=$1)',[room]);
-      for(const table of ['wedding_game_chat_turns','wedding_game_conversations','wedding_game_answers','wedding_game_prizes','wedding_game_otps','wedding_game_captcha_uses','wedding_game_participants','wedding_game_config_history','wedding_game_question_voice','wedding_games'])await pool.query(`DELETE FROM ${table} WHERE room_id=$1`,[room]);
+      for(const table of ['wedding_game_chat_turns','wedding_game_conversations','wedding_game_answers','wedding_game_prizes','wedding_game_otps','wedding_game_captcha_uses','wedding_game_participants','wedding_game_config_history','wedding_game_question_voice','wedding_game_knowledge','wedding_games'])await pool.query(`DELETE FROM ${table} WHERE room_id=$1`,[room]);
       await pool.end();
     }};
 }

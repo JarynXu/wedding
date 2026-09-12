@@ -2,7 +2,7 @@ export class GameError extends Error {
   constructor(code, message, status = 400, retryAfter = 0) { super(message); this.code = code; this.status = status; this.retryAfter = retryAfter; }
 }
 export function initialGameConfig() {
-  return { closesAt: '2026-10-16T16:00:00.000Z', maxWinners: 20, requiredCorrect: 2,
+  return { prizePolicy:'perfect-six-v1', closesAt: '2026-10-16T16:00:00.000Z', participationLimit: 20, requiredCorrect: 2,
     questions: Array.from({ length: 6 }, (_, index) => ({ id: `q${index + 1}`, title: '', answer: '', aliases: [], rubric: '' })),
     prizes: { first: '一等奖', second: '二等奖', third: '三等奖', participation: '小玩偶' }, judgeInstructions: '' };
 }
@@ -33,7 +33,7 @@ export function validateGameConfig(input) {
     return { id: question.id, title: text(question.title, '题目', 240, true), answer: text(question.answer, '标准答案', 800, true), aliases: question.aliases.map(alias => text(alias, '答案别称', 200)), rubric: text(question.rubric, '评分依据', 1600, true) };
   });
   const prizes = Object.fromEntries(['first', 'second', 'third', 'participation'].map(key => [key, text(input.prizes?.[key], '奖品名称', 60)]));
-  return { closesAt: new Date(input.closesAt).toISOString(), maxWinners: integer(input.maxWinners, '获奖名额', 3, 500), requiredCorrect: integer(input.requiredCorrect, '达标题数', 1, 6), questions, prizes, judgeInstructions: text(input.judgeInstructions, '判题补充说明', 4000, true) };
+  return { prizePolicy:'perfect-six-v1', closesAt: new Date(input.closesAt).toISOString(), participationLimit: integer(input.participationLimit ?? input.maxWinners, '参与奖名额', 0, 500), requiredCorrect: integer(input.requiredCorrect, '达标题数', 1, 6), questions, prizes, judgeInstructions: text(input.judgeInstructions, '判题补充说明', 4000, true) };
 }
 export function gamePhase(event, now = Date.now()) {
   if (event.settled_at) return 'settled';
@@ -43,7 +43,7 @@ export function gamePhase(event, now = Date.now()) {
 const compareId = (a, b) => BigInt(a) < BigInt(b) ? -1 : BigInt(a) > BigInt(b) ? 1 : 0;
 const compareArrival = (a, b) => new Date(a.received_at).getTime() - new Date(b.received_at).getTime() || compareId(a.id, b.id);
 
-/** 名额取达标时间最早的 N 人，奖项在该名单内按得分和达到该分数的时间排序。 */
+/** 前三取全体最早六题全对者；参与奖取其余最早达标者，奖位与实时名次分开。 */
 export function rankGame(participants, answers, config) {
   const grouped = new Map();
   for (const answer of answers) {
@@ -53,14 +53,18 @@ export function rankGame(participants, answers, config) {
   const standings = participants.map(participant => {
     const all = grouped.get(participant.id) || [];
     const correct = all.filter(answer => answer.status === 'correct').sort(compareArrival);
-    const qualifying = correct[config.requiredCorrect - 1];
-    return { ...participant, score: correct.length, answered: all.length, pending: all.filter(answer => ['pending', 'judging', 'review'].includes(answer.status)).length, qualifiedAt: qualifying?.received_at || null, qualifying, reached: correct.at(-1) };
+    const qualifying = correct[config.requiredCorrect - 1], completed = correct[config.questions.length - 1];
+    return { ...participant, score: correct.length, answered: all.length, pending: all.filter(answer => ['pending', 'judging', 'review'].includes(answer.status)).length, qualifiedAt: qualifying?.received_at || null, qualifying, completed, reached: correct.at(-1) };
   });
-  const eligible = standings.filter(row => row.qualifying).sort((a, b) => compareArrival(a.qualifying, b.qualifying));
-  eligible.forEach((row, index) => { row.qualificationOrder = index + 1; });
-  const candidates = eligible.slice(0, config.maxWinners).sort((a, b) => b.score - a.score || compareArrival(a.reached, b.reached));
-  candidates.forEach((row, index) => { row.rank = index + 1; row.prize = config.prizes[['first', 'second', 'third'][index] || 'participation']; });
-  return { standings, candidates };
+  const ordered = [...standings].filter(row=>row.answered).sort((a,b)=>b.score-a.score || (a.reached&&b.reached?compareArrival(a.reached,b.reached):new Date(a.created_at)-new Date(b.created_at)||a.id.localeCompare(b.id)));
+  ordered.forEach((row,index)=>{row.rank=index+1;});
+  const eligible = standings.filter(row=>row.qualifying).sort((a,b)=>compareArrival(a.qualifying,b.qualifying));
+  eligible.forEach((row,index)=>{row.qualificationOrder=index+1;});
+  const podium = standings.filter(row=>row.completed).sort((a,b)=>compareArrival(a.completed,b.completed)).slice(0,3);
+  podium.forEach((row,index)=>{row.podiumPlace=index+1;});
+  const participation = eligible.filter(row=>!podium.includes(row)).slice(0,config.participationLimit ?? config.maxWinners);
+  const candidates = [...podium.map((row,index)=>({...row,slot:index+1,award:'podium',prize:config.prizes[['first','second','third'][index]]})),...participation.map((row,index)=>({...row,slot:index+4,award:'participation',prize:config.prizes.participation}))];
+  return { standings, ordered, candidates };
 }
 
 export function parseVerdict(value, answer) {

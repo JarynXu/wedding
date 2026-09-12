@@ -22,7 +22,7 @@ test('请柬内聊天保留音乐、页面与草稿，手机只滚动聊天区',
       const before = await page.evaluate(() => { window.invitationDocumentProof = crypto.randomUUID(); return { proof: window.invitationDocumentProof, time: document.querySelector('#bgm').currentTime }; });
       await page.locator('#gameEntry').click();
       const frame = page.frameLocator('.invitation-game-layer iframe');
-      await frame.locator('.conversation-host').first().waitFor();
+      await frame.locator('.conversation-host').first().waitFor();if(await frame.locator('dialog[data-kind=first-rules][open]').count())await frame.locator('.dialog-primary').click();
       await frame.locator('#gameAnswer').fill('还没发送的心意');
       for (const [width, height] of [[320, 568], [390, 844], [390, 420]]) {
         await page.setViewportSize({ width, height });
@@ -34,11 +34,23 @@ test('请柬内聊天保留音乐、页面与草稿，手机只滚动聊天区',
         assert.ok(layout.input.bottom <= layout.height && layout.input.top >= 0); assert.ok(layout.back.top >= 0);
       }
       await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(()=>{
+        window.qaViewportDescriptor=Object.getOwnPropertyDescriptor(window,'visualViewport');
+        Object.defineProperty(window,'visualViewport',{configurable:true,value:{height:360,width:390,offsetTop:110,offsetLeft:0}});
+        document.querySelector('#app').style.transform='translateY(-230px)';window.dispatchEvent(new Event('resize'));
+      });
+      await frame.locator('#gameAnswer').focus();
+      const keyboard=await page.locator('.invitation-game-layer').evaluate(node=>({height:node.getBoundingClientRect().height,top:node.getBoundingClientRect().top}));
+      assert.equal(keyboard.height,360,'活动窗口使用可见高度，不与被键盘滚动的请柬求交集');assert.equal(keyboard.top,110);
+      const childKeyboard=await frame.locator('#gameApp').evaluate(node=>({top:node.getBoundingClientRect().top,height:node.getBoundingClientRect().height,inputBottom:document.querySelector('.conversation-composer').getBoundingClientRect().bottom}));
+      assert.equal(childKeyboard.top,0);assert.equal(childKeyboard.height,360);assert.ok(childKeyboard.inputBottom<=360);
+      await page.evaluate(()=>{if(window.qaViewportDescriptor)Object.defineProperty(window,'visualViewport',window.qaViewportDescriptor);else delete window.visualViewport;document.querySelector('#app').style.transform='';window.dispatchEvent(new Event('resize'));});
       await frame.locator('#gameMenuToggle').click(); await frame.locator('#showGameRules').click();
       await frame.locator('dialog[open]').waitFor(); await frame.locator('.dialog-primary').click();
       await frame.locator('#gameMenuToggle').click(); await frame.locator('[data-game-tab=board]').click();
-      await frame.locator('.game-board-note').waitFor();
-      await frame.locator('#gameMenuToggle').click(); await frame.locator('[data-game-tab=play]').click();
+      await frame.locator('#gameBoardHeading').waitFor();
+      assert.equal(await frame.locator('.game-board-note,.leaderboard-room .game-small-button').count(),0);
+      await frame.getByRole('link',{name:'回到聊天',exact:true}).click();await frame.locator('#gameAnswer').waitFor();
       assert.equal(await frame.locator('#gameAnswer').inputValue(), '还没发送的心意');
       if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `integrated-game-${theme}.png`), animations: 'disabled' });
       await frame.locator('#backToInvitation').click(); await page.locator('.invitation-game-layer[open]').waitFor({ state: 'hidden' });

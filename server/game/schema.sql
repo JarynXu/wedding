@@ -147,4 +147,11 @@ CREATE TABLE IF NOT EXISTS wedding_game_prizes (
   PRIMARY KEY(room_id,slot),
   UNIQUE(room_id,participant_id)
 );
+CREATE TABLE IF NOT EXISTS wedding_game_knowledge (
+  room_id VARCHAR(64) PRIMARY KEY REFERENCES wedding_games(room_id),
+  version INTEGER NOT NULL DEFAULT 1,
+  config JSONB NOT NULL,
+  updated_by VARCHAR(64) NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
 COMMIT;

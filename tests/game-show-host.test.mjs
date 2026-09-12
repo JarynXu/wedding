@@ -9,10 +9,10 @@ import { gameOpeningInvitation } from '../src/game-rules.js';
 
 const context={scene:'score',shouldAsk:false,score:1,answered:2,pending:0,variantSeed:0,recent:[],deck:{id:'q1',phrasings:['第一次旅行去了哪座城市？'],hints:['想想旅途里的湖水。'],choices:['杭州','上海','南京','苏州']}};
 test('开场先说明活动资格，不把达标说成人人获奖，不公开主持要求',()=>{
-  const config=initialGameConfig();config.requiredCorrect=3;config.maxWinners=15;config.prizes.participation='纪念熊';
+  const config=initialGameConfig();config.requiredCorrect=3;config.participationLimit=15;config.prizes.participation='纪念熊';
   const invitation=gameOpeningInvitation(config),host=new ShowHost(null);
   const reply=host.render({...context,scene:'welcome',shouldAsk:true,invitation},{messages:['咱们不紧不慢地聊，我会用轻松的方式陪你。','{{question}}'],help:'none',quickReplies:['我负责活跃气氛','慢慢聊聊吧']},'ai');
-  assert.match(reply.messages.join(''),/答对 3 题.*前 15 位.*纪念熊/s);
+  assert.match(reply.messages.join(''),/答对 3 题.*另有 15 份.*纪念熊/s);
   assert.ok(reply.messages.indexOf(invitation)<reply.messages.indexOf(reply.questionText));
   assert.doesNotMatch(reply.messages.join(''),/不紧不慢|我会用|轻松的方式|我负责/);assert.deepEqual(reply.quickReplies,[]);
 });
@@ -36,6 +36,8 @@ test('主持人保留自然接话，成绩与线索标记不会泄漏或重复�
   assert.equal(clue.messages.join('').match(/想想旅途里的湖水/g).length,1);
   const reordered=host.render(context,{messages:['{{question}}','{{score}}'],help:'none'},'ai');
   assert.match(reordered.messages[0],/答对 1 题/);
+  const backstage=host.render({...context,scene:'onsite',purpose:'guest-assistant',deck:null},{messages:['暗号是同心同行。','这是新人允许公开的答案，直接告诉你啦。'],help:'none'},'ai');
+  assert.deepEqual(backstage.messages,['暗号是同心同行。']);
 });
 test('发言核对失败时不得使用未经核对的线索；主动接话可选择沉默',async()=>{
   const host=new ShowHost({model:'host',reviewModel:'review',baseUrl:'https://example.invalid',key:'test'});

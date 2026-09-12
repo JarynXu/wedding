@@ -6,9 +6,9 @@ import { GameJudge } from '../server/game/judge.js';
 import { gameFixture,gameTestDatabase,gameRequest,adminLogin } from './game-fixture.mjs';
 
 test('游戏配置与结构化判题边界不接受客户端发奖字段',()=>{
-  const config=initialGameConfig();assert.equal(config.questions.length,6);assert.equal(config.maxWinners,20);assert.equal(config.requiredCorrect,2);assert.equal(config.closesAt,'2026-10-16T16:00:00.000Z');
+  const config=initialGameConfig();assert.equal(config.questions.length,6);assert.equal(config.participationLimit,20);assert.equal(config.requiredCorrect,2);assert.equal(config.closesAt,'2026-10-16T16:00:00.000Z');
   assert.equal(validateGameConfig(config).prizes.participation,'小玩偶');
-  assert.throws(()=>validateGameConfig({...config,questions:[]}));assert.throws(()=>validateGameConfig({...config,maxWinners:-1}));
+  assert.throws(()=>validateGameConfig({...config,questions:[]}));assert.throws(()=>validateGameConfig({...config,participationLimit:-1}));
   assert.equal(phoneNumber('138 0000 0000'),'+8613800000000');assert.throws(()=>phoneNumber('fake'));
   assert.throws(()=>parseVerdict({verdict:'correct',reason:'正确',evidence:'不存在的依据'},'用户原文'));
   assert.throws(()=>parseVerdict({verdict:'incorrect',reason:'错误',evidence:'不存在的依据'},'用户原文'));
@@ -69,7 +69,7 @@ test('真实 PostgreSQL 游戏身份、判题版本、库存与核销；短信�
       assert.equal((await f.store.participant(person.participantId)).answers[0].status,'incorrect');
     });
     const participants=[];
-    await suite.test('奖项候选取最早达标的20人，再按正确数和到达时间排前三',async()=>{
+    await suite.test('前三取全体最早六题全对者，另有20份参与奖且不重复领奖',async()=>{
       const version=(await f.store.event()).version;
       for(let i=0;i<25;i++){
         const person=await f.participant(i);participants.push(person);
@@ -79,13 +79,13 @@ test('真实 PostgreSQL 游戏身份、判题版本、库存与核销；短信�
           await f.store.manualReview(answer.id,{expectedVersion:1,verdict:'correct',reason:'隔离测试计分'},'tester');
         }
       }
-      const ranking=await f.store.ranking();assert.equal(ranking.candidates.length,20);
-      assert.deepEqual(ranking.candidates.slice(0,3).map(row=>row.id),[participants[1].participantId,participants[2].participantId,participants[3].participantId]);
-      assert.ok(ranking.candidates.every(row=>!participants.slice(20).some(person=>person.participantId===row.id)));
+      const ranking=await f.store.ranking();assert.equal(ranking.candidates.length,23);
+      assert.deepEqual(ranking.candidates.slice(0,3).map(row=>row.id),[participants[1].participantId,participants[2].participantId,participants[20].participantId]);
+      assert.equal(ranking.candidates.filter(row=>row.award==='participation').length,20);assert.equal(new Set(ranking.candidates.map(row=>row.id)).size,23);assert.ok(ranking.candidates.filter(row=>row.award==='podium').every(row=>row.score===6));
       await assert.rejects(f.store.settle({expectedVersion:version,confirmed:true}),{code:'NOT_READY'});
     });
     let issued;
-    await suite.test('过期预览不能结算，并发结算不超出20个奖位',async()=>{
+    await suite.test('过期预览不能结算，并发结算不超出23个奖位',async()=>{
       const cutoff=(await f.pool.query('SELECT clock_timestamp() AS now')).rows[0].now.toISOString();
       await f.pool.query("UPDATE wedding_games SET config=jsonb_set(config,'{closesAt}',to_jsonb($2::text)) WHERE room_id=$1",[f.room,cutoff]);
       const preview=await f.store.settlementPreview();assert.equal(preview.ready,true,preview.reason);
@@ -96,9 +96,9 @@ test('真实 PostgreSQL 游戏身份、判题版本、库存与核销；短信�
       const fresh=await f.store.settlementPreview();
       const results=await Promise.all(Array.from({length:8},()=>f.store.settle({expectedVersion:fresh.configVersion,previewToken:fresh.previewToken,confirmed:true})));
       assert.equal(results.filter(result=>!result.alreadySettled).length,1);
-      const stats=await f.store.overview(f.integrations);assert.equal(stats.stats.awarded,20);
+      const stats=await f.store.overview(f.integrations);assert.equal(stats.stats.awarded,23);
       const awards=(await f.pool.query('SELECT name,count(*)::int AS count FROM wedding_game_prizes WHERE room_id=$1 GROUP BY name',[f.room])).rows;
-      assert.equal(awards.find(row=>row.name==='小玩偶').count,17);
+      assert.equal(awards.find(row=>row.name==='小玩偶').count,20);
       issued=await f.store.participant(participants[1].participantId);assert.equal(issued.claim.prize,'一等奖');
       await assert.rejects(f.store.submit(participants[0].participantId,{requestId:randomUUID(),questionId:'q6',text:'迟到答案',configVersion:fresh.configVersion}),{code:'CLOSED'});
     });
@@ -117,7 +117,7 @@ test('真实 PostgreSQL 游戏身份、判题版本、库存与核销；短信�
       const cookie=await adminLogin(origin);const response=await gameRequest(origin,'/admin/api/game',undefined,cookie);assert.equal(response.status,200);
       const profile=await(await gameRequest(origin,'/api/game/me',undefined,'wedding_game='+participants[1].token)).json();
       assert.ok(profile.claim.code);assert.ok(profile.answers.every(answer=>!('reason'in answer)&&!('question'in answer)));
-      const unrelated=await(await gameRequest(origin,'/api/game/me',undefined,'wedding_game='+participants[20].token)).json();assert.equal(unrelated.claim,undefined);
+      const unrelated=await(await gameRequest(origin,'/api/game/me',undefined,'wedding_game='+participants[24].token)).json();assert.equal(unrelated.claim,undefined);
     });
   } finally {await f.close();}
 });

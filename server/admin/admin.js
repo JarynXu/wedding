@@ -1,3 +1,5 @@
+import { KnowledgeEditor } from './knowledge.js';
+const knowledgeEditor=new KnowledgeEditor({root:document.querySelector('#gameKnowledgeEditor'),request,onAuthError:handleAuthError});
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 const $ = selector => document.querySelector(selector);
 
@@ -201,6 +203,7 @@ async function loadGame({ manual = false, includeParticipants = true } = {}) {
     if (!data || data.config == null) { state.gameLoaded = false; state.gameData = null; showGameEmpty(); return false; }
     if (!isGamePayload(data)) throw localError('游戏配置数据格式无效');
     applyGameData(data);
+    await knowledgeEditor.load();
     if (includeParticipants) await loadParticipants({ reset: true });
     return true;
   } catch (error) {
@@ -243,7 +246,7 @@ function renderGame(data) {
   setConfigured('#aiIntegration', data.integrations?.ai?.configured);
   setConfigured('#captchaIntegration', data.integrations?.captcha?.configured);
   $('#gameClosesAt').value = isoToBeijingInput(config.closesAt);
-  $('#gameMaxWinners').value = valueOrEmpty(config.maxWinners);
+  $('#gameMaxWinners').value = valueOrEmpty(config.participationLimit);
   $('#gameRequiredCorrect').value = valueOrEmpty(config.requiredCorrect);
   $('#prizeFirst').value = valueOrEmpty(config.prizes?.first);
   $('#prizeSecond').value = valueOrEmpty(config.prizes?.second);
@@ -311,7 +314,7 @@ function questionField(label, field, value, placeholder, type, wide = false) {
 function collectGameConfig() {
   return {
     closesAt: beijingInputToUtc($('#gameClosesAt').value),
-    maxWinners: numberOrNull($('#gameMaxWinners').value),
+    participationLimit: numberOrNull($('#gameMaxWinners').value),
     requiredCorrect: numberOrNull($('#gameRequiredCorrect').value),
     questions: [...questionsContainer.querySelectorAll('.question-card')].map(card => ({
       id: card.dataset.questionId,
@@ -823,7 +826,7 @@ function resetRedemptionRecord() {
 
 function updatePrizeComposition() {
   const count = numberOrNull($('#gameMaxWinners').value);
-  $('#prizeComposition').textContent = count == null || count < 3 ? '名额至少为 3，才能分配前三大奖。' : `${count} 名：前三大奖各 1 名，参与奖 ${count - 3} 名。`;
+  $('#prizeComposition').textContent = count == null || count < 0 ? '请填写参与奖名额。' : `前三大奖各 1 名，另有参与奖 ${count} 名；每人只领取一个奖项。`;
 }
 
 function updateSettleButton() {

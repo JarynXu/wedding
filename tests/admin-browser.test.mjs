@@ -61,7 +61,7 @@ test('默契游戏管理视图按契约加载、保存、复核、结算与核�
     await page.locator('#refreshButton').click();
     await page.locator('#gameContent:not([hidden])').waitFor();
     assert.equal(await page.locator('#gameClosesAt').inputValue(), '2026-10-17T00:00');
-    assert.equal(await page.locator('#prizeComposition').innerText(), '20 名：前三大奖各 1 名，参与奖 17 名。');
+    assert.equal(await page.locator('#prizeComposition').innerText(), '前三大奖各 1 名，另有参与奖 20 名；每人只领取一个奖项。');
     assert.equal(await page.locator('#smsIntegration').innerText(), '未配置');
     assert.equal(await page.locator('#aiIntegration').innerText(), '未配置');
     assert.equal(await page.locator('#captchaIntegration').innerText(), '未知');
@@ -73,7 +73,7 @@ test('默契游戏管理视图按契约加载、保存、复核、结算与核�
     assert.ok(await page.evaluate(() => document.body.scrollWidth <= innerWidth + 1));
     await page.setViewportSize({ width: 390, height: 844 });
     await page.locator('#gameMaxWinners').fill('23');
-    assert.equal(await page.locator('#prizeComposition').innerText(), '23 名：前三大奖各 1 名，参与奖 20 名。');
+    assert.equal(await page.locator('#prizeComposition').innerText(), '前三大奖各 1 名，另有参与奖 23 名；每人只领取一个奖项。');
     await page.locator('#gameMaxWinners').fill('20');
 
     await page.locator('[data-question-field="title"]').first().fill('题目待填写后的标题');
@@ -172,6 +172,7 @@ function createGameApiStub(page) {
       if (gameGetCount++ === 0) return route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ error: 'GAME_UNAVAILABLE', message: '游戏服务未配置' }) });
       return json(game);
     }
+    if (url.pathname === '/admin/api/game/knowledge') return json({version:0,enabled:false,entries:[]});
     if (url.pathname === '/admin/api/game/config' && method === 'PUT') {
       stub.savedBody = body();
       game = { ...game, config: { ...stub.savedBody.config, version: 5 }, integrations: { ...game.integrations, captcha: { configured: true } } };
@@ -195,7 +196,7 @@ function initialGame() {
     config: {
       version: 4,
       closesAt: '2026-10-16T16:00:00.000Z',
-      maxWinners: 20,
+      participationLimit: 20,
       requiredCorrect: 2,
       questions: Array.from({ length: 6 }, (_, index) => ({ id: `q${index + 1}`, title: '', answer: '', aliases: [], rubric: '' })),
       prizes: { first: '一等奖', second: '二等奖', third: '三等奖', participation: '小玩偶' },

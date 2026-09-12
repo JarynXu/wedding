@@ -60,6 +60,11 @@ export class InvitationGame {
   fit() {
     if (!this.dialog?.open) return;
     const rect = this.app.getBoundingClientRect(), viewport = window.visualViewport;
+    // 手机键盘可能滚动外层文档，活动窗口仍占据整个可见区域，不与已偏移的请柬求交集。
+    if (document.documentElement.clientWidth < 500) {
+      Object.assign(this.dialog.style, { left:(viewport?.offsetLeft || 0)+'px', top:(viewport?.offsetTop || 0)+'px', width:(viewport?.width || innerWidth)+'px', height:(viewport?.height || innerHeight)+'px' });
+      return;
+    }
     const top = Math.max(rect.top, viewport?.offsetTop || 0);
     const bottom = Math.min(rect.bottom, (viewport?.offsetTop || 0) + (viewport?.height || innerHeight));
     Object.assign(this.dialog.style, { left: rect.left + 'px', top: top + 'px', width: rect.width + 'px', height: Math.max(180, bottom - top) + 'px' });

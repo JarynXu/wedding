@@ -5,7 +5,7 @@ export class InvitationDialogs {
   constructor() {
     this.queue = [];
     this.dialog = document.createElement('dialog'); this.dialog.className = 'invitation-dialog';
-    this.dialog.innerHTML = '<button type="button" class="dialog-close" aria-label="关闭">×</button><h2></h2><div class="dialog-content"></div><div class="dialog-actions"></div>';
+    this.dialog.innerHTML = '<button type="button" class="dialog-close" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"/></svg></button><h2></h2><div class="dialog-content"></div><div class="dialog-actions"></div>';
     this.dialog.querySelector('.dialog-close').onclick = () => this.finish(false);
     this.dialog.addEventListener('cancel', event => { event.preventDefault(); this.finish(false); });
     this.dialog.addEventListener('keydown', event => { if(event.key==='Escape')event.stopPropagation(); });
@@ -34,7 +34,8 @@ export class InvitationDialogs {
   finish(value) {
     if(!this.active)return;
     const item=this.active;this.active=null;this.dialog.close();item.resolve(value);
-    if(this.returnFocus?.isConnected)this.returnFocus.focus({preventScroll:true});
+    const focus=value&&item.focusAfter?item.focusAfter:this.returnFocus;
+    if(focus?.isConnected)focus.focus({preventScroll:true});
     this.advance();
   }
   destroy() { const active=this.active;this.active=null;active?.resolve(false);this.queue.splice(0).forEach(item=>item.resolve(false));this.dialog.remove(); }
