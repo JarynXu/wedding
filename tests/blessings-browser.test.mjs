@@ -37,11 +37,29 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
           const layout = await page.locator('.blessings-card').evaluate(card => ({ width: card.clientWidth, scroll: card.scrollWidth, blur: getComputedStyle(card).backdropFilter, body: document.body.scrollWidth, viewport: innerWidth, inputSize: getComputedStyle(card.querySelector('input')).fontSize }));
           assert.ok(layout.scroll <= layout.width + 1); assert.ok(layout.body <= layout.viewport); assert.match(layout.blur, /blur/); assert.equal(layout.inputSize, '16px');
           const send = page.locator('.blessing-send'); await send.scrollIntoViewIfNeeded(); assert.equal(await send.isVisible(), true);
+          const before = await page.locator('.blessings-card').boundingBox();
+          await page.locator('[data-tab="history"]').click();
+          await page.locator('.blessing-empty').waitFor();
+          const after = await page.locator('.blessings-card').boundingBox();
+          assert.ok(Math.abs(before.height - after.height) < 1 && Math.abs(before.y - after.y) < 1, '空祝福簿与表单的外框保持同一位置和高度');
+          const scrollbar = await page.locator('.blessing-history-list').evaluate(node => ({ width: getComputedStyle(node).scrollbarWidth, color: getComputedStyle(node).scrollbarColor }));
+          assert.equal(scrollbar.width, 'thin'); assert.notEqual(scrollbar.color, 'auto');
+          await page.locator('[data-tab="compose"]').click();
         }
         await page.setViewportSize({ width: 390, height: 844 });
         await page.locator('.blessings-card').evaluate(card => { card.scrollTop = 0; });
         if (process.env.WEDDING_QA_DIR) { await page.waitForTimeout(350); await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `blessings-${theme}.png`) }); }
         await page.locator('#blessingsModal .modal-close').click();
+        assert.equal(await page.locator('#blessingEntry i').count(), 0);
+        for (const width of [320, 375, 414]) {
+          await page.setViewportSize({ width, height: 844 });
+          const controls = await page.locator('.blessing-dock button').evaluateAll(buttons => buttons.map(button => {
+            const r=button.getBoundingClientRect(), next=document.querySelector('.page-1 .scroll-hint').getBoundingClientRect();
+            return { width:r.width, height:r.height, right:r.right, viewport:innerWidth, overlap:r.right>next.left&&r.left<next.right&&r.top<next.bottom&&r.bottom>next.top };
+          }));
+          assert.ok(controls.every(r=>r.width>=44&&r.height>=44&&r.right<=r.viewport&&!r.overlap), '快捷礼物完整可点，不遮挡翻页按钮');
+        }
+        await page.setViewportSize({ width: 390, height: 844 });
       }
     });
     await suite.test('一端送出礼物，另一端收到气泡和画布效果；正文按纯文本保存', async () => {
@@ -96,12 +114,37 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
       const rows = await f.db.query('SELECT count(*)::int AS count FROM wedding_blessings WHERE room_id=$1 AND message=$2', [f.config.room, '响应中断测试']); assert.equal(rows.rows[0].count, 1);
       await classic.unroute('**/api/blessings');
     });
-    await suite.test('暂停飘屏、礼物单独发送、减少动态效果和历史重载', async () => {
-      await chinese.locator('#blessingEntry').click(); await chinese.locator('#blessingFloat').uncheck(); await chinese.locator('#blessingsModal .modal-close').click();
-      await post(a.origin, payload({ text: '静音显示测试', gift: 'rose' }));
-      await chinese.waitForTimeout(500);
-      assert.equal(await chinese.locator('.blessing-bubble').count(), 0);
-      await chinese.locator('#blessingEntry').click(); await chinese.locator('#blessingFloat').check(); await chinese.locator('[data-gift="lantern"]').click(); await chinese.locator('.blessing-send').click();
+    await suite.test('快捷礼物不发送未提交文字；响应中断后原礼物重试只保存一次', async () => {
+      await classic.locator('#blessingEntry').click(); await classic.locator('#blessingMessage').fill('尚未送出的草稿');
+      await classic.locator('#blessingsModal .modal-close').click();
+      let intercept=true;
+      await classic.route('**/api/blessings', async route=>{if(intercept&&route.request().method()==='POST'){intercept=false;await route.fetch();await route.abort();}else await route.continue();});
+      await classic.locator('[data-quick-gift="rose"]').click();
+      await classic.locator('.blessing-quick-feedback').filter({hasText:'暂未确认'}).waitFor();
+      await classic.locator('[data-quick-gift="rose"]').click();
+      await classic.locator('.blessing-quick-feedback').filter({hasText:'玫瑰已送达'}).waitFor();
+      assert.equal(await classic.locator('#blessingsModal.open').count(),0);
+      assert.equal(await classic.locator('#blessingMessage').inputValue(),'尚未送出的草稿');
+      const saved=await f.db.query('SELECT message FROM wedding_blessings WHERE room_id=$1 AND gift_id=$2',[f.config.room,'rose']);
+      assert.deepEqual(saved.rows,[{message:''}]);
+      await classic.unroute('**/api/blessings');
+    });
+    await suite.test('长祝福簿在主题内容区滚动，不改变外框高度', async () => {
+      await classic.locator('#blessingEntry').click();
+      await classic.locator('.blessings-card').evaluate(async card=>{await Promise.all(card.getAnimations().map(animation=>animation.finished));});
+      const formBox=await classic.locator('.blessings-card').boundingBox();
+      await Promise.all(Array.from({length:32},(_,i)=>post(a.origin,payload({name:`祝福簿测试 ${i}`,text:'愿你们岁岁相伴，年年欢喜。'.repeat(5)}))));
+      await classic.locator('[data-tab="history"]').click();
+      await classic.waitForFunction(()=>document.querySelectorAll('.blessing-history-item').length===30);
+      const historyBox=await classic.locator('.blessings-card').boundingBox();
+      assert.ok(Math.abs(historyBox.height-formBox.height)<1);
+      const scrolled=await classic.locator('.blessing-history-list').evaluate(list=>{list.scrollTop=120;return {top:list.scrollTop,overflow:list.scrollHeight>list.clientHeight};});
+      assert.ok(scrolled.top>0&&scrolled.overflow);
+      await classic.locator('#blessingsModal .modal-close').click();
+    });
+    await suite.test('祝福默认实时显示，无连接状态行，保留礼物单独发送和减少动态效果', async () => {
+      assert.equal(await chinese.locator('.blessings-footer,#blessingFloat,.blessing-connection').count(),0);
+      await chinese.locator('#blessingEntry').click(); await chinese.locator('[data-gift="lantern"]').click(); await chinese.locator('.blessing-send').click();
       await chinese.locator('#blessingsModal.open').waitFor({ state: 'hidden' });
       await chinese.emulateMedia({ reducedMotion: 'reduce' });
       await chinese.reload(); await chinese.locator('#preloaderOverlay[data-state="ready"]').waitFor(); await chinese.locator('#btnEnterInvitation').click();
