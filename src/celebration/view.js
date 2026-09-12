@@ -23,7 +23,7 @@ function giftIcon(id) {
   const icon = document.createElement('span');
   icon.className = 'blessing-gift-art';
   icon.setAttribute('aria-hidden', 'true');
-  if (gift) { icon.style.setProperty('--gift-x', `${gift.sprite % 3 * 50}%`); icon.style.setProperty('--gift-y', `${Math.floor(gift.sprite / 3) * 100}%`); }
+  if (gift) { icon.dataset.giftArt=id;icon.style.setProperty('--gift-x', `${gift.sprite % 3 * 50}%`); icon.style.setProperty('--gift-y', `${Math.floor(gift.sprite / 3) * 100}%`); }
   return icon;
 }
 

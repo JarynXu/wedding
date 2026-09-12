@@ -29,7 +29,7 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
     await Promise.all([enter(classic, a.origin), enter(chinese, b.origin, '?theme=chinese&side=groom&parents=测试父母')]);
     assert.equal(rejectedStream, true, '首次 SSE 503 后可恢复连接');
     await suite.test('两套主题展示各自礼物，弹窗保持毛玻璃，手机尺寸不溢出', async () => {
-      for (const [page, theme, expected] of [[classic, 'classic', ['rose', 'champagne', 'fireworks']], [chinese, 'chinese', ['fireworks', 'lantern', 'knot', 'double-happiness']]]) {
+      for (const [page, theme, expected] of [[classic, 'classic', ['rose', 'champagne', 'rings', 'fireworks']], [chinese, 'chinese', ['fireworks', 'lantern', 'knot', 'double-happiness']]]) {
         await page.locator('#blessingEntry').click();
         assert.equal(await page.locator('.blessings-heading').count(), 0);
         assert.deepEqual(await page.locator('.blessing-gift-options button').evaluateAll(nodes => nodes.map(node => node.dataset.gift)), expected);

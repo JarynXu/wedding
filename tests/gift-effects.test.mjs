@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { createServer } from 'vite';
 import { join } from 'node:path';
 
-test('六种礼物画布产生可见变化，结束后释放动画；减少动态效果不播放', { timeout: 60000 }, async () => {
+test('七种礼物画布产生可见变化，结束后释放动画；减少动态效果不播放', { timeout: 60000 }, async () => {
   const require = createRequire(import.meta.url);
   const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
   const vite = await createServer({ server: { host: '127.0.0.1', port: 0, hmr: false }, logLevel: 'silent' }); await vite.listen();
@@ -13,7 +13,7 @@ test('六种礼物画布产生可见变化，结束后释放动画；减少动�
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    for (const [theme, gifts] of [['classic', ['rose', 'champagne', 'fireworks']], ['chinese', ['lantern', 'knot', 'double-happiness']]]) {
+    for (const [theme, gifts] of [['classic', ['rose', 'champagne', 'rings', 'fireworks']], ['chinese', ['lantern', 'knot', 'double-happiness']]]) {
       await page.setViewportSize({width: theme==='chinese'?320:390,height:844});
       await page.goto(`${origin}/?theme=${theme}`);
       await page.locator('#preloaderOverlay[data-state="ready"]').waitFor(); await page.locator('#btnEnterInvitation').click();
@@ -21,7 +21,7 @@ test('六种礼物画布产生可见变化，结束后释放动画；减少动�
         const { GiftEffects } = await import('/src/celebration/gift-effects.js');
         const canvas = document.createElement('canvas'); canvas.id = 'qaGiftCanvas'; canvas.className = 'gift-effects'; document.querySelector('#app').append(canvas);
         window.qaGiftEffects = new GiftEffects(canvas, theme);
-        await window.qaGiftEffects.atlas.decode(); await window.qaGiftEffects.petals.decode();
+        await window.qaGiftEffects.atlas.decode(); await window.qaGiftEffects.petals.decode(); await window.qaGiftEffects.rings.decode();
       }, theme);
       for (const gift of gifts) {
         await page.evaluate(gift => window.qaGiftEffects.play(gift), gift);
@@ -49,7 +49,7 @@ test('六种礼物画布产生可见变化，结束后释放动画；减少动�
         return {active:effects.active.length,sequence:effects.effectSequence,latest:effects.canvas.dataset.gift};
       },gifts[0]);
       assert.equal(repeated.active,10,'绘制实例有上限');
-      assert.equal(repeated.sequence,28,'每次输入均产生新实例，正在播放时不忽略输入');
+      assert.equal(repeated.sequence,gifts.length+25,'每次输入均产生新实例，正在播放时不忽略输入');
       await page.locator('#qaGiftCanvas[data-state="idle"]').waitFor({timeout:5000});
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.evaluate(() => window.qaGiftEffects.play('fireworks'));

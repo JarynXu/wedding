@@ -424,7 +424,7 @@ function initializeInvitation() {
         const url = new URL('./game.html', location.href);
         for (const key of ['theme', 'side', 'parents']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
         entry.href = url.href; entry.hidden = false;
-        if (game.phase !== 'open') entry.querySelector('span').textContent = '查看默契榜';
+        if (game.phase !== 'open') { entry.querySelector('span').textContent = '默契榜';entry.querySelector('small').textContent='查看成绩与兑奖码'; }
       } catch { /* 可选活动服务未就绪时，邀请、祝福与音乐仍可使用。 */ }
       finally { clearTimeout(timeout); }
     }

@@ -1,6 +1,7 @@
 import { findGift } from './catalog.js';
 import { rosePetalsUrl } from '../petals.js';
 const atlasUrl = new URL('../assets/celebration-gifts.webp', import.meta.url).href;
+const fireworkColors = ['#ff304a','#eab03c','#228fff','#37ce71','#9f57ff','#ff48ad'];
 
 /** 每次播放加入一个礼物实例；共用画布逐帧绘制，实例上限限制绘制成本。 */
 export class GiftEffects {
@@ -13,6 +14,7 @@ export class GiftEffects {
     this.atlas.src = atlasUrl;
     this.atlas.decode().catch(() => { this.canvas.dataset.assets = 'unavailable'; });
     this.petals = new Image(); this.petals.src = rosePetalsUrl;
+    this.rings = new Image(); this.rings.src = new URL('../assets/gift-rings.webp', import.meta.url).href;
     this.frame = null;
     this.active = [];
     this.effectSequence = 0;
@@ -39,8 +41,9 @@ export class GiftEffects {
     if (!gift || !this.context || this.motion.matches || document.hidden) return;
     const seed = Math.random() * Math.PI;
     const sparks = Array.from({ length: gift.effect === 'fireworks' ? (this.active.length ? 32 : 96) : (this.active.length ? 12 : 28) }, (_, i) => ({
-      angle: i * 2.39996 + seed, speed: 18 + Math.random() * 50,
-      life: 1.1 + Math.random() * 0.9, radius: 0.6 + Math.random(), side: i % 2,
+      angle: i * 2.39996 + seed, speed: gift.effect==='fireworks'?44+Math.random()*62:18+Math.random()*50,
+      life: 1.3 + Math.random() * 0.9, radius: 1.3 + Math.random(), side: i % 2,
+      color:fireworkColors[(Math.floor(i/2)+(i%2)*3+this.effectSequence)%fireworkColors.length],
     }));
     this.canvas.dataset.gift = id;
     this.canvas.dataset.state = 'playing';
@@ -68,26 +71,33 @@ export class GiftEffects {
     if (gift.effect === 'fireworks') {
       for (let side = 0; side < 2; side++) {
         const launch = t - side * .35;
-        if (launch < 0 || launch > .35) continue;
+        if (launch < 0 || launch > .45) continue;
         const x = this.width * (side ? .88 : .74), target = this.height * (side ? .27 : .16);
-        const y = target + (1 - launch / .35) * 95;
-        c.globalAlpha = Math.sin(launch / .35 * Math.PI); c.strokeStyle = '#e7bc70'; c.lineWidth = 1;
-        c.beginPath(); c.moveTo(x, y + 24); c.lineTo(x, y); c.stroke();
+        const y = target + (this.height - 74 - target) * (1 - launch / .45) ** 2;
+        c.globalAlpha = .95; c.strokeStyle = '#fff1ba'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(x, y + 34); c.lineTo(x, y); c.stroke();
+        c.fillStyle='#fff9da';c.beginPath();c.arc(x,y,2.5,0,Math.PI*2);c.fill();
       }
       for (const p of sparks) {
-        const age = t - 0.35 - p.side * 0.35;
+        const age = t - 0.45 - p.side * 0.35;
         if (age < 0 || age > p.life) continue;
         const x = this.width * (p.side ? .88 : .74);
         const y = this.height * (p.side ? .27 : .16);
         const distance = p.speed * (1 - Math.exp(-age * 1.5));
-        c.globalAlpha = (1 - age / p.life) * 0.95;
-        c.strokeStyle = this.theme === 'chinese' && p.side ? '#b63823' : '#e9be72';
-        c.lineWidth = p.radius;
-        c.beginPath();
-        c.moveTo(x + Math.cos(p.angle) * distance * 0.82, y + Math.sin(p.angle) * distance * 0.82 + age * age * 10);
-        c.lineTo(x + Math.cos(p.angle) * distance, y + Math.sin(p.angle) * distance + age * age * 10);
-        c.stroke();
+        const brightness=Math.pow(1-age/p.life,.65);
+        c.globalAlpha = brightness;
+        c.strokeStyle = p.color;c.fillStyle=p.color;
+        c.lineWidth = p.radius;c.shadowColor=p.color;c.shadowBlur=0;
+        for(const [from,to,alpha]of[[.55,.8,.3],[.8,.92,.7],[.92,1,1]]){
+          c.globalAlpha=brightness*alpha;c.lineWidth=p.radius*(.5+alpha*.5);
+          c.beginPath();c.moveTo(x+Math.cos(p.angle)*distance*from,y+Math.sin(p.angle)*distance*from+age*age*10);
+          c.lineTo(x+Math.cos(p.angle)*distance*to,y+Math.sin(p.angle)*distance*to+age*age*10);c.stroke();
+        }
+        c.globalAlpha=brightness;
+        c.shadowBlur=4;
+        c.beginPath();c.arc(x+Math.cos(p.angle)*distance,y+Math.sin(p.angle)*distance+age*age*10,p.radius*.8,0,Math.PI*2);c.fill();
       }
+      c.shadowBlur=0;
     } else {
       const rise = gift.effect === 'lantern' ? t * 70 : gift.effect === 'petals' ? t * 32 : t * 15;
       const y = this.height - 230 - rise;
@@ -108,7 +118,8 @@ export class GiftEffects {
       c.rotate(Math.sin(t * 2) * (gift.effect === 'seal' ? 0.015 : 0.07));
       const scale = gift.effect === 'seal' ? 1 + Math.exp(-t * 8) * 0.3 : 1;
       c.scale(scale, scale);
-      if (this.atlas.complete && this.atlas.naturalWidth) c.drawImage(this.atlas, gift.sprite % 3 * 256, Math.floor(gift.sprite / 3) * 256, 256, 256, -size / 2, -size / 2, size, size);
+      if(gift.effect==='rings'){if(this.rings.complete&&this.rings.naturalWidth)c.drawImage(this.rings,-size/2,-size/2,size,size);}
+      else if (this.atlas.complete && this.atlas.naturalWidth) c.drawImage(this.atlas, gift.sprite % 3 * 256, Math.floor(gift.sprite / 3) * 256, 256, 256, -size / 2, -size / 2, size, size);
       c.restore();
       if (gift.effect === 'petals' && this.petals.complete && this.petals.naturalWidth) {
         const w = this.petals.naturalWidth / 3, h = this.petals.naturalHeight / 2;

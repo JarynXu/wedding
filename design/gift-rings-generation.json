@@ -1,0 +1,8 @@
+{
+  "tool": "内置 image_gen",
+  "output": "src/assets/gift-rings.webp",
+  "source": "exec-a7dbc345-9615-4e34-9887-34eb7899f83f.png",
+  "processing": "保留透明通道，缩放到320×320并转为WebP",
+  "sha256": "5a12a4fca470ed155877bdc2e2383ae50497005635c301443245556dac77ffe5",
+  "prompt": "Create ONE isolated photorealistic wedding gift sprite: a pair of intertwined elegant champagne-gold wedding bands, one smooth rounded band and one slender band with a small brilliant-cut diamond, subtle warm-ivory silk ribbon loosely knotted beneath them. Match a luxurious French wedding invitation palette (cream, champagne gold, burgundy atmosphere), finely detailed polished gold with bright readable edges. True transparent alpha background, absolutely no backdrop or ground plane, no text, no border, no symbols or people. Square image, centered object cluster occupying 80% of the canvas with clean transparent padding on all sides. Three-quarter product photography view; rings clearly separate and instantly recognizable even as a 44px website gift icon. Soft directional studio lighting, realistic metal highlights and very restrained soft contact shadow only inside the object cluster. This is a production UI image asset, not a mockup."
+}

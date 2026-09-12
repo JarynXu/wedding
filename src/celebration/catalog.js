@@ -2,6 +2,7 @@
 export const GIFTS = Object.freeze([
   { id: 'rose', name: '玫瑰', themes: ['classic'], sprite: 0, effect: 'petals' },
   { id: 'champagne', name: '香槟', themes: ['classic'], sprite: 1, effect: 'toast' },
+  { id: 'rings', name: '对戒', themes: ['classic'], sprite: null, effect: 'rings' },
   { id: 'fireworks', name: '烟花', themes: ['classic', 'chinese'], sprite: 2, effect: 'fireworks' },
   { id: 'lantern', name: '喜灯', themes: ['chinese'], sprite: 3, effect: 'lantern' },
   { id: 'knot', name: '同心结', themes: ['chinese'], sprite: 4, effect: 'knot' },
