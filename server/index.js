@@ -1,11 +1,14 @@
 import { createInvitationApp } from './app.js';
+import { readAdminConfig } from './admin/config.js';
 import { readBlessingsConfig } from './blessings/config.js';
 import { createBlessingsService } from './blessings/service.js';
 
 const port = Number(process.env.PORT || 8080);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT 须为 1–65535 的端口号');
-const blessings = createBlessingsService(readBlessingsConfig());
-const server = createInvitationApp({ blessings }).listen(port, process.env.HOST || '0.0.0.0', () => {
+const blessingsConfig = readBlessingsConfig();
+const admin = readAdminConfig();
+const blessings = createBlessingsService(blessingsConfig);
+const server = createInvitationApp({ blessings, admin }).listen(port, process.env.HOST || '0.0.0.0', () => {
   console.log(`请柬服务已监听端口 ${port}`);
 });
 let stopping = false;

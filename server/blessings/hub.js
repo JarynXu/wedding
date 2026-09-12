@@ -20,6 +20,12 @@ export class BlessingHub {
     this.subscribers.add(subscriber);
     return () => this.subscribers.delete(subscriber);
   }
+  status() {
+    if (this.stopped) return { state: 'stopped' };
+    if (this.connecting) return { state: 'connecting' };
+    if (!this.listener || !this.ready) return { state: 'unavailable' };
+    return { state: 'ready' };
+  }
   async connect() {
     if (this.stopped || this.connecting) return;
     this.connecting = true;

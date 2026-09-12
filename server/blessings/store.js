@@ -11,6 +11,10 @@ export class BlessingStore {
   }
   async verify() { await this.pool.query('SELECT id, request_id, fingerprint FROM wedding_blessings LIMIT 0'); }
   async latestId() { const { rows } = await this.pool.query('SELECT id FROM wedding_blessings WHERE room_id=$1 ORDER BY id DESC LIMIT 1', [this.config.room]); return rows[0]?.id || '0'; }
+  async dashboardStats() {
+    const { rows } = await this.pool.query('SELECT count(*)::text AS total_count, max(created_at) AS last_saved_at FROM wedding_blessings WHERE room_id=$1', [this.config.room]);
+    return { totalCount: rows[0]?.total_count || '0', lastSavedAt: rows[0]?.last_saved_at || null };
+  }
   async history(before = null, limit = 30) {
     const { rows } = await this.pool.query('SELECT * FROM wedding_blessings WHERE room_id=$1 AND ($2::bigint IS NULL OR id<$2) ORDER BY id DESC LIMIT $3', [this.config.room, before, limit + 1]);
     const messages = rows.slice(0, limit).map(publicBlessing);

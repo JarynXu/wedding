@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>婚礼请柬 · 运行后台</title>
+    <link rel="stylesheet" href="/admin/admin.css">
+    <script type="module" src="/admin/admin.js"></script>
+  </head>
+  <body>
+    <main class="admin-shell">
+      <section id="loginView" class="panel login-panel" aria-labelledby="loginTitle">
+        <p class="eyebrow">WEDDING INVITATION</p>
+        <h1 id="loginTitle">运行后台</h1>
+        <p class="panel-intro">查看请柬服务的实例状态与祝福服务状态。</p>
+        <form id="loginForm" class="login-form">
+          <label for="username">用户名</label>
+          <input id="username" name="username" autocomplete="username" required maxlength="64">
+          <label for="password">密码</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+          <button id="loginButton" class="primary-button" type="submit">登录后台</button>
+        </form>
+        <p id="loginError" class="notice error-notice" role="alert" hidden></p>
+      </section>
+
+      <section id="dashboardView" class="dashboard" hidden aria-labelledby="dashboardTitle">
+        <header class="dashboard-header">
+          <div>
+            <p class="eyebrow">WEDDING INVITATION</p>
+            <h1 id="dashboardTitle">服务状态</h1>
+          </div>
+          <div class="header-actions">
+            <button id="refreshButton" class="secondary-button" type="button">刷新状态</button>
+            <button id="logoutButton" class="text-button" type="button">退出</button>
+          </div>
+        </header>
+
+        <p id="dashboardError" class="notice error-notice" role="alert" hidden></p>
+
+        <div class="metrics-grid">
+          <article class="metric-card">
+            <div class="card-heading"><h2>应用版本</h2><span class="card-mark">01</span></div>
+            <dl class="metric-list">
+              <div><dt>版本</dt><dd id="appVersion">未知</dd></div>
+              <div><dt>构建标识</dt><dd id="appBuild">未知</dd></div>
+              <div><dt>构建时间</dt><dd id="appBuildTime">未知</dd></div>
+              <div><dt>Git 提交</dt><dd id="appCommit">未知</dd></div>
+            </dl>
+          </article>
+
+          <article class="metric-card">
+            <div class="card-heading"><h2>运行实例</h2><span class="card-mark">02</span></div>
+            <dl class="metric-list">
+              <div><dt>启动时间</dt><dd id="startedAt">未知</dd></div>
+              <div><dt>运行时长</dt><dd id="uptime">未知</dd></div>
+              <div><dt>当前实例 SSE 连接</dt><dd id="realtimeConnections">未知</dd></div>
+            </dl>
+          </article>
+
+          <article class="metric-card">
+            <div class="card-heading"><h2>祝福数据</h2><span class="card-mark">03</span></div>
+            <div class="status-row"><span>数据库连接</span><span id="databaseConnection" class="status-badge">未知</span></div>
+            <div class="status-row"><span>祝福读取</span><span id="databaseRead" class="status-badge">未知</span></div>
+            <dl class="metric-list compact-list">
+              <div><dt>累计祝福</dt><dd id="blessingCount">未知</dd></div>
+              <div><dt>最近保存</dt><dd id="lastSavedAt">未知</dd></div>
+            </dl>
+          </article>
+
+          <article class="metric-card">
+            <div class="card-heading"><h2>实时通知</h2><span class="card-mark">04</span></div>
+            <div class="listener-state">
+              <span id="sseListener" class="status-badge">未知</span>
+              <p>PostgreSQL 通知监听与祝福消息同步状态</p>
+            </div>
+            <p class="scope-note">祝福数据按配置的婚礼 room 统计。SSE 连接数只统计当前服务实例，不代表全局在线人数。</p>
+          </article>
+        </div>
+
+        <footer class="dashboard-footer">
+          <span>最后刷新 <time id="lastRefresh">未知</time></span>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <span>移动端后台</span>
+        </footer>
+      </section>
+    </main>
+  </body>
+</html>
