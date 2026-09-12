@@ -15,7 +15,7 @@ export class JsonModelClient {
     const chunks=[];let size=0;
     for await(const chunk of response.body){size+=chunk.length;if(size>32000)throw new Error('AI_RESPONSE_TOO_LARGE');chunks.push(chunk);}
     const body=JSON.parse(Buffer.concat(chunks).toString('utf8')),choice=body.choices?.[0];
-    if(choice?.finish_reason!=='stop'||choice.message?.refusal||typeof choice.message?.content!=='string')throw new Error('AI_INCOMPLETE');
+    if(choice?.finish_reason!=='stop'||choice.message?.refusal||typeof choice.message?.content!=='string'||!choice.message.content.trim())throw new Error('AI_INCOMPLETE');
     const tokenCount=value=>Number.isSafeInteger(value)&&value>=0?value:null;
     return {text:choice.message.content,model:typeof body.model==='string'?body.model:model,durationMs:Date.now()-started,
       usage:{inputTokens:tokenCount(body.usage?.prompt_tokens),outputTokens:tokenCount(body.usage?.completion_tokens)}};

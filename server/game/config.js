@@ -22,5 +22,6 @@ export function readGameRuntime(env = process.env) {
   const captcha=env.GAME_CAPTCHA_APP_ID?{appId:env.GAME_CAPTCHA_APP_ID,appKey:env.GAME_CAPTCHA_APP_KEY}:null;
   const dailyLimit = Number(env.GAME_SMS_DAILY_LIMIT || 300);
   if (!Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 5000) throw new Error('GAME_SMS_DAILY_LIMIT 须为 1–5000');
-  return { dataKey: Buffer.from(dataKey, 'hex'), sessionSecret: env.GAME_SESSION_SECRET, ai, sms, captcha, dailyLimit, cookieSecure: env.NODE_ENV === 'production' };
+  const workers=Number(env.GAME_AI_CONCURRENCY||8);if(!Number.isInteger(workers)||workers<1||workers>32)throw new Error('GAME_AI_CONCURRENCY 须为 1–32');
+  return { dataKey: Buffer.from(dataKey, 'hex'), sessionSecret: env.GAME_SESSION_SECRET, ai, sms, captcha, dailyLimit, workers, cookieSecure: env.NODE_ENV === 'production' };
 }

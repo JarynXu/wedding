@@ -90,6 +90,40 @@ CREATE TABLE IF NOT EXISTS wedding_game_question_voice (
   lease_until TIMESTAMPTZ,
   PRIMARY KEY(room_id,config_version,question_id)
 );
+ALTER TABLE wedding_game_question_voice ADD COLUMN IF NOT EXISTS deck JSONB;
+CREATE TABLE IF NOT EXISTS wedding_game_conversations (
+  participant_id UUID PRIMARY KEY REFERENCES wedding_game_participants(id),
+  room_id VARCHAR(64) NOT NULL REFERENCES wedding_games(room_id),
+  active_question VARCHAR(8),
+  revision INTEGER NOT NULL DEFAULT 0,
+  offered_choices JSONB NOT NULL DEFAULT '[]',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+ALTER TABLE wedding_game_conversations ADD COLUMN IF NOT EXISTS active_config_version INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS wedding_game_chat_turns (
+  id BIGSERIAL PRIMARY KEY,
+  room_id VARCHAR(64) NOT NULL REFERENCES wedding_games(room_id),
+  participant_id UUID NOT NULL REFERENCES wedding_game_participants(id),
+  request_id UUID NOT NULL,
+  kind VARCHAR(12) NOT NULL CHECK(kind IN ('start','message','nudge')),
+  input TEXT NOT NULL DEFAULT '',
+  question_id VARCHAR(8),
+  config_version INTEGER NOT NULL,
+  state VARCHAR(12) NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','processing','complete')),
+  progress VARCHAR(16),
+  reply JSONB,
+  audit JSONB,
+  lease_token UUID,
+  lease_until TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+  completed_at TIMESTAMPTZ,
+  UNIQUE(room_id,participant_id,request_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS wedding_game_chat_start ON wedding_game_chat_turns(participant_id) WHERE kind='start';
+CREATE UNIQUE INDEX IF NOT EXISTS wedding_game_chat_nudge ON wedding_game_chat_turns(participant_id,question_id) WHERE kind='nudge';
+CREATE INDEX IF NOT EXISTS wedding_game_chat_work ON wedding_game_chat_turns(room_id,state,id);
+ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS wedding_game_reviews (
   id BIGSERIAL PRIMARY KEY,
   answer_id BIGINT NOT NULL REFERENCES wedding_game_answers(id),

@@ -471,9 +471,26 @@ function renderParticipantDetail(data) {
     empty.className = 'sub-state';
     empty.textContent = '暂无答卷记录。';
     answersList.append(empty);
-    return;
   }
   for (const answer of data.answers) answersList.append(createAnswerCard(answer));
+  if(data.conversation?.length){
+    const details=document.createElement('details');details.className='evaluation-details';const title=document.createElement('summary');title.textContent='完整聊天记录';details.append(title);
+    for(const turn of data.conversation){const entry=document.createElement('article');entry.className='evaluation-record';
+      if(turn.input)entry.append(recordField('宾客',turn.input));
+      for(const message of turn.reply?.messages||[])entry.append(recordField('主持人',message));
+      if(turn.audit?.intent)entry.append(recordField('意图',turn.audit.intent.intent),recordField('处理依据',turn.audit.intent.reason));
+      if(turn.reply?.retryable){
+        const reason=document.createElement('textarea');reason.placeholder='填写处理依据';reason.className='review-reason';entry.append(reason);
+        for(const [decision,label]of[['ignore','作为聊天，不计题'],['correct','作为回答，判为正确'],['incorrect','作为回答，判为不正确']]){
+          const action=document.createElement('button');action.type='button';action.className='small-button';action.textContent=label;
+          action.onclick=async()=>{action.disabled=true;try{await request(`/admin/api/game/conversation/${turn.id}/resolve`,{method:'POST',body:JSON.stringify({decision,reason:reason.value})});invalidateSettlementPreview();await loadParticipant(state.selectedParticipantId);await refreshGameSummary();}catch(error){showNotice(participantDetailError,error.message);}finally{action.disabled=false;}};
+          entry.append(action);
+        }
+      }
+      details.append(entry);
+    }
+    answersList.append(details);
+  }
 }
 
 function createAnswerCard(answer) {

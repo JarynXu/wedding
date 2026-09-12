@@ -12,6 +12,7 @@ import { resolveInvitationTheme } from './invitation-theme.js';
 import { applyChineseTheme } from './themes/chinese.js';
 import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
+import { InvitationGame } from './game-layer.js';
 import { Celebration } from './celebration/view.js';
 
 // 分享配置独立于请柬素材加载，不阻塞开场或音乐。
@@ -386,6 +387,7 @@ function initializeInvitation() {
 
     const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
+    const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), app: document.getElementById('app') });
     const weddingPreloader = new WeddingPreloader({
       audio,
       audioUrl: config.assets?.bgMusic || new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href,
@@ -438,6 +440,7 @@ function initializeInvitation() {
     }
     if (import.meta.hot) import.meta.hot.dispose(() => {
       weddingPreloader.destroy();
+      invitationGame.destroy();
       rosePetals.destroy();
       celebration.destroy();
     });

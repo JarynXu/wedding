@@ -10,11 +10,16 @@
 </head>
 <body>
   <main id="gameApp" data-state="loading">
-    <nav class="game-toolbar" aria-label="默契挑战导航"><button type="button" data-game-tab="board">默契榜</button><button type="button" data-game-tab="play" hidden>返回问答</button><button type="button" id="showGameRules">参与与兑奖规则</button></nav>
+    <nav class="game-toolbar" aria-label="默契挑战导航">
+      <a id="backToInvitation" class="game-icon-button" href="./" aria-label="返回请柬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12"/></svg></a>
+      <div class="game-menu-wrap">
+        <button type="button" id="gameMenuToggle" class="game-icon-button" aria-label="更多选项" aria-expanded="false" aria-controls="gameMenu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+        <div id="gameMenu" class="game-menu glass-surface" hidden><button type="button" data-game-tab="board">默契榜</button><button type="button" data-game-tab="play" hidden>回到聊天</button><button type="button" id="showGameRules">游戏规则</button><button type="button" id="gameLogout" hidden>退出登录</button></div>
+      </div>
+    </nav>
     <div class="game-paper glass-surface">
-      <div id="gameContent"><p class="game-empty">正在展开默契小笺…</p></div>
+      <div id="gameContent"><p class="game-empty">主持人正在准备开场…</p></div>
     </div>
-    <a id="backToInvitation" class="game-back" href="./">返回请柬</a>
   </main>
   <script type="module" src="./src/game/main.js"></script>
 </body>

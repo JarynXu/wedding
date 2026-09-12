@@ -1,3 +1,5 @@
+import { WEDDING_CONFIG } from '../src/config.js';
+import { publicWeddingFacts } from './game/public-context.js';
 import { createInvitationApp } from './app.js';
 import { readAdminConfig } from './admin/config.js';
 import { readBlessingsConfig } from './blessings/config.js';
@@ -12,7 +14,7 @@ const blessingsConfig = readBlessingsConfig();
 const admin = readAdminConfig();
 const gameRuntime = readGameRuntime();
 const blessings = createBlessingsService(blessingsConfig, { writing: new BlessingWriter(gameRuntime?.ai) });
-const game = createGameService({ database: blessingsConfig?.database, room: blessingsConfig?.room, runtime: gameRuntime });
+const game = createGameService({ database: blessingsConfig?.database, room: blessingsConfig?.room, runtime: gameRuntime, wedding: publicWeddingFacts(WEDDING_CONFIG) });
 const server = createInvitationApp({ blessings, admin, game, gameOrigin: blessingsConfig?.origin }).listen(port, process.env.HOST || '0.0.0.0', () => {
   console.log(`请柬服务已监听端口 ${port}`);
 });

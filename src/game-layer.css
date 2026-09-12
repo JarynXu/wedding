@@ -1,0 +1,9 @@
+.invitation-game-layer { position:fixed; inset:auto; max-width:none; max-height:none; margin:0; padding:0; border:0; border-radius:inherit; overflow:hidden; background:var(--paper-cream); color:var(--burgundy); }
+.invitation-game-layer::backdrop { background:#20171138; }
+.invitation-game-layer iframe { display:block; width:100%; height:100%; border:0; }
+.invitation-game-layer [hidden] { display:none; }
+.game-layer-pending { height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; font-size:13px; background:linear-gradient(130deg,#fff9ed,#eddbc4); }
+.game-layer-pending button { min-height:44px; padding:8px 18px; border:1px solid #b9935f80; border-radius:22px; background:#fff7e8; color:var(--burgundy); font:12px "Noto Serif SC",serif; cursor:pointer; }
+.game-layer-pending button:first-child { position:absolute; top:12px; left:12px; }
+@media(min-width:500px) { .invitation-game-layer { border-radius:28px; } }
+@media(prefers-reduced-motion:no-preference) { .invitation-game-layer[open] { animation:game-layer-arrive 240ms cubic-bezier(.2,.7,.2,1); } @keyframes game-layer-arrive { from { opacity:.4; transform:translateY(16px); } } }
