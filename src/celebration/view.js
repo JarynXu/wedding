@@ -85,7 +85,11 @@ export class Celebration {
       button.append(giftIcon(gift.id), textNode('span', 'blessing-quick-label', gift.name));
       gifts.append(button);
     });
-    this.dock.append(this.entry, gifts);
+    this.holdHint=textNode('span','blessing-hold-hint','长按试试');this.holdHint.hidden=Boolean(memory.read('heldGift'));
+    this.dock.append(this.entry, gifts, this.holdHint);
+    const hideHint=()=>{this.holdHint.hidden=true;memory.write('heldGift',true);};
+    gifts.addEventListener('pointerdown',()=>{this.holdHintTimer=setTimeout(hideHint,800);},{signal:this.events.signal});
+    for(const event of ['pointerup','pointercancel'])gifts.addEventListener(event,()=>clearTimeout(this.holdHintTimer),{signal:this.events.signal});
     this.app.append(this.canvas, this.lane, this.dock);
     this.announcement = textNode('span', 'blessing-announcement', ''); this.announcement.setAttribute('role', 'status'); this.app.append(this.announcement);
     this.modal = document.createElement('div'); this.modal.className = 'modal-backdrop'; this.modal.id = 'blessingsModal'; this.modal.inert = true;
@@ -284,7 +288,7 @@ export class Celebration {
     finally{this.writing=false;this.aiButton.disabled=false;this.submit.disabled=false;this.aiButton.removeAttribute('aria-busy');this.textInput.dispatchEvent(new Event('input'));}
   }
   destroy() {
-    this.destroyed = true; this.events.abort(); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.history.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
+    this.destroyed = true; this.events.abort(); clearTimeout(this.holdHintTimer); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.history.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
     this.dialogs.destroy();this.dock.remove(); this.lane.remove(); this.canvas.remove(); this.modal.remove(); this.announcement.remove(); delete this.app.dataset.celebration;
   }
 }

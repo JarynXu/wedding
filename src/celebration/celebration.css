@@ -3,6 +3,9 @@
   .blessing-dock { background:linear-gradient(125deg,#fffbef78,#fff9ec26 55%,#f9e6c566); backdrop-filter:blur(14px) saturate(1.1); -webkit-backdrop-filter:blur(14px) saturate(1.1); }
 }
 .blessing-dock[hidden] { display: none; }
+.blessing-hold-hint { position:absolute; bottom:calc(100% + 9px); left:66px; padding:4px 10px; border:1px solid #e3c69b9c; border-radius:10px 10px 10px 3px; background:#fff8e9df; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:#805438; font:10px/1.6 "Noto Serif SC",serif; pointer-events:none; }
+.blessing-hold-hint[hidden] { display:none; }
+.blessing-lane:has(.blessing-bubble) + .blessing-dock .blessing-hold-hint { visibility:hidden; }
 .game-entry { position:absolute; right:12px; bottom:var(--page-next-bottom); z-index:86; width:44px; min-height:44px; padding:6px; display:flex; align-items:center; text-align:center; text-decoration:none; color:#7a1f2b; border:1px solid #b9935f; border-radius:50%; background:#fff5e1eb; box-shadow:0 4px 16px #58201825; }
 .game-entry[hidden] { display:none; }
 .game-entry span { display:block; font-size:11px; line-height:1.35; letter-spacing:.08em; }
@@ -78,7 +81,8 @@
 .blessing-ai-write[aria-busy=true] { animation:ai-breathe 900ms ease-in-out infinite alternate; }
 @keyframes ai-breathe { to { opacity:.4; } }
 .blessing-ai-write:disabled { opacity:.65;cursor:wait; }
-.blessings-card :is(button,input,textarea):focus-visible { outline: 2px solid var(--blessing-accent); outline-offset: 3px; }
+.blessings-card button:focus-visible { outline:1px solid var(--blessing-accent); outline-offset:-3px; }
+.blessings-card :is(input,textarea):focus { outline:none; border-color:#a77452; box-shadow:inset 0 0 0 1px #a7745266; }
 .blessing-gifts { border: 0; margin: 0; min-width: 0; }
 .blessing-gift-options { display: flex; gap: 6px; }
 .blessing-gift-options button { flex: 1; min-width: 0; padding: 3px 0 7px; display: flex; flex-direction: column; align-items: center; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #755133; font: 11px "Noto Serif SC", serif; cursor: pointer; transition: border-color 160ms, background 160ms; }

@@ -13,7 +13,7 @@ test('七种礼物画布产生可见变化，结束后释放动画；减少动�
   try {
     const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    for (const [theme, gifts] of [['classic', ['rose', 'champagne', 'rings', 'fireworks']], ['chinese', ['lantern', 'knot', 'double-happiness']]]) {
+    for (const [theme, gifts] of [['classic', ['rose', 'champagne', 'rings', 'fireworks']], ['chinese', ['fireworks','lantern', 'knot', 'double-happiness']]]) {
       await page.setViewportSize({width: theme==='chinese'?320:390,height:844});
       await page.goto(`${origin}/?theme=${theme}`);
       await page.locator('#preloaderOverlay[data-state="ready"]').waitFor(); await page.locator('#btnEnterInvitation').click();
@@ -39,7 +39,7 @@ test('七种礼物画布产生可见变化，结束后释放动画；减少动�
         });
         assert.ok(Math.max(...sums.map(value=>value.sum)) > 500, `${gift} 有可见像素`); assert.ok(new Set(sums.map(value=>value.sum)).size > 2, `${gift} 有变化`);
         assert.ok(sums.every(value=>value.left===0),`${gift} 的火花、光晕和主体都不进入气泡轨迹`);
-        if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `gift-${gift}.png`) });
+        if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `gift-${gift}-${theme}.png`) });
         await page.locator('#qaGiftCanvas[data-state="idle"]').waitFor({ timeout: 5000 });
         assert.equal(await page.evaluate(() => window.qaGiftEffects.frame), null);
       }
