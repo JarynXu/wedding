@@ -400,6 +400,7 @@ function initializeInvitation() {
         if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
         syncWelcomeGlass();
         celebration.enter();
+        prepareGameEntry();
         // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
         if (audio && audio.paused) {
           audio.play().then(() => {
@@ -413,6 +414,20 @@ function initializeInvitation() {
       }
     });
     weddingPreloader.init();
+    async function prepareGameEntry() {
+      const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 8000);
+      try {
+        const response = await fetch('/api/game/config', { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) return;
+        const game = await response.json(); if (!game.enabled) return;
+        const entry = document.getElementById('gameEntry');
+        const url = new URL('./game.html', location.href);
+        for (const key of ['theme', 'side', 'parents']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
+        entry.href = url.href; entry.hidden = false;
+        if (game.phase !== 'open') entry.querySelector('span').textContent = '查看默契榜';
+      } catch { /* 可选活动服务未就绪时，邀请、祝福与音乐仍可使用。 */ }
+      finally { clearTimeout(timeout); }
+    }
 
     // ==========================================
     // 浪漫玫瑰花瓣飘落 Canvas 特效

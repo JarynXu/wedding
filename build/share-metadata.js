@@ -31,7 +31,7 @@ export function shareMetadata() {
     configureServer: server => handleRequest(server, false),
     configurePreviewServer: server => handleRequest(server, true),
     transformIndexHtml(html, context) {
-      if (html.includes('<!-- calendar-entry -->')) return html;
+      if (html.includes('<!-- calendar-entry -->') || !html.includes('<!-- share-metadata:start -->')) return html;
       const search = new URL(context.originalUrl || '/', 'http://vite.local/').search;
       return renderShareMetadata(html, getShareMetadata(WEDDING_CONFIG, search));
     },

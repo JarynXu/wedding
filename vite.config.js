@@ -15,6 +15,7 @@ export default defineConfig({
       input: {
         invitation: fileURLToPath(new URL('./index.html', import.meta.url)),
         calendar: fileURLToPath(new URL('./calendar.html', import.meta.url)),
+        game: fileURLToPath(new URL('./game.html', import.meta.url)),
       },
     },
   },

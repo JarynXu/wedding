@@ -1,5 +1,10 @@
 .blessing-dock { position: absolute; left: 12px; bottom: var(--page-next-bottom); z-index: 86; display: flex; gap: 4px; align-items: center; max-width: calc(100% - 76px); }
 .blessing-dock[hidden] { display: none; }
+.game-entry { position:absolute; left:50%; bottom:calc(var(--page-next-bottom) + 60px); transform:translateX(-50%); z-index:30; width:190px; min-height:50px; padding:9px 10px; text-align:center; text-decoration:none; color:#7a1f2b; border:1px solid #b9935f; border-radius:26px; background:#fff5e1eb; box-shadow:0 4px 16px #58201825; }
+.game-entry[hidden] { display:none; }
+.game-entry span { display:block; font-size:14px; letter-spacing:.15em; }
+.game-entry small { display:block; font-size:8px; margin-top:4px; color:#8b673a; }
+:root[data-theme='chinese'] .game-entry { border-radius:5px 20px; }
 #app[data-celebration='enabled'] .scroll-hint { left: auto; right: 12px; transform: none; }
 .blessing-entry {
   flex: 0 0 auto; min-height: 44px; width: 86px; padding: 0 10px; display: flex; align-items: center; justify-content: center; gap: 5px;

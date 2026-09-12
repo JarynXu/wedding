@@ -13,7 +13,7 @@
       <section id="loginView" class="panel login-panel" aria-labelledby="loginTitle">
         <p class="eyebrow">WEDDING INVITATION</p>
         <h1 id="loginTitle">运行后台</h1>
-        <p class="panel-intro">查看请柬服务的实例状态与祝福服务状态。</p>
+        <p class="panel-intro">查看请柬服务状态，管理默契游戏规则与活动记录。</p>
         <form id="loginForm" class="login-form">
           <label for="username">用户名</label>
           <input id="username" name="username" autocomplete="username" required maxlength="64">
@@ -28,7 +28,7 @@
         <header class="dashboard-header">
           <div>
             <p class="eyebrow">WEDDING INVITATION</p>
-            <h1 id="dashboardTitle">服务状态</h1>
+            <h1 id="dashboardTitle">服务后台</h1>
           </div>
           <div class="header-actions">
             <button id="refreshButton" class="secondary-button" type="button">刷新状态</button>
@@ -36,53 +36,192 @@
           </div>
         </header>
 
-        <p id="dashboardError" class="notice error-notice" role="alert" hidden></p>
+        <nav class="admin-nav" aria-label="后台页面">
+          <button class="admin-nav-button is-active" type="button" data-admin-view="runtime" aria-selected="true">运行状态</button>
+          <button class="admin-nav-button" type="button" data-admin-view="game" aria-selected="false">默契游戏</button>
+        </nav>
 
-        <div class="metrics-grid">
-          <article class="metric-card">
-            <div class="card-heading"><h2>应用版本</h2><span class="card-mark">01</span></div>
-            <dl class="metric-list">
-              <div><dt>版本</dt><dd id="appVersion">未知</dd></div>
-              <div><dt>构建标识</dt><dd id="appBuild">未知</dd></div>
-              <div><dt>构建时间</dt><dd id="appBuildTime">未知</dd></div>
-              <div><dt>Git 提交</dt><dd id="appCommit">未知</dd></div>
-            </dl>
-          </article>
+        <section id="runtimeView" class="admin-view" aria-labelledby="dashboardTitle">
+          <p id="dashboardError" class="notice error-notice" role="alert" hidden></p>
 
-          <article class="metric-card">
-            <div class="card-heading"><h2>运行实例</h2><span class="card-mark">02</span></div>
-            <dl class="metric-list">
-              <div><dt>启动时间</dt><dd id="startedAt">未知</dd></div>
-              <div><dt>运行时长</dt><dd id="uptime">未知</dd></div>
-              <div><dt>当前实例 SSE 连接</dt><dd id="realtimeConnections">未知</dd></div>
-            </dl>
-          </article>
+          <div class="metrics-grid">
+            <article class="metric-card">
+              <div class="card-heading"><h2>应用版本</h2><span class="card-mark">01</span></div>
+              <dl class="metric-list">
+                <div><dt>版本</dt><dd id="appVersion">未知</dd></div>
+                <div><dt>构建标识</dt><dd id="appBuild">未知</dd></div>
+                <div><dt>构建时间</dt><dd id="appBuildTime">未知</dd></div>
+                <div><dt>Git 提交</dt><dd id="appCommit">未知</dd></div>
+              </dl>
+            </article>
 
-          <article class="metric-card">
-            <div class="card-heading"><h2>祝福数据</h2><span class="card-mark">03</span></div>
-            <div class="status-row"><span>数据库连接</span><span id="databaseConnection" class="status-badge">未知</span></div>
-            <div class="status-row"><span>祝福读取</span><span id="databaseRead" class="status-badge">未知</span></div>
-            <dl class="metric-list compact-list">
-              <div><dt>累计祝福</dt><dd id="blessingCount">未知</dd></div>
-              <div><dt>最近保存</dt><dd id="lastSavedAt">未知</dd></div>
-            </dl>
-          </article>
+            <article class="metric-card">
+              <div class="card-heading"><h2>运行实例</h2><span class="card-mark">02</span></div>
+              <dl class="metric-list">
+                <div><dt>启动时间</dt><dd id="startedAt">未知</dd></div>
+                <div><dt>运行时长</dt><dd id="uptime">未知</dd></div>
+                <div><dt>当前实例 SSE 连接</dt><dd id="realtimeConnections">未知</dd></div>
+              </dl>
+            </article>
 
-          <article class="metric-card">
-            <div class="card-heading"><h2>实时通知</h2><span class="card-mark">04</span></div>
-            <div class="listener-state">
-              <span id="sseListener" class="status-badge">未知</span>
-              <p>PostgreSQL 通知监听与祝福消息同步状态</p>
+            <article class="metric-card">
+              <div class="card-heading"><h2>祝福数据</h2><span class="card-mark">03</span></div>
+              <div class="status-row"><span>数据库连接</span><span id="databaseConnection" class="status-badge">未知</span></div>
+              <div class="status-row"><span>祝福读取</span><span id="databaseRead" class="status-badge">未知</span></div>
+              <dl class="metric-list compact-list">
+                <div><dt>累计祝福</dt><dd id="blessingCount">未知</dd></div>
+                <div><dt>最近保存</dt><dd id="lastSavedAt">未知</dd></div>
+              </dl>
+            </article>
+
+            <article class="metric-card">
+              <div class="card-heading"><h2>实时通知</h2><span class="card-mark">04</span></div>
+              <div class="listener-state">
+                <span id="sseListener" class="status-badge">未知</span>
+                <p>PostgreSQL 通知监听与祝福消息同步状态</p>
+              </div>
+              <p class="scope-note">祝福数据按配置的婚礼 room 统计。SSE 连接数只统计当前服务实例，不代表全局在线人数。</p>
+            </article>
+          </div>
+
+          <footer class="dashboard-footer">
+            <span>最后刷新 <time id="lastRefresh">未知</time></span>
+            <span class="footer-dot" aria-hidden="true">·</span>
+            <span>移动端后台</span>
+          </footer>
+        </section>
+
+        <section id="gameView" class="admin-view" hidden aria-labelledby="gameTitle">
+          <header class="game-header">
+            <div>
+              <p class="eyebrow">MATCHING GAME</p>
+              <h2 id="gameTitle">默契游戏</h2>
+              <p class="section-intro">配置题目、判题规则、奖项与活动记录。</p>
             </div>
-            <p class="scope-note">祝福数据按配置的婚礼 room 统计。SSE 连接数只统计当前服务实例，不代表全局在线人数。</p>
-          </article>
-        </div>
+            <div class="game-phase-block">
+              <span id="gamePhase" class="status-badge">未知</span>
+              <span id="gameVersion" class="version-label">配置版本 未知</span>
+            </div>
+          </header>
 
-        <footer class="dashboard-footer">
-          <span>最后刷新 <time id="lastRefresh">未知</time></span>
-          <span class="footer-dot" aria-hidden="true">·</span>
-          <span>移动端后台</span>
-        </footer>
+          <div id="gameLoading" class="game-state" role="status">正在读取游戏配置…</div>
+          <div id="gameEmpty" class="game-state" hidden>暂无游戏配置。</div>
+          <p id="gameError" class="notice error-notice" role="alert" hidden></p>
+
+          <div id="gameContent" hidden>
+            <section class="game-card game-overview-card" aria-labelledby="gameOverviewTitle">
+              <div class="section-heading">
+                <div><p class="section-kicker">OVERVIEW</p><h3 id="gameOverviewTitle">活动概览</h3></div>
+                <span id="gameCloseSummary" class="section-aside">截止时间未知</span>
+              </div>
+              <div class="game-stat-grid">
+                <div class="game-stat"><span>参与者</span><strong data-game-stat="participants">未知</strong></div>
+                <div class="game-stat"><span>待判定</span><strong data-game-stat="pending">未知</strong></div>
+                <div class="game-stat"><span>待复核</span><strong data-game-stat="review">未知</strong></div>
+                <div class="game-stat"><span>达标</span><strong data-game-stat="qualified">未知</strong></div>
+                <div class="game-stat"><span>已获奖</span><strong data-game-stat="awarded">未知</strong></div>
+                <div class="game-stat"><span>已核销</span><strong data-game-stat="redeemed">未知</strong></div>
+              </div>
+              <div class="integration-row">
+                <span>短信验证码</span><span id="smsIntegration" class="status-badge">未知</span>
+                <span>AI 判题</span><span id="aiIntegration" class="status-badge">未知</span>
+                <span>图形认证</span><span id="captchaIntegration" class="status-badge">未知</span>
+              </div>
+            </section>
+
+            <form id="gameConfigForm" class="game-card" novalidate>
+              <div class="section-heading">
+                <div><p class="section-kicker">RULES</p><h3>游戏规则</h3></div>
+                <span class="section-aside">6 道题</span>
+              </div>
+              <fieldset id="gameConfigFields" class="game-fieldset">
+                <legend class="sr-only">游戏规则配置</legend>
+                <div class="rule-grid">
+                  <label class="field-group"><span>截止时间</span><input id="gameClosesAt" type="datetime-local"><small>按北京时间（UTC+8）填写，和操作设备时区无关。</small></label>
+                  <label class="field-group"><span>获奖名额</span><input id="gameMaxWinners" type="number" min="3" step="1" inputmode="numeric"><small id="prizeComposition">未知</small></label>
+                  <label class="field-group"><span>答对题数</span><input id="gameRequiredCorrect" type="number" min="1" step="1" inputmode="numeric"><small>达到此题数后进入达标名单。</small></label>
+                </div>
+                <div class="prize-grid">
+                  <label class="field-group"><span>一等奖名称</span><input id="prizeFirst" maxlength="64"></label>
+                  <label class="field-group"><span>二等奖名称</span><input id="prizeSecond" maxlength="64"></label>
+                  <label class="field-group"><span>三等奖名称</span><input id="prizeThird" maxlength="64"></label>
+                  <label class="field-group"><span>参与奖名称</span><input id="prizeParticipation" maxlength="64"></label>
+                </div>
+                <label class="field-group"><span>判题补充说明</span><textarea id="judgeInstructions" rows="4" placeholder="填写给人工或 AI 判题使用的补充说明"></textarea></label>
+                <div id="questionsContainer" class="questions-container"></div>
+              </fieldset>
+              <div class="form-actions">
+                <div>
+                  <p id="gameImpactNote" class="impact-note" hidden>活动开始后修改题目或标准答案，会触发已有答卷重新判定。</p>
+                  <p id="gameSaveMessage" class="inline-message" role="status" hidden></p>
+                </div>
+                <div class="action-buttons">
+                  <button id="saveGameButton" class="secondary-button" type="submit">保存规则</button>
+                  <button id="publishGameButton" class="primary-button compact-button" type="button">开放活动</button>
+                </div>
+              </div>
+            </form>
+
+            <section class="game-card" aria-labelledby="participantsTitle">
+              <div class="section-heading">
+                <div><p class="section-kicker">ENTRIES</p><h3 id="participantsTitle">参与者与答卷</h3></div>
+                <button id="participantsRefreshButton" class="small-button" type="button">刷新列表</button>
+              </div>
+              <p id="participantsError" class="notice error-notice" role="alert" hidden></p>
+              <div id="participantsLoading" class="sub-state" hidden>正在读取参与者…</div>
+              <div id="participantsEmpty" class="sub-state" hidden>暂无参与者记录。</div>
+              <div id="participantsListWrap" hidden>
+                <div id="participantsList" class="participants-list" role="list"></div>
+                <button id="participantsMoreButton" class="more-button" type="button" hidden>加载更早记录</button>
+              </div>
+            </section>
+
+            <section class="game-card detail-card" aria-labelledby="participantDetailTitle">
+              <div class="section-heading"><div><p class="section-kicker">ANSWER REVIEW</p><h3 id="participantDetailTitle">答卷详情</h3></div></div>
+              <div id="participantDetailEmpty" class="sub-state">选择参与者查看答卷。</div>
+              <p id="participantDetailError" class="notice error-notice" role="alert" hidden></p>
+              <p id="participantDetailMessage" class="inline-message" role="status" hidden></p>
+              <div id="participantDetailContent" hidden>
+                <dl id="participantSummary" class="participant-summary"></dl>
+                <div id="answersList" class="answers-list"></div>
+              </div>
+            </section>
+
+            <section class="game-card" aria-labelledby="settlementTitle">
+              <div class="section-heading">
+                <div><p class="section-kicker">SETTLEMENT</p><h3 id="settlementTitle">结算名单</h3></div>
+                <button id="previewSettlementButton" class="small-button" type="button">预览名单</button>
+              </div>
+              <p class="section-intro">结算前核对最终候选与奖项。名单由服务端按资格顺序生成。</p>
+              <div id="settlementEmpty" class="sub-state">尚未生成结算预览。</div>
+              <div id="settlementLoading" class="sub-state" hidden>正在生成结算预览…</div>
+              <p id="settlementError" class="notice error-notice" role="alert" hidden></p>
+              <div id="settlementContent" hidden>
+                <div class="status-row"><span>预览状态</span><span id="settlementReady" class="status-badge">未知</span></div>
+                <p id="settlementReason" class="settlement-reason"></p>
+                <div id="settlementCandidates" class="settlement-list" role="list"></div>
+                <label class="confirm-row"><input id="settlementConfirm" type="checkbox"> 我已核对最终名单与奖项</label>
+                <button id="settleButton" class="primary-button full-button" type="button" disabled>确认结算</button>
+              </div>
+              <p id="settlementMessage" class="inline-message" role="status" hidden></p>
+            </section>
+
+            <section class="game-card" aria-labelledby="redemptionTitle">
+              <div class="section-heading"><div><p class="section-kicker">REDEMPTION</p><h3 id="redemptionTitle">兑奖核销</h3></div><span class="section-aside">文本兑奖码</span></div>
+              <p class="section-intro">先查询兑奖码，再执行核销。当前不启用摄像头扫码。</p>
+              <form id="redemptionForm" class="redemption-form">
+                <label class="field-group"><span>兑奖码</span><input id="redemptionCode" autocomplete="off" required maxlength="128" placeholder="输入兑奖码"></label>
+                <button id="checkRedemptionButton" class="secondary-button" type="submit">查询状态</button>
+              </form>
+              <p id="redemptionError" class="notice error-notice" role="alert" hidden></p>
+              <div id="redemptionRecord" class="redemption-record" hidden>
+                <dl id="redemptionSummary" class="participant-summary"></dl>
+                <button id="redeemButton" class="primary-button full-button" type="button" disabled>确认核销</button>
+                <p id="redemptionMessage" class="inline-message" role="status" hidden></p>
+              </div>
+            </section>
+          </div>
+        </section>
       </section>
     </main>
   </body>

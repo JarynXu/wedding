@@ -9,9 +9,10 @@ import { renderShareMetadata } from '../src/share-html.js';
 import { blessingsRouter } from './blessings/http.js';
 import { adminRouter } from './admin/http.js';
 import { readBuildInfo } from './admin/status.js';
+import { gamePublicRouter } from './game/http.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */
-export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, startedAt = new Date(), buildInfo } = {}) {
+export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, game = null, gameOrigin, startedAt = new Date(), buildInfo } = {}) {
   const html = readFileSync(resolve(distDir, 'index.html'), 'utf8');
   renderShareMetadata(html, getShareMetadata(config));
   const app = express();
@@ -19,7 +20,8 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
   app.disable('x-powered-by');
   app.use(compression({ filter: (request, response) => !request.path.startsWith('/api/blessings') && !request.headers.range && compression.filter(request, response) }));
   app.use('/api/blessings', blessingsRouter(blessings));
-  app.use('/admin', adminRouter({ config: admin, blessings, startedAt, buildInfo: applicationBuildInfo }));
+  app.use('/admin', adminRouter({ config: admin, blessings, game, startedAt, buildInfo: applicationBuildInfo }));
+  app.use('/api/game', gamePublicRouter(game, gameOrigin || new URL(config.share.siteUrl).origin));
   app.get('/healthz', (_request, response) => response.type('text/plain').send('ok\n'));
   app.get(['/', '/index.html'], (request, response, next) => {
     try {

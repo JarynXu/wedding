@@ -1,0 +1,8 @@
+{
+  "file": "ct4.js",
+  "version": "1.0.0",
+  "source": "用户提供的 graphAuthSDK_WEB_H5_v1.0.0_operator_ui_log_static.zip / alicom-js-sdk-demo/ct4.js",
+  "sha256": "6dbb7c6a446514035d27dc7b464476946e4b2f3afdc34cec6cbf8814e94d0a4c",
+  "changes": "删除两行空白行中的空格；保留原始 SDK 逻辑",
+  "originalSha256": "4e2c819c87e7324b3c3a7f83243a2c8ad4f1415c0c8ee25661dc5454f1f08b96"
+}

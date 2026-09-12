@@ -9,7 +9,8 @@
     "build": "vite build",
     "start": "node server/index.js",
     "preview": "vite preview",
-    "blessings:migrate": "node server/blessings/migrate.js"
+    "blessings:migrate": "node server/blessings/migrate.js",
+    "game:migrate": "node server/game/migrate.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -24,6 +25,9 @@
     "vite": "^6.4.3"
   },
   "dependencies": {
+    "@alicloud/dypnsapi20170525": "^2.0.0",
+    "@alicloud/openapi-core": "^1.0.8",
+    "@darabonba/typescript": "^1.0.5",
     "compression": "^1.8.1",
     "express": "^5.2.1",
     "pg": "^8.23.0"

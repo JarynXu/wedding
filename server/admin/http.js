@@ -3,10 +3,11 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { AdminAuth } from './auth.js';
 import { createAdminStatus } from './status.js';
+import { gameAdminRouter } from '../game/http.js';
 
 const ADMIN_DIR = fileURLToPath(new URL('./', import.meta.url));
 
-export function adminRouter({ config = null, blessings = null, startedAt = new Date(), buildInfo, clock } = {}) {
+export function adminRouter({ config = null, blessings = null, game = null, startedAt = new Date(), buildInfo, clock } = {}) {
   const router = express.Router();
   const auth = config ? new AdminAuth(config, { ...(clock ? { clock } : {}) }) : null;
   const status = createAdminStatus({ blessings, startedAt, ...(buildInfo ? { buildInfo } : {}), ...(clock ? { clock: () => new Date(clock()) } : {}) });
@@ -44,6 +45,7 @@ export function adminRouter({ config = null, blessings = null, startedAt = new D
   });
 
   router.get('/api/status', requireSession(auth), async (_request, response) => response.status(200).json(await status.snapshot()));
+  router.use('/api/game', requireSession(auth), gameAdminRouter(game, config?.username));
 
   router.get(['/', '/index.html'], sendStatic('index.html'));
   router.get('/admin.js', sendStatic('admin.js'));

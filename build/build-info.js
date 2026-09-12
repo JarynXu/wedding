@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
 
-const sourceDirectories = ['src', 'server', 'build'];
-const sourceFiles = ['index.html', 'calendar.html', 'vite.config.js', 'package.json', 'package-lock.json', 'Dockerfile'];
+const sourceDirectories = ['src', 'server', 'build', 'public'];
+const sourceFiles = ['index.html', 'calendar.html', 'game.html', 'vite.config.js', 'package.json', 'package-lock.json', 'Dockerfile'];
 
 /** 构建产物记录应用源码指纹与生成时间，不读取环境文件。 */
 export function buildInfo() {
