@@ -9,7 +9,7 @@ export class BlessingStore {
     this.pool = new pg.Pool(config.database);
     this.pool.on('error', error => console.error('祝福数据库连接中断', error.code || error.name));
   }
-  async verify() { await this.pool.query('SELECT id, request_id, fingerprint FROM wedding_blessings LIMIT 0'); }
+  async verify() { await this.pool.query('SELECT id, request_id, fingerprint, gift_count FROM wedding_blessings LIMIT 0'); }
   async latestId() { const { rows } = await this.pool.query('SELECT id FROM wedding_blessings WHERE room_id=$1 ORDER BY id DESC LIMIT 1', [this.config.room]); return rows[0]?.id || '0'; }
   async dashboardStats() {
     const { rows } = await this.pool.query('SELECT count(*)::text AS total_count, max(created_at) AS last_saved_at FROM wedding_blessings WHERE room_id=$1', [this.config.room]);
@@ -53,8 +53,8 @@ export class BlessingStore {
         throw new BlessingError('RATE_LIMITED', '发送有些频繁，稍等片刻再试', 429, Math.max(1, wait));
       }
       const inserted = await client.query(`INSERT INTO wedding_blessings
-        (room_id,request_id,fingerprint,sender_hash,network_hash,guest_name,message,gift_id,sender_theme)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`, [this.config.room, message.requestId, message.fingerprint, senderHash, networkHash, message.name, message.text, message.gift, message.theme]);
+        (room_id,request_id,fingerprint,sender_hash,network_hash,guest_name,message,gift_id,sender_theme,gift_count)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, [this.config.room, message.requestId, message.fingerprint, senderHash, networkHash, message.name, message.text, message.gift, message.theme, message.giftCount || 1]);
       await client.query("SELECT pg_notify('wedding_blessings_changed', $1)", [this.config.room]);
       await client.query('COMMIT');
       return { message: publicBlessing(inserted.rows[0]), created: true };

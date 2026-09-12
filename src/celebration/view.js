@@ -1,10 +1,12 @@
 import { giftsForTheme, findGift, BLESSING_LIMITS } from './catalog.js';
 import { BlessingsClient } from './client.js';
 import { GiftEffects } from './gift-effects.js';
+import { QuickGifts } from './quick-gifts.js';
 import './celebration.css';
 
 const noteIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M4 5h16v12H9l-5 3V5Z"/><path d="M8 9h8M8 13h5"/></svg>';
 const textNode = (tag, className, text) => { const node = document.createElement(tag); node.className = className; node.textContent = text; return node; };
+const giftLabel = message => `送来${message.giftName}${message.giftCount > 1 ? ` × ${message.giftCount}` : ''}`;
 const memory = {
   read(key) { try { return JSON.parse(localStorage.getItem(`wedding.blessings.${key}`)); } catch { return null; } },
   write(key, value) { try { localStorage.setItem(`wedding.blessings.${key}`, JSON.stringify(value)); } catch { /* 浏览器禁用存储时，当前页面仍可发送。 */ } },
@@ -46,6 +48,16 @@ export class Celebration {
     this.createView();
     this.effects = new GiftEffects(this.canvas, theme);
     this.client = new BlessingsClient({ onSync: snapshot => this.sync(snapshot), onMessage: message => this.receive(message), onState: state => this.connectionState(state) });
+    this.quick = new QuickGifts({
+      buttons: this.dock.querySelectorAll('[data-quick-gift]'), client: this.client, pending: this.pendingGift,
+      play: id => this.effects.play(id), persist: message => memory.write('pendingGift', message), recorded: message => this.receive(message, true),
+      createMessage: (gift, giftCount) => {
+        const name = this.nameInput.value.trim().normalize('NFC');
+        if ([...name].length > BLESSING_LIMITS.name) return null;
+        memory.write('name', name);
+        return { requestId: uuid(), clientId: this.clientId, name, text: '', gift, giftCount, theme: this.theme };
+      },
+    });
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { this.client.pause(); this.clearVisuals(); }
       else if (this.enabled && this.entered) this.client.connect();
@@ -66,16 +78,14 @@ export class Celebration {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.quickGift = gift.id;
       button.setAttribute('aria-label', `送${gift.name}`); button.title = `送${gift.name}`;
       button.append(giftIcon(gift.id), textNode('span', 'blessing-quick-label', gift.name));
-      button.addEventListener('click', () => this.sendGift(gift.id), { signal: this.events.signal }); gifts.append(button);
+      gifts.append(button);
     });
-    this.quickFeedback = textNode('p', 'blessing-quick-feedback', ''); this.quickFeedback.setAttribute('role', 'status');
-    this.dock.append(this.entry, gifts, this.quickFeedback);
+    this.dock.append(this.entry, gifts);
     this.app.append(this.canvas, this.lane, this.dock);
     this.announcement = textNode('span', 'blessing-announcement', ''); this.announcement.setAttribute('role', 'status'); this.app.append(this.announcement);
     this.modal = document.createElement('div'); this.modal.className = 'modal-backdrop'; this.modal.id = 'blessingsModal'; this.modal.inert = true;
-    this.modal.innerHTML = `<section class="modal-card glass-surface blessings-card" role="dialog" aria-modal="true" aria-labelledby="blessingsTitle">
+    this.modal.innerHTML = `<section class="modal-card glass-surface blessings-card" role="dialog" aria-modal="true" aria-label="祝福与祝福簿">
       <button class="modal-close" type="button" data-close-modal="blessingsModal" aria-label="关闭祝福面板">×</button>
-      <div class="blessings-heading"><span class="blessings-ornament" aria-hidden="true">${this.theme === 'chinese' ? '囍' : '✧'}</span><h2 id="blessingsTitle">${this.theme === 'chinese' ? '共贺新禧' : '把心意留在这里'}</h2><p>${this.theme === 'chinese' ? '一笺祝愿，满堂欢喜' : '让这一刻，有你的祝福'}</p></div>
       <div class="blessings-tabs" role="tablist" aria-label="祝福面板"><button type="button" role="tab" id="blessingComposeTab" aria-controls="blessingCompose" aria-selected="true" data-tab="compose">送祝福</button><button type="button" role="tab" id="blessingHistoryTab" aria-controls="blessingHistory" aria-selected="false" data-tab="history" tabindex="-1">祝福簿</button></div>
       <form id="blessingCompose" role="tabpanel" aria-labelledby="blessingComposeTab">
         <label class="blessing-label" for="blessingName">您的称呼 <span>选填</span></label><input id="blessingName" name="name" autocomplete="nickname" placeholder="让新人知道是谁的心意" maxlength="48">
@@ -182,7 +192,7 @@ export class Celebration {
     this.messageVersion++;
     const fresh = this.remember(message.id);
     this.modal.querySelector('.blessing-new').hidden = false;
-    if (!fresh || document.hidden) return;
+    if (!fresh || document.hidden || this.quick.hasPlayed(message.requestId)) return;
     this.queue.push({ message, historical: false, own });
     if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
     this.flushBubble();
@@ -194,8 +204,8 @@ export class Celebration {
     const bubble = document.createElement('div'); bubble.className = 'blessing-bubble'; bubble.dataset.messageId = message.id;
     if (message.gift) bubble.append(giftIcon(message.gift));
     const content = document.createElement('div');
-    content.append(textNode('span', 'blessing-bubble-name', message.name), textNode('span', 'blessing-bubble-text', message.text || `送来${message.giftName}`));
-    if (historical) content.append(textNode('span', 'blessing-bubble-time', '留在祝福簿的心意'));
+    content.append(textNode('span', 'blessing-bubble-name', message.name), textNode('span', 'blessing-bubble-text', message.text || giftLabel(message)));
+    bubble.classList.toggle('has-gift', Boolean(message.gift));
     bubble.append(content); this.lane.append(bubble);
     const timeout = setTimeout(() => { bubble.remove(); this.bubbleTimers.delete(timeout); }, 7200);
     this.bubbleTimers.add(timeout);
@@ -203,8 +213,16 @@ export class Celebration {
   }
   clearVisuals() { this.queue = []; this.lane.replaceChildren(); this.effects.clear(); for (const timer of this.bubbleTimers) clearTimeout(timer); this.bubbleTimers.clear(); }
   selectTab(tab) {
+    const changed = this.selectedTab && this.selectedTab !== tab;
+    this.selectedTab = tab;
+    this.modal.querySelector('.blessings-tabs').dataset.active = tab;
     this.modal.querySelectorAll('[data-tab]').forEach(button => { const selected = button.dataset.tab === tab; button.setAttribute('aria-selected', String(selected)); button.tabIndex = selected ? 0 : -1; });
     this.form.hidden = tab !== 'compose'; this.modal.querySelector('#blessingHistory').hidden = tab !== 'history';
+    this.tabAnimation?.cancel();
+    if (changed && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const panel = tab === 'compose' ? this.form : this.modal.querySelector('#blessingHistory');
+      this.tabAnimation = panel.animate([{ opacity: .6, transform: `translateX(${tab === 'history' ? 6 : -6}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 160, easing: 'cubic-bezier(.2,.7,.2,1)' });
+    }
     if (tab === 'history') this.loadHistory();
   }
   async loadHistory(before = null) {
@@ -223,7 +241,7 @@ export class Celebration {
         const header = textNode('header', '', ''); header.append(textNode('strong', '', message.name), textNode('time', '', new Date(message.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })));
         item.append(header);
         if (message.text) item.append(textNode('p', '', message.text));
-        if (message.gift) { const gift = textNode('div', 'blessing-history-gift', ''); gift.append(giftIcon(message.gift), textNode('span', '', `送来${message.giftName}`)); item.append(gift); }
+        if (message.gift) { const gift = textNode('div', 'blessing-history-gift', ''); gift.append(giftIcon(message.gift), textNode('span', '', giftLabel(message))); item.append(gift); }
         list.append(item);
       });
       if (!result.messages.length) list.append(textNode('p', 'blessing-empty', '祝福簿正等着第一份心意。'));
@@ -237,7 +255,7 @@ export class Celebration {
     }
   }
   async send() {
-    if (this.sending || this.quickSending) return;
+    if (this.sending) return;
     const name = this.nameInput.value.trim().normalize('NFC');
     const text = this.textInput.value.trim().normalize('NFC');
     if ([...name].length > BLESSING_LIMITS.name || [...text].length > BLESSING_LIMITS.text) { this.result.textContent = '称呼请在 24 字内，祝福请在 120 字内。'; return; }
@@ -246,7 +264,6 @@ export class Celebration {
     if (!samePending) this.pending = { requestId: uuid(), clientId: this.clientId, name, text, gift: this.selectedGift, theme: this.theme };
     memory.write('pending', this.pending); memory.write('name', name);
     this.sending = true; this.submit.disabled = true; this.form.setAttribute('aria-busy', 'true');
-    this.setQuickBusy(true);
     this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = true; });
     this.result.textContent = '正在送出心意…';
     try {
@@ -266,49 +283,10 @@ export class Celebration {
     } catch (error) {
       if (this.destroyed) return;
       this.result.textContent = error.status && error.status < 500 ? error.message : '暂未确认送达。内容已保留，点击送出可确认或重试。';
-    } finally { this.sending = false; this.setQuickBusy(false); this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = false; }); this.form.removeAttribute('aria-busy'); }
-  }
-  setQuickBusy(busy, gift = '') {
-    this.dock.querySelectorAll('[data-quick-gift]').forEach(button => {
-      button.disabled = busy;
-      button.setAttribute('aria-busy', String(busy && button.dataset.quickGift === gift));
-    });
-  }
-  showQuickFeedback(message, persist = false) {
-    clearTimeout(this.quickFeedbackTimer);
-    this.quickFeedback.textContent = message;
-    this.announcement.textContent = message;
-    if (!persist) this.quickFeedbackTimer = setTimeout(() => { this.quickFeedback.textContent = ''; }, 3500);
-  }
-  async sendGift(id) {
-    if (this.sending || this.quickSending) return;
-    const gift = findGift(id);
-    if (!gift?.themes.includes(this.theme)) return;
-    if (this.pendingGift && this.pendingGift.gift !== id) {
-      this.showQuickFeedback(`上次送出的${findGift(this.pendingGift.gift).name}待确认，请点原礼物重试。`, true); return;
-    }
-    const name = this.nameInput.value.trim().normalize('NFC');
-    if ([...name].length > BLESSING_LIMITS.name) { this.showQuickFeedback('称呼请在 24 字内。'); return; }
-    this.pendingGift ??= { requestId: uuid(), clientId: this.clientId, name, text: '', gift: id, theme: this.theme };
-    memory.write('pendingGift', this.pendingGift);
-    this.quickSending = true; this.setQuickBusy(true, id); this.submit.disabled = true;
-    this.showQuickFeedback(`正在送出${gift.name}…`, true);
-    try {
-      const result = await this.client.send(this.pendingGift);
-      if (this.destroyed) return;
-      this.pendingGift = null; memory.write('pendingGift', null); memory.write('name', name);
-      this.receive(result.message, true);
-      this.showQuickFeedback(`${gift.name}已送达`);
-    } catch (error) {
-      if (this.destroyed) return;
-      if (error.status && error.status < 500) {
-        this.pendingGift = null; memory.write('pendingGift', null);
-        this.showQuickFeedback(error.message, true);
-      } else this.showQuickFeedback(`暂未确认送达，请再点${gift.name}重试。`, true);
-    } finally { this.quickSending = false; this.setQuickBusy(false); this.submit.disabled = false; }
+    } finally { this.sending = false; this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = false; }); this.form.removeAttribute('aria-busy'); }
   }
   destroy() {
-    this.destroyed = true; this.events.abort(); clearInterval(this.timer); clearTimeout(this.confirmationTimer); clearTimeout(this.quickFeedbackTimer); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
+    this.destroyed = true; this.events.abort(); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
     this.dock.remove(); this.lane.remove(); this.canvas.remove(); this.modal.remove(); this.announcement.remove(); delete this.app.dataset.celebration;
   }
 }

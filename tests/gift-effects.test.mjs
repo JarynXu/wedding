@@ -43,6 +43,14 @@ test('六种礼物画布产生可见变化，结束后释放动画；减少动�
         await page.locator('#qaGiftCanvas[data-state="idle"]').waitFor({ timeout: 5000 });
         assert.equal(await page.evaluate(() => window.qaGiftEffects.frame), null);
       }
+      const repeated=await page.evaluate(gift=>{
+        const effects=window.qaGiftEffects;
+        for(let i=0;i<25;i++)effects.play(gift);
+        return {active:effects.active.length,sequence:effects.effectSequence,latest:effects.canvas.dataset.gift};
+      },gifts[0]);
+      assert.equal(repeated.active,10,'绘制实例有上限');
+      assert.equal(repeated.sequence,28,'每次输入均产生新实例，正在播放时不忽略输入');
+      await page.locator('#qaGiftCanvas[data-state="idle"]').waitFor({timeout:5000});
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await page.evaluate(() => window.qaGiftEffects.play('fireworks'));
       assert.equal(await page.evaluate(() => window.qaGiftEffects.frame), null);

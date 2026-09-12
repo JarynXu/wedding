@@ -15,8 +15,12 @@ export function validateBlessing(body) {
   if (body.theme !== 'classic' && body.theme !== 'chinese') throw new BlessingError('INVALID_THEME', '请柬主题无效');
   if (typeof gift !== 'string' || (gift && !findGift(gift)?.themes.includes(body.theme))) throw new BlessingError('INVALID_GIFT', '请选择这套请柬中的礼物');
   if (!text && !gift) throw new BlessingError('EMPTY_MESSAGE', '写一句祝福，或选一份心意');
+  const giftCount = body.giftCount ?? (gift ? 1 : 0);
+  if (!Number.isInteger(giftCount) || (gift ? giftCount < 1 || giftCount > BLESSING_LIMITS.giftCount : giftCount !== 0)) throw new BlessingError('INVALID_GIFT_COUNT', '礼物数量无效');
   const payload = { name, text, gift, theme: body.theme };
-  return { ...payload, requestId: body.requestId, clientId: body.clientId, fingerprint: createHash('sha256').update(JSON.stringify(payload)).digest('hex') };
+  // 单份礼物沿用旧指纹，部署前未确认的请求仍能按原标识重试。
+  const fingerprint = createHash('sha256').update(JSON.stringify(giftCount > 1 ? { ...payload, giftCount } : payload)).digest('hex');
+  return { ...payload, giftCount, requestId: body.requestId, clientId: body.clientId, fingerprint };
 }
 
 export function parseCursor(value) {
@@ -26,7 +30,7 @@ export function parseCursor(value) {
 }
 
 export function publicBlessing(row) {
-  return { id: String(row.id), name: row.guest_name, text: row.message, gift: row.gift_id, giftName: findGift(row.gift_id)?.name || (row.gift_id ? '心意礼物' : ''), theme: row.sender_theme, createdAt: new Date(row.created_at).toISOString() };
+  return { id: String(row.id), requestId: row.request_id, name: row.guest_name, text: row.message, gift: row.gift_id, giftCount: row.gift_id ? (row.gift_count ?? 1) : 0, giftName: findGift(row.gift_id)?.name || (row.gift_id ? '心意礼物' : ''), theme: row.sender_theme, createdAt: new Date(row.created_at).toISOString() };
 }
 
 function isUuid(value) { return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }

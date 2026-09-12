@@ -5,7 +5,7 @@ import { BlessingError, parseCursor, validateBlessing } from './model.js';
 export function blessingsRouter(service) {
   const router = express.Router();
   router.use((_request, response, next) => { response.set('Cache-Control', 'no-store'); next(); });
-  router.get('/config', (_request, response) => response.json({ enabled: Boolean(service) }));
+  router.get('/config', (_request, response) => response.json({ enabled: Boolean(service), ...(service ? { giftRecordIntervalMs: Math.max(1000, service.config?.minIntervalMs ?? 3000, Math.ceil(60000 / (service.config?.clientLimit || 12))) } : {}) }));
   router.use((_request, _response, next) => next(service ? undefined : new BlessingError('DISABLED', '祝福功能尚未开放', 503)));
   router.get('/history', async (request, response) => {
     const before = parseCursor(singleQuery(request, 'before'));

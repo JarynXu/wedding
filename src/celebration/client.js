@@ -8,6 +8,7 @@ export class BlessingsClient {
   }
   async available() {
     const config = await this.request('/config');
+    this.giftRecordIntervalMs = Number.isFinite(config.giftRecordIntervalMs) ? Math.max(1000, config.giftRecordIntervalMs) : 5000;
     return config.enabled === true;
   }
   connect() {
@@ -53,6 +54,7 @@ export class BlessingsClient {
       if (!response.ok) {
         const error = new Error(body.message || '祝福服务暂时无法连接，请稍后重试');
         error.status = response.status;
+        error.retryAfter = Number(response.headers.get('Retry-After')) || 0;
         throw error;
       }
       return body;

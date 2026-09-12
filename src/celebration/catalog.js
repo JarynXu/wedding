@@ -1,4 +1,4 @@
-/** 礼物是无价格、无数量的祝福附件；两套主题共享同一祝福簿。 */
+/** 礼物没有价格；数量记录来宾的播放次数，两套主题共享同一祝福簿。 */
 export const GIFTS = Object.freeze([
   { id: 'rose', name: '玫瑰', themes: ['classic'], sprite: 0, effect: 'petals' },
   { id: 'champagne', name: '香槟', themes: ['classic'], sprite: 1, effect: 'toast' },
@@ -7,6 +7,6 @@ export const GIFTS = Object.freeze([
   { id: 'knot', name: '同心结', themes: ['chinese'], sprite: 4, effect: 'knot' },
   { id: 'double-happiness', name: '双喜', themes: ['chinese'], sprite: 5, effect: 'seal' },
 ]);
-export const BLESSING_LIMITS = Object.freeze({ name: 24, text: 120 });
+export const BLESSING_LIMITS = Object.freeze({ name: 24, text: 120, giftCount: 999 });
 export const findGift = id => GIFTS.find(gift => gift.id === id) || null;
 export const giftsForTheme = theme => GIFTS.filter(gift => gift.themes.includes(theme));

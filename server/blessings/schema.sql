@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS wedding_blessings (
   CHECK (char_length(message) <= 120),
   CHECK (message <> '' OR gift_id <> '')
 );
+ALTER TABLE wedding_blessings ADD COLUMN IF NOT EXISTS gift_count INTEGER NOT NULL DEFAULT 1 CHECK(gift_count BETWEEN 1 AND 999);
 CREATE INDEX IF NOT EXISTS wedding_blessings_room_order ON wedding_blessings (room_id, id DESC);
 CREATE INDEX IF NOT EXISTS wedding_blessings_sender_time ON wedding_blessings (room_id, sender_hash, created_at DESC);
 CREATE INDEX IF NOT EXISTS wedding_blessings_network_time ON wedding_blessings (room_id, network_hash, created_at DESC);

@@ -8,6 +8,10 @@ import { databaseUrl, fixture, payload, post, stream, waitFor } from './blessing
 test('祝福边界：文本、礼物、主题、幂等键、游标与显式错误配置', () => {
   assert.equal(validateBlessing(payload({ name: ' ', text: ' 恭喜 ' })).name, '一位亲友');
   assert.equal(validateBlessing(payload({ text: '', gift: 'lantern', theme: 'chinese' })).gift, 'lantern');
+  const single = payload({ text: '', gift: 'rose' });
+  assert.equal(validateBlessing(single).fingerprint, validateBlessing({ ...single, giftCount: 1 }).fingerprint);
+  for (const giftCount of [0, -1, 1.5, '3', 1000]) assert.throws(() => validateBlessing({ ...single, giftCount }));
+  assert.throws(() => validateBlessing(payload({ giftCount: 3 })));
   assert.equal(validateBlessing(payload({ text: '💐'.repeat(120) })).text.length, 240);
   for (const bad of [{ text: '', gift: '' }, { text: '字'.repeat(121) }, { name: '名'.repeat(25) }, { gift: 'lantern' }, { gift: 'unknown' }, { clientId: 'bad' }, { requestId: null }, { text: '\u0000' }, { theme: 'unknown' }]) assert.throws(() => validateBlessing(payload(bad)));
   for (const cursor of ['-1', '1e2', '00', '9223372036854775808', '<script>']) assert.throws(() => parseCursor(cursor));
@@ -42,7 +46,9 @@ test('PostgreSQL：跨实例实时消息、重放、历史、幂等与失败', {
       assert.equal(first.name, message.name);
       const event = await live.take(event => event.type === 'blessing' && event.data.id === first.id);
       assert.equal(event.data.text, message.text);
-      assert.deepEqual(Object.keys(event.data).sort(), ['id', 'name', 'text', 'gift', 'giftName', 'theme', 'createdAt'].sort());
+      assert.deepEqual(Object.keys(event.data).sort(), ['id', 'requestId', 'name', 'text', 'gift', 'giftCount', 'giftName', 'theme', 'createdAt'].sort());
+      assert.equal(event.data.requestId, message.requestId);
+      assert.equal(event.data.giftCount, 1);
       const retry = await post(b.origin, message); assert.equal(retry.status, 200); assert.equal((await retry.json()).message.id, first.id);
       assert.equal((await post(a.origin, { ...message, text: '改变内容' })).status, 409);
       assert.equal((await post(a.origin, payload(), { Origin: 'https://evil.test' })).status, 403);
@@ -87,5 +93,24 @@ test('PostgreSQL：跨实例实时消息、重放、历史、幂等与失败', {
         } finally { await rejected.db.query('ALTER TABLE wedding_blessings_temporarily_unavailable RENAME TO wedding_blessings'); }
       } finally { await rejected.close(); }
     });
+  } finally { await live?.close(); await f.close(); }
+});
+
+test('长按礼物数量入库和跨实例重试保留同一条记录，限频不增加记录', { skip: !databaseUrl && '需要隔离 PostgreSQL' }, async () => {
+  const f = await fixture({ BLESSINGS_MIN_INTERVAL_MS: '3000', BLESSINGS_CLIENT_LIMIT: '12' });
+  let live;
+  try {
+    const a = await f.instance(), b = await f.instance();
+    live = await stream(b.origin); await live.take(event => event.type === 'sync');
+    const batch = payload({ text: '', gift: 'rose', giftCount: 8 });
+    const response = await post(a.origin, batch); assert.equal(response.status, 201);
+    const recorded = (await response.json()).message;
+    assert.equal(recorded.giftCount, 8);
+    const event = await live.take(event => event.type === 'blessing'); assert.equal(event.data.giftCount, 8);
+    const retry = await post(b.origin, batch); assert.equal(retry.status, 200); assert.equal((await retry.json()).message.id, recorded.id);
+    assert.equal((await post(a.origin, { ...batch, giftCount: 9 })).status, 409);
+    assert.equal((await post(b.origin, payload({ clientId: batch.clientId, text: '', gift: 'rose', giftCount: 4 }))).status, 429);
+    const history = await (await fetch(a.origin + '/api/blessings/history')).json();
+    assert.equal(history.messages.length, 1); assert.equal(history.messages[0].giftCount, 8);
   } finally { await live?.close(); await f.close(); }
 });
