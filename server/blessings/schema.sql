@@ -21,4 +21,16 @@ ALTER TABLE wedding_blessings ADD COLUMN IF NOT EXISTS gift_count INTEGER NOT NU
 CREATE INDEX IF NOT EXISTS wedding_blessings_room_order ON wedding_blessings (room_id, id DESC);
 CREATE INDEX IF NOT EXISTS wedding_blessings_sender_time ON wedding_blessings (room_id, sender_hash, created_at DESC);
 CREATE INDEX IF NOT EXISTS wedding_blessings_network_time ON wedding_blessings (room_id, network_hash, created_at DESC);
+CREATE TABLE IF NOT EXISTS wedding_blessing_writing (
+  room_id VARCHAR(64) NOT NULL,
+  request_id UUID NOT NULL,
+  sender_hash CHAR(64) NOT NULL,
+  network_hash CHAR(64) NOT NULL,
+  fingerprint CHAR(64) NOT NULL,
+  result TEXT,
+  state VARCHAR(12) NOT NULL DEFAULT 'pending' CHECK(state IN ('pending','complete','failed')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+  PRIMARY KEY(room_id,request_id)
+);
+CREATE INDEX IF NOT EXISTS wedding_writing_rate ON wedding_blessing_writing(room_id,created_at DESC);
 COMMIT;

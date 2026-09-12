@@ -1,9 +1,9 @@
 /** 供应商协议差异保留在此边界；调用者只接收完整 JSON 文本和可核对的用量。 */
 export class JsonModelClient {
   constructor(config){this.config=config;}
-  async complete({model,messages,schema},signal) {
+  async complete({model,messages,schema,temperature=0},signal) {
     const options=this.config.provider==='deepseek'
-      ? {response_format:{type:'json_object'},max_tokens:800,thinking:{type:'disabled'},temperature:0}
+      ? {response_format:{type:'json_object'},max_tokens:800,thinking:{type:'disabled'},temperature}
       : {response_format:{type:'json_schema',json_schema:{name:'wedding_answer_verdict',strict:true,schema}},max_completion_tokens:800,store:false};
     const started=Date.now();
     const response=await fetch(this.config.baseUrl+'/chat/completions',{

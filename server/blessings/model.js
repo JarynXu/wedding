@@ -28,6 +28,12 @@ export function parseCursor(value) {
   if (typeof value !== 'string' || !/^(0|[1-9]\d{0,18})$/.test(value) || BigInt(value) > 9223372036854775807n) throw new BlessingError('INVALID_CURSOR', '祝福页码无效，请刷新重试');
   return value;
 }
+export function validateWriting(body) {
+  if (!body || !isUuid(body.requestId) || !isUuid(body.clientId)) throw new BlessingError('INVALID_ID','请求凭据无效');
+  if (!['classic','chinese'].includes(body.theme)) throw new BlessingError('INVALID_THEME','请柬主题无效');
+  const text=cleanText(body.text ?? '',BLESSING_LIMITS.text,true);
+  return {requestId:body.requestId,clientId:body.clientId,text,theme:body.theme,fingerprint:createHash('sha256').update(JSON.stringify({text,theme:body.theme})).digest('hex')};
+}
 
 export function publicBlessing(row) {
   return { id: String(row.id), requestId: row.request_id, name: row.guest_name, text: row.message, gift: row.gift_id, giftCount: row.gift_id ? (row.gift_count ?? 1) : 0, giftName: findGift(row.gift_id)?.name || (row.gift_id ? '心意礼物' : ''), theme: row.sender_theme, createdAt: new Date(row.created_at).toISOString() };

@@ -28,12 +28,13 @@ export async function gameFixture() {
   await store.publish(2,integrations);
   const service={store,identity,runtime,integrations,ensure:async()=>{},tick:()=>{}};
   const servers=[];
-  async function server() {
+  async function server({blessings=null}={}) {
     let handler;const node=createServer((req,res)=>handler(req,res));node.listen(0,'127.0.0.1');await new Promise(resolve=>node.once('listening',resolve));
     const origin='http://127.0.0.1:'+node.address().port;
     const admin=readAdminConfig({ADMIN_USERNAME:'test-admin',ADMIN_PASSWORD_HASH:await hashPassword('test-admin-password'),ADMIN_SESSION_SECRET:runtime.sessionSecret,ADMIN_COOKIE_SECURE:'false'});
     servers.push(node);
-    handler=createInvitationApp({game:service,admin,gameOrigin:origin});
+    if(blessings)blessings.config.origin=origin;
+    handler=createInvitationApp({game:service,admin,blessings,gameOrigin:origin});
     return origin;
   }
   async function participant(index=0) {
@@ -46,7 +47,7 @@ export async function gameFixture() {
       for(const server of servers){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}
       await pool.query('DELETE FROM wedding_game_sessions WHERE participant_id IN (SELECT id FROM wedding_game_participants WHERE room_id=$1)',[room]);
       await pool.query('DELETE FROM wedding_game_reviews WHERE answer_id IN (SELECT id FROM wedding_game_answers WHERE room_id=$1)',[room]);
-      for(const table of ['wedding_game_answers','wedding_game_prizes','wedding_game_otps','wedding_game_captcha_uses','wedding_game_participants','wedding_game_config_history','wedding_games'])await pool.query(`DELETE FROM ${table} WHERE room_id=$1`,[room]);
+      for(const table of ['wedding_game_answers','wedding_game_prizes','wedding_game_otps','wedding_game_captcha_uses','wedding_game_participants','wedding_game_config_history','wedding_game_question_voice','wedding_games'])await pool.query(`DELETE FROM ${table} WHERE room_id=$1`,[room]);
       await pool.end();
     }};
 }

@@ -1,11 +1,11 @@
 import express from 'express';
 import { isIP } from 'node:net';
-import { BlessingError, parseCursor, validateBlessing } from './model.js';
+import { BlessingError, parseCursor, validateBlessing, validateWriting } from './model.js';
 
 export function blessingsRouter(service) {
   const router = express.Router();
   router.use((_request, response, next) => { response.set('Cache-Control', 'no-store'); next(); });
-  router.get('/config', (_request, response) => response.json({ enabled: Boolean(service), ...(service ? { giftRecordIntervalMs: Math.max(1000, service.config?.minIntervalMs ?? 3000, Math.ceil(60000 / (service.config?.clientLimit || 12))) } : {}) }));
+  router.get('/config', (_request, response) => response.json({ enabled: Boolean(service), ...(service ? { aiWritingEnabled:Boolean(service.writing?.configured), giftRecordIntervalMs: Math.max(1000, service.config?.minIntervalMs ?? 3000, Math.ceil(60000 / (service.config?.clientLimit || 12))) } : {}) }));
   router.use((_request, _response, next) => next(service ? undefined : new BlessingError('DISABLED', '祝福功能尚未开放', 503)));
   router.get('/history', async (request, response) => {
     const before = parseCursor(singleQuery(request, 'before'));
@@ -14,6 +14,11 @@ export function blessingsRouter(service) {
   router.get('/stream', async (request, response) => {
     const after = parseCursor(request.get('Last-Event-ID') || singleQuery(request, 'after'));
     await openStream(request, response, service, after);
+  });
+  router.post('/polish', (request,_response,next)=>{
+    if(request.get('Origin')!==service.config.origin||!request.is('application/json'))return next(new BlessingError('FORBIDDEN','请从请柬页面使用AI写祝福',403));next();
+  },express.json({limit:'4kb',strict:true}),async(request,response)=>{
+    response.json(await service.write(validateWriting(request.body),clientNetwork(request,service.config)));
   });
   router.post('/', (request, _response, next) => {
     if (request.get('Origin') !== service.config.origin || !request.is('application/json')) return next(new BlessingError('FORBIDDEN', '请从请柬页面发送祝福', 403));

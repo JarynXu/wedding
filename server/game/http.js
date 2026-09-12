@@ -10,7 +10,7 @@ export function gamePublicRouter(service, origin) {
     const event = await service.store.event();
     if (!event.published) return response.json({ enabled: false, phase: 'draft' });
     response.json({ enabled: true, phase: gamePhase(event, event.now.getTime()), version: event.version, closesAt: event.config.closesAt,
-      maxWinners: event.config.maxWinners, requiredCorrect: event.config.requiredCorrect, questions: event.config.questions.map(question => ({ id: question.id, title: question.title })), prizes: event.config.prizes, captchaId:service.runtime.captcha?.appId||null });
+      maxWinners: event.config.maxWinners, requiredCorrect: event.config.requiredCorrect, questions: await service.store.publicQuestions(event), prizes: event.config.prizes, captchaId:service.runtime.captcha?.appId||null });
   });
   router.use(ready(service));
   router.use((request, _response, next) => {

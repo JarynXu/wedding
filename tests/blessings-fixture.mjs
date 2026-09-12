@@ -9,14 +9,14 @@ export const waitFor = async (condition, timeout = 10000) => {
   const deadline = Date.now() + timeout;
   while (!await condition()) { if (Date.now() >= deadline) throw new Error('等待条件超时'); await new Promise(resolve => setTimeout(resolve, 30)); }
 };
-export async function fixture(overrides = {}) {
+export async function fixture(overrides = {}, { writing = null } = {}) {
   const config = readBlessingsConfig({ BLESSINGS_DATABASE_URL: databaseUrl, BLESSINGS_DB_SSL: 'false', BLESSINGS_RATE_SECRET: 'isolated-test-secret-32-characters-minimum', BLESSINGS_ROOM: `test-${randomUUID()}`, BLESSINGS_MIN_INTERVAL_MS: '0', BLESSINGS_CLIENT_LIMIT: '120', ...overrides });
   const db = new pg.Client(config.database); await db.connect();
   await db.query(await readFile(new URL('../server/blessings/schema.sql', import.meta.url), 'utf8'));
   const instances = [];
   async function instance() {
     const instanceConfig = { ...config };
-    const service = createBlessingsService(instanceConfig);
+    const service = createBlessingsService(instanceConfig,{writing});
     const server = createInvitationApp({ blessings: service }).listen(0, '127.0.0.1');
     await new Promise(resolve => server.once('listening', resolve));
     const origin = `http://127.0.0.1:${server.address().port}`;
@@ -27,7 +27,7 @@ export async function fixture(overrides = {}) {
     await waitFor(() => service.hub.ready);
     return result;
   }
-  return { config, db, instance, async close() { for (const server of instances) await server.stop(); await db.query('DELETE FROM wedding_blessings WHERE room_id=$1', [config.room]); await db.end(); } };
+  return { config, db, instance, async close() { for (const server of instances) await server.stop(); await db.query('DELETE FROM wedding_blessings WHERE room_id=$1', [config.room]); await db.query('DELETE FROM wedding_blessing_writing WHERE room_id=$1',[config.room]);await db.end(); } };
 }
 export const payload = (values = {}) => ({ requestId: randomUUID(), clientId: randomUUID(), name: '测试来宾', text: '百年好合', gift: '', theme: 'classic', ...values });
 export const post = (origin, body, headers = {}) => fetch(origin + '/api/blessings', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) });

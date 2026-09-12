@@ -6,9 +6,10 @@ import { GameIdentity } from './identity.js';
 import { AliyunGameSms } from './sms.js';
 import { AliyunGameCaptcha } from './captcha.js';
 import { GameJudge } from './judge.js';
+import { GameHost } from './host.js';
 
 /** 活动持久化与判题工作由服务拥有；判题租约可由其他实例恢复。 */
-export function createGameService({ database, room, runtime, sms = new AliyunGameSms(runtime?.sms), captcha = new AliyunGameCaptcha(runtime?.captcha), judge = new GameJudge(runtime?.ai) }) {
+export function createGameService({ database, room, runtime, sms = new AliyunGameSms(runtime?.sms), captcha = new AliyunGameCaptcha(runtime?.captcha), judge = new GameJudge(runtime?.ai), host = new GameHost(runtime?.ai) }) {
   if (!runtime) return null;
   if (!database) throw new Error('游戏需要已配置的请柬数据库');
   const pool = new pg.Pool({ ...database, application_name: 'wedding-game' });
@@ -29,10 +30,15 @@ export function createGameService({ database, room, runtime, sms = new AliyunGam
       await ensure(); loggedFailure = false;
       if (!judge.configured) return;
       while (jobs.size < 3 && !stopped) {
-        const answer = await store.claimJob(); if (!answer || stopped) break;
+        const answer = await store.claimJob();
+        const voice = !answer ? await store.claimQuestionVoice() : null;
+        if ((!answer && !voice) || stopped) break;
         const job = { controller: new AbortController() }; jobs.add(job);
         job.promise = (async () => {
-          try { const result = await judge.grade(answer, job.controller.signal); if (!stopped) await store.finishJob(answer, result); }
+          try {
+            if (answer) { const result = await judge.grade(answer, job.controller.signal, stage => store.updateJobStage(answer, stage)); if (!stopped) await store.finishJob(answer, result); }
+            else { const result = await host.opening(voice.title, voice.position, job.controller.signal); if (!stopped) await store.finishQuestionVoice(voice, result); }
+          }
           catch (error) { console.error('游戏判题未完成', error.code || error.name); }
           finally { jobs.delete(job); }
         })();

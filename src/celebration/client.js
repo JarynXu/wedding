@@ -9,6 +9,7 @@ export class BlessingsClient {
   async available() {
     const config = await this.request('/config');
     this.giftRecordIntervalMs = Number.isFinite(config.giftRecordIntervalMs) ? Math.max(1000, config.giftRecordIntervalMs) : 5000;
+    this.writingEnabled=config.aiWritingEnabled===true;
     return config.enabled === true;
   }
   connect() {
@@ -43,10 +44,11 @@ export class BlessingsClient {
   destroy() { this.stopped = true; this.pause(); for (const controller of this.controllers) controller.abort(); this.controllers.clear(); }
   history(before = null) { return this.request(`/history${before ? `?before=${encodeURIComponent(before)}` : ''}`); }
   send(message) { return this.request('', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(message) }); }
+  polish(message) { return this.request('/polish',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)}); }
   async request(path, options = {}) {
     const controller = new AbortController();
     this.controllers.add(controller);
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), path==='/polish'?20000:12000);
     try {
       const response = await fetch(`/api/blessings${path}`, { ...options, signal: controller.signal, cache: 'no-store' });
       let body;

@@ -12,7 +12,7 @@ export function readGameRuntime(env = process.env) {
     if(!['openai-compatible','deepseek'].includes(provider))throw new Error('GAME_AI_PROVIDER 须为 openai-compatible 或 deepseek');
     const url = new URL(env.GAME_AI_BASE_URL);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('GAME_AI_BASE_URL 须为模型 API 基础地址');
-    ai = { provider,baseUrl: url.href.replace(/\/$/, ''), key: env.GAME_AI_API_KEY, model: env.GAME_AI_MODEL, reviewModel: env.GAME_AI_REVIEW_MODEL };
+    ai = { provider,baseUrl: url.href.replace(/\/$/, ''), key: env.GAME_AI_API_KEY, model: env.GAME_AI_MODEL, reviewModel: env.GAME_AI_REVIEW_MODEL, hostModel: env.GAME_AI_HOST_MODEL || env.GAME_AI_MODEL };
   }
   const smsFields = [env.GAME_ALIYUN_ACCESS_KEY_ID, env.GAME_ALIYUN_ACCESS_KEY_SECRET, env.GAME_SMS_SIGN_NAME, env.GAME_SMS_TEMPLATE_CODE];
   if (smsFields.some(Boolean) && !smsFields.every(Boolean)) throw new Error('阿里云短信认证密钥、签名和模板 Code 须一并配置');

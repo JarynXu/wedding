@@ -273,7 +273,7 @@ function initializeInvitation() {
 
     function navigationBlocked() {
       return !document.body.classList.contains('invitation-open')
-        || !!document.querySelector('.modal-backdrop.open');
+        || !!document.querySelector('.modal-backdrop.open,dialog[open]');
     }
 
     function nextPage() {

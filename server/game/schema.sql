@@ -77,6 +77,19 @@ CREATE TABLE IF NOT EXISTS wedding_game_answers (
   UNIQUE(room_id,request_id)
 );
 CREATE INDEX IF NOT EXISTS wedding_game_answer_queue ON wedding_game_answers(room_id,status,id);
+ALTER TABLE wedding_game_answers ADD COLUMN IF NOT EXISTS processing_stage VARCHAR(16);
+ALTER TABLE wedding_game_answers ADD COLUMN IF NOT EXISTS host_result JSONB;
+CREATE TABLE IF NOT EXISTS wedding_game_question_voice (
+  room_id VARCHAR(64) NOT NULL REFERENCES wedding_games(room_id),
+  config_version INTEGER NOT NULL,
+  question_id VARCHAR(8) NOT NULL,
+  title TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  result JSONB,
+  lease_token UUID,
+  lease_until TIMESTAMPTZ,
+  PRIMARY KEY(room_id,config_version,question_id)
+);
 CREATE TABLE IF NOT EXISTS wedding_game_reviews (
   id BIGSERIAL PRIMARY KEY,
   answer_id BIGINT NOT NULL REFERENCES wedding_game_answers(id),

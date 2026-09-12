@@ -10,11 +10,9 @@
 </head>
 <body>
   <main id="gameApp" data-state="loading">
-    <header class="game-page-header"><small>A LITTLE WEDDING CHALLENGE</small><h1>默契挑战</h1><p>六道小问答，看看你有多了解这对新人</p></header>
-    <div class="game-paper">
-      <nav class="game-tabs" role="tablist" aria-label="默契挑战"><button type="button" role="tab" data-game-tab="play" aria-selected="true">我的默契</button><button type="button" role="tab" data-game-tab="board" aria-selected="false" tabindex="-1">默契榜</button></nav>
+    <nav class="game-toolbar" aria-label="默契挑战导航"><button type="button" data-game-tab="board">默契榜</button><button type="button" data-game-tab="play" hidden>返回问答</button><button type="button" id="showGameRules">参与与兑奖规则</button></nav>
+    <div class="game-paper glass-surface">
       <div id="gameContent"><p class="game-empty">正在展开默契小笺…</p></div>
-      <p id="gameFeedback" role="status" aria-live="polite"></p>
     </div>
     <a id="backToInvitation" class="game-back" href="./">返回请柬</a>
   </main>

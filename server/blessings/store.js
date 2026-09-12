@@ -64,4 +64,26 @@ export class BlessingStore {
     } finally { client.release(releaseError); }
   }
   async close() { await this.pool.end(); }
+  async beginWriting(message,network) {
+    const hash=value=>createHmac('sha256',this.config.secret).update(value).digest('hex');
+    const sender=hash(`sender:${message.clientId}`),source=hash(`network:${network}`),client=await this.pool.connect();
+    let releaseError;
+    try{
+      await client.query('BEGIN');await client.query("SET LOCAL lock_timeout='4s'");
+      await client.query('SELECT pg_advisory_xact_lock(1279440461,hashtext($1))',[this.config.room+':writing']);
+      const prior=(await client.query('SELECT * FROM wedding_blessing_writing WHERE room_id=$1 AND request_id=$2',[this.config.room,message.requestId])).rows[0];
+      if(prior){
+        if(prior.sender_hash!==sender||prior.fingerprint!==message.fingerprint)throw new BlessingError('REQUEST_CONFLICT','本次润色内容已改变',409);
+        if(prior.state!=='complete')throw new BlessingError('WRITING_UNAVAILABLE','上次润色尚未取得结果，请稍后重试',429,15);
+        await client.query('COMMIT');return {result:prior.result};
+      }
+      const rate=(await client.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE sender_hash=$2)::int AS sender,count(*) FILTER(WHERE network_hash=$3)::int AS network
+        FROM wedding_blessing_writing WHERE room_id=$1 AND created_at>clock_timestamp()-interval '1 minute'`,[this.config.room,sender,source])).rows[0];
+      if(rate.total>=120||rate.sender>=6||rate.network>=60)throw new BlessingError('WRITING_RATE_LIMITED','先留一份心意吧，过一会儿再试试AI润色。',429,60);
+      await client.query('DELETE FROM wedding_blessing_writing WHERE room_id=$1 AND created_at<clock_timestamp()-interval \'30 minutes\'',[this.config.room]);
+      await client.query('INSERT INTO wedding_blessing_writing(room_id,request_id,sender_hash,network_hash,fingerprint) VALUES($1,$2,$3,$4,$5)',[this.config.room,message.requestId,sender,source,message.fingerprint]);
+      await client.query('COMMIT');return {result:null};
+    }catch(error){try{await client.query('ROLLBACK');}catch(failure){releaseError=failure;}throw error;}finally{client.release(releaseError);}
+  }
+  async finishWriting(requestId,result) { await this.pool.query("UPDATE wedding_blessing_writing SET result=$3,state=$4 WHERE room_id=$1 AND request_id=$2 AND state='pending'",[this.config.room,requestId,result,result?'complete':'failed']); }
 }

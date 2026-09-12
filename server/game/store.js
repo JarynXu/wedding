@@ -1,11 +1,13 @@
 import { randomBytes, randomUUID } from 'node:crypto';
 import { GameError, gamePhase, initialGameConfig, rankGame, text, uuid, validateGameConfig } from './model.js';
 import { gameTransaction } from './persistence.js';
+import { answerReply, questionGreeting } from '../../src/game-voice.js';
 
 export class GameStore {
   constructor(pool, room, secrets) { this.pool = pool; this.room = room; this.secrets = secrets; this.initialized = false; }
   async initialize() {
     await this.pool.query('INSERT INTO wedding_games(room_id,config) VALUES($1,$2) ON CONFLICT DO NOTHING', [this.room, initialGameConfig()]);
+    await this.prepareQuestionVoice(this.pool);
     this.initialized = true;
   }
   async event(client = this.pool) {
@@ -14,6 +16,28 @@ export class GameStore {
     return rows[0];
   }
   transaction(operation) { return gameTransaction(this.pool, this.room, operation); }
+  async prepareQuestionVoice(client) {
+    await client.query(`INSERT INTO wedding_game_question_voice(room_id,config_version,question_id,title,position)
+      SELECT g.room_id,g.version,q.value->>'id',q.value->>'title',(q.ordinality-1)::int
+      FROM wedding_games g CROSS JOIN LATERAL jsonb_array_elements(g.config->'questions') WITH ORDINALITY q
+      WHERE g.room_id=$1 AND g.published ON CONFLICT DO NOTHING`, [this.room]);
+  }
+  async publicQuestions(event) {
+    const rows = (await this.pool.query('SELECT question_id,result FROM wedding_game_question_voice WHERE room_id=$1 AND config_version=$2', [this.room,event.version])).rows;
+    return event.config.questions.map((question,index) => ({ id: question.id, title: question.title, opening: rows.find(row=>row.question_id===question.id)?.result?.message || questionGreeting(index) }));
+  }
+  async claimQuestionVoice() {
+    const { rows } = await this.pool.query(`WITH candidate AS (
+      SELECT v.room_id,v.config_version,v.question_id FROM wedding_game_question_voice v JOIN wedding_games g ON g.room_id=v.room_id
+      WHERE v.room_id=$1 AND v.config_version=g.version AND g.published AND v.result IS NULL AND (v.lease_until IS NULL OR v.lease_until<clock_timestamp())
+      ORDER BY v.position FOR UPDATE OF v SKIP LOCKED LIMIT 1)
+      UPDATE wedding_game_question_voice v SET lease_token=$2,lease_until=clock_timestamp()+interval '30 seconds'
+      FROM candidate c WHERE v.room_id=c.room_id AND v.config_version=c.config_version AND v.question_id=c.question_id RETURNING v.*`, [this.room,randomUUID()]);
+    return rows[0] || null;
+  }
+  async finishQuestionVoice(job,result) {
+    await this.pool.query('UPDATE wedding_game_question_voice SET result=$5,lease_until=NULL,lease_token=NULL WHERE room_id=$1 AND config_version=$2 AND question_id=$3 AND lease_token=$4', [this.room,job.config_version,job.question_id,job.lease_token,result]);
+  }
   async ranking(client = this.pool, event) {
     const participants = await client.query('SELECT id,name,phone_last4,created_at FROM wedding_game_participants WHERE room_id=$1', [this.room]);
     const answers = await client.query('SELECT id,participant_id,status,received_at FROM wedding_game_answers WHERE room_id=$1', [this.room]);
@@ -40,10 +64,11 @@ export class GameStore {
         const prior = event.config.questions.find(item => item.id === question.id);
         if (!sameQuestion(prior, question) || event.config.judgeInstructions !== config.judgeInstructions) {
           await client.query(`UPDATE wedding_game_answers SET question=$3,instructions=$4,status='pending',version=version+1,
-            judge_result=NULL,review_result=NULL,reason='题目规则已更新，等待复核',lease_token=NULL,lease_until=NULL WHERE room_id=$1 AND question_id=$2`, [this.room, question.id, question, config.judgeInstructions]);
+            judge_result=NULL,review_result=NULL,host_result=NULL,processing_stage=NULL,reason='题目规则已更新，等待复核',lease_token=NULL,lease_until=NULL WHERE room_id=$1 AND question_id=$2`, [this.room, question.id, question, config.judgeInstructions]);
         }
       }
       await client.query('UPDATE wedding_games SET config=$2,version=version+1 WHERE room_id=$1', [this.room, config]);
+      if (event.published) await this.prepareQuestionVoice(client);
     });
   }
   async publish(expectedVersion, integrations) {
@@ -54,6 +79,7 @@ export class GameStore {
       if (!integrations.sms.configured || !integrations.captcha?.configured || !integrations.ai.configured) throw new GameError('NOT_CONFIGURED', '请先配置短信、图形认证与 AI 判题接口');
       if (Date.parse(event.config.closesAt) <= event.now.getTime()) throw new GameError('CLOSED', '截止时间已过，请修改时间后开放');
       await client.query('UPDATE wedding_games SET published=true WHERE room_id=$1', [this.room]);
+      await this.prepareQuestionVoice(client);
     });
   }
   async submit(participantId, body) {
@@ -83,15 +109,20 @@ export class GameStore {
       SELECT a.id FROM wedding_game_answers a JOIN wedding_games g ON g.room_id=a.room_id
       WHERE a.room_id=$1 AND g.published AND g.settled_at IS NULL AND (a.status='pending' OR (a.status='judging' AND a.lease_until<clock_timestamp()))
       ORDER BY a.id FOR UPDATE OF a SKIP LOCKED LIMIT 1)
-      UPDATE wedding_game_answers a SET status='judging',lease_token=$2,lease_until=clock_timestamp()+interval '90 seconds'
+      UPDATE wedding_game_answers a SET status='judging',processing_stage='thinking',lease_token=$2,lease_until=clock_timestamp()+interval '90 seconds'
       FROM candidate c WHERE a.id=c.id RETURNING a.*`, [this.room, token]);
     return rows[0] || null;
+  }
+  async updateJobStage(job,stage) {
+    if (!['thinking','checking','replying'].includes(stage)) throw new Error('INVALID_GAME_STAGE');
+    const result = await this.pool.query("UPDATE wedding_game_answers SET processing_stage=$5 WHERE room_id=$1 AND id=$2 AND version=$3 AND lease_token=$4 AND status='judging'", [this.room,job.id,job.version,job.lease_token,stage]);
+    if (!result.rowCount) throw new Error('GAME_JOB_SUPERSEDED');
   }
   async finishJob(job, result) {
     return this.transaction(async client => {
       const event = await this.event(client); if (event.settled_at) return false;
-      const { rows } = await client.query(`UPDATE wedding_game_answers SET status=$5,reason=$6,judge_result=$7,review_result=$8,lease_token=NULL,lease_until=NULL
-        WHERE room_id=$1 AND id=$2 AND version=$3 AND lease_token=$4 AND status='judging' RETURNING id`, [this.room, job.id, job.version, job.lease_token, result.status, result.reason, result.judge, result.reviewer]);
+      const { rows } = await client.query(`UPDATE wedding_game_answers SET status=$5,reason=$6,judge_result=$7,review_result=$8,host_result=$9,processing_stage=NULL,lease_token=NULL,lease_until=NULL
+        WHERE room_id=$1 AND id=$2 AND version=$3 AND lease_token=$4 AND status='judging' RETURNING id`, [this.room, job.id, job.version, job.lease_token, result.status, result.reason, result.judge, result.reviewer, result.host || null]);
       if (!rows.length) return false;
       await client.query('INSERT INTO wedding_game_reviews(answer_id,version,actor,result) VALUES($1,$2,$3,$4)', [job.id, job.version, 'ai', result]);
       return true;
@@ -106,7 +137,7 @@ export class GameStore {
       if (!answer) throw new GameError('NOT_FOUND', '答卷不存在', 404);
       checkVersion(answer.version, body.expectedVersion);
       await client.query('INSERT INTO wedding_game_reviews(answer_id,version,actor,result) VALUES($1,$2,$3,$4)', [id, answer.version, actor, { verdict: body.verdict, reason }]);
-      await client.query('UPDATE wedding_game_answers SET status=$3,reason=$4,version=version+1,lease_token=NULL,lease_until=NULL WHERE room_id=$1 AND id=$2', [this.room, id, body.verdict, reason]);
+      await client.query('UPDATE wedding_game_answers SET status=$3,reason=$4,version=version+1,host_result=NULL,processing_stage=NULL,lease_token=NULL,lease_until=NULL WHERE room_id=$1 AND id=$2', [this.room, id, body.verdict, reason]);
     });
   }
   async participants(before) {
@@ -127,7 +158,7 @@ export class GameStore {
     const standing=rankGame([row],answers,(await this.event()).config).standings[0];
     const history=includePrivate?(await this.pool.query('SELECT r.* FROM wedding_game_reviews r JOIN wedding_game_answers a ON a.id=r.answer_id WHERE a.room_id=$1 AND a.participant_id=$2 ORDER BY r.id',[this.room,id])).rows:[];
     return { participant: participantDto(standing, prize), answers: answers.map(answer => includePrivate ? { ...publicAnswer(answer), reason: answer.reason, questionTitle: answer.question.title,
-      evaluations:[['判题',answer.judge_result],['复核',answer.review_result]].filter(([,result])=>result).map(([stage,result])=>({stage,...result})),
+      evaluations:[['判题',answer.judge_result],['复核',answer.review_result],['回应',answer.host_result?{...answer.host_result,model:answer.host_result.model||'预设文案',verdict:answer.host_result.outcome,reason:answer.host_result.message}:null]].filter(([,result])=>result).map(([stage,result])=>({stage,...result})),
       history:history.filter(record=>record.answer_id===answer.id).map(record=>({actor:record.actor,createdAt:record.created_at,result:record.result}))
     } : publicAnswer(answer)),
       ...(prize && !includePrivate ? { claim: { code: this.secrets.open('prize', prize.code_cipher), prize: prize.name, redeemedAt: prize.redeemed_at } } : {}) };
@@ -179,7 +210,7 @@ export class GameStore {
     });
   }
 }
-export function publicAnswer(row) { return { id: String(row.id), requestId: row.request_id, questionId: row.question_id, text: row.text, status: row.status, version: row.version, receivedAt: row.received_at }; }
+export function publicAnswer(row) { return { id: String(row.id), requestId: row.request_id, questionId: row.question_id, text: row.text, status: row.status, progress: row.processing_stage || null, reply: row.host_result?.outcome === row.status ? row.host_result.message : answerReply(row.status), version: row.version, receivedAt: row.received_at }; }
 function participantDto(row, prize) { return { id: row.id, name: row.name, phoneMasked: '*******' + row.phone_last4, score: row.score, answered: row.answered, qualifiedAt: row.qualifiedAt, prize: prize?.name || null, redeemedAt: prize?.redeemed_at || null }; }
 function checkVersion(actual, expected) { if (actual !== expected) throw new GameError('VERSION_CONFLICT', '配置或答卷已更新，请刷新后再操作', 409); }
 function checkQuestions(config) { if (config.questions.some(question => !question.title || !question.answer)) throw new GameError('INCOMPLETE_QUESTIONS', '请填写六道题及标准答案'); }
