@@ -11,7 +11,7 @@ export class ConversationView {
     this.typing=node('div','conversation-typing');this.typing.setAttribute('role','status');this.root.append(this.typing);
     this.claim=node('button','conversation-claim','查看领礼凭证');this.claim.type='button';this.claim.hidden=true;this.claim.onclick=showClaim;this.root.append(this.claim);
     const form=node('form','conversation-composer');form.noValidate=true;
-    this.input=node('textarea','');this.input.id='gameAnswer';this.input.rows=1;this.input.maxLength=640;this.input.placeholder='和主持人聊聊…';this.input.setAttribute('aria-label','聊天消息');this.input.value=this.pending?.text||'';
+    this.input=node('textarea','');this.input.id='gameAnswer';this.input.rows=1;this.input.maxLength=640;this.input.placeholder='说说你的答案…';this.input.setAttribute('aria-label','聊天消息');this.input.value=this.pending?.text||'';
     this.sendButton=node('button','','发送');this.sendButton.type='submit';
     form.append(this.input,this.sendButton);this.root.append(form);
     form.onsubmit=event=>{event.preventDefault();this.send(this.input.value,true);};

@@ -40,7 +40,7 @@ test('请柬内聊天保留音乐、页面与草稿，手机只滚动聊天区',
       await frame.locator('.game-board-note').waitFor();
       await frame.locator('#gameMenuToggle').click(); await frame.locator('[data-game-tab=play]').click();
       assert.equal(await frame.locator('#gameAnswer').inputValue(), '还没发送的心意');
-      if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `integrated-game-${theme}.png`) });
+      if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: join(process.env.WEDDING_QA_DIR, `integrated-game-${theme}.png`), animations: 'disabled' });
       await frame.locator('#backToInvitation').click(); await page.locator('.invitation-game-layer[open]').waitFor({ state: 'hidden' });
       const after = await page.evaluate(() => ({ proof: window.invitationDocumentProof, time: document.querySelector('#bgm').currentTime, paused: document.querySelector('#bgm').paused, current: document.querySelector('.page.active').dataset.index }));
       assert.equal(after.proof, before.proof); assert.ok(after.time > before.time); assert.equal(after.paused, false); assert.equal(after.current, '3');

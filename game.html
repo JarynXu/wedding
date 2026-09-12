@@ -10,14 +10,15 @@
 </head>
 <body>
   <main id="gameApp" data-state="loading">
+    <div class="game-paper glass-surface">
     <nav class="game-toolbar" aria-label="默契挑战导航">
-      <a id="backToInvitation" class="game-icon-button" href="./" aria-label="返回请柬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12"/></svg></a>
+      <a id="backToInvitation" class="game-back-link" href="./" aria-label="返回请柬"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg><span>请柬</span></a>
+      <span class="game-header-mark" aria-hidden="true"><svg class="game-mark-classic" viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1"><ellipse cx="19" cy="13" rx="8" ry="7" transform="rotate(-25 19 13)"/><ellipse cx="29" cy="13" rx="8" ry="7" transform="rotate(25 29 13)"/><path d="m22 4 2-2 2 2-2 2Z"/></svg><span class="game-mark-chinese">囍</span></span>
       <div class="game-menu-wrap">
-        <button type="button" id="gameMenuToggle" class="game-icon-button" aria-label="更多选项" aria-expanded="false" aria-controls="gameMenu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></button>
+        <button type="button" id="gameMenuToggle" class="game-menu-button" aria-label="更多选项" aria-expanded="false" aria-controls="gameMenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M5 7h14M9 12h10M5 17h14"/></svg></button>
         <div id="gameMenu" class="game-menu glass-surface" hidden><button type="button" data-game-tab="board">默契榜</button><button type="button" data-game-tab="play" hidden>回到聊天</button><button type="button" id="showGameRules">游戏规则</button><button type="button" id="gameLogout" hidden>退出登录</button></div>
       </div>
     </nav>
-    <div class="game-paper glass-surface">
       <div id="gameContent"><p class="game-empty">主持人正在准备开场…</p></div>
     </div>
   </main>
