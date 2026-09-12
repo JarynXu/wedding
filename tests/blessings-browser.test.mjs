@@ -186,8 +186,15 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
       await classic.waitForFunction(()=>document.querySelectorAll('.blessing-history-item').length===30);
       const historyBox=await classic.locator('.blessings-card').boundingBox();
       assert.ok(Math.abs(historyBox.height-formBox.height)<1);
-      const scrolled=await classic.locator('.blessing-history-list').evaluate(list=>{list.scrollTop=120;return {top:list.scrollTop,overflow:list.scrollHeight>list.clientHeight};});
-      assert.ok(scrolled.top>0&&scrolled.overflow);
+      const list=classic.locator('.blessing-history-list');
+      assert.equal(await classic.locator('[data-history]').count(),0);
+      await classic.waitForFunction(()=>document.querySelector('.blessing-history-list').scrollTop>25);
+      const bounds=await list.boundingBox();await classic.mouse.move(bounds.x+30,bounds.y+60);await classic.mouse.wheel(0,160);
+      await classic.waitForTimeout(300);const manual=await list.evaluate(node=>node.scrollTop);
+      await classic.waitForTimeout(1300);assert.ok(Math.abs(await list.evaluate(node=>node.scrollTop)-manual)<2,'手动滚动后不再自动推进');
+      const timeBounds=await list.locator('time').first().evaluate(node=>{const r=node.getBoundingClientRect(),p=node.closest('.blessing-history-list').getBoundingClientRect();return {right:r.right,edge:p.right};});
+      assert.ok(timeBounds.edge-timeBounds.right>=12,'时间与滚动条保留间距');
+      await list.evaluate(node=>{node.scrollTop=node.scrollHeight;});await classic.waitForFunction(()=>document.querySelectorAll('.blessing-history-item').length>30);
       await classic.locator('#blessingsModal .modal-close').click();
     });
     await suite.test('祝福默认实时显示，无连接状态行，保留礼物单独发送和减少动态效果', async () => {

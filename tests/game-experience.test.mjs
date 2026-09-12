@@ -23,26 +23,33 @@ test('手机授权弹窗、分段规则、称呼同步与AI写祝福草稿',{ski
     assert.equal(await page.locator('[name=name]').inputValue(),'先前的称呼');
     assert.equal(await page.locator('[name=name]').isVisible(),false);
     assert.equal(await page.locator('.game-page-header,h1,.game-facts,#gameFeedback').count(),0);
-    await page.locator('#showGameRules').click();await page.locator('dialog[open]').waitFor();
-    assert.ok(await page.locator('.dialog-content h3').count()>=5);
-    assert.match(await page.locator('.dialog-content').innerText(),/6 道题.*2 题/s);
+    await page.locator('#gameMenuToggle').click();await page.locator('#showGameRules').click();await page.locator('dialog[open]').waitFor();
+    assert.ok(await page.locator('.dialog-content h3').count()>=4);
+    assert.match(await page.locator('.dialog-content').innerText(),/6 个.*2 题/s);
+    assert.doesNotMatch(await page.locator('.dialog-content').innerText(),/阿里云|SDK|Cookie|服务端|后端|接口|数据库|模型|重试不重复计分/);
     await page.locator('.dialog-primary').click();
     await page.locator('[name=phone]').fill('13900000777');await page.locator('#getGameCode').click();
     await page.locator('dialog[data-kind=consent][open]').waitFor();
+    assert.doesNotMatch(await page.locator('.dialog-content').innerText(),/阿里云|SDK|Cookie|服务端|后端|接口|数据库|模型/);
     assert.equal(g.sms.calls.length,0);assert.equal(await page.evaluate(()=>window.captchaStarts||0),0);
     await page.locator('.dialog-secondary').click();assert.equal(await page.locator('[name=consent]').isChecked(),false);
     await page.locator('#getGameCode').click();await page.locator('.dialog-primary').click();
     await waitFor(()=>g.sms.calls.length===1);assert.equal(await page.locator('[name=consent]').isChecked(),true);
     await page.locator('.game-known-name button').click();await page.locator('[name=name]').fill('注册的新称呼');
     const actualCode=g.codes.get('+8613900000777');
-    await page.locator('[name=code]').fill(actualCode==='000000'?'111111':'000000');await page.getByRole('button',{name:'开启默契挑战',exact:true}).click();
+    await page.locator('[name=code]').fill(actualCode==='000000'?'111111':'000000');await page.getByRole('button',{name:'请主持人开场',exact:true}).click();
     await page.locator('dialog[open]').waitFor();assert.match(await page.locator('.dialog-content').innerText(),/验证码/);await page.locator('.dialog-primary').click();
-    await page.locator('[name=code]').fill(actualCode);await page.getByRole('button',{name:'开启默契挑战',exact:true}).click();await page.locator('#gameAnswer').waitFor();
-    assert.equal(await page.locator('.game-chat-host').count(),1);
+    await page.locator('[name=code]').fill(actualCode);await page.getByRole('button',{name:'请主持人开场',exact:true}).click();await page.locator('#gameAnswer').waitFor();
+    await page.locator('.conversation-host').first().waitFor();assert.equal(await page.locator('.game-question-nav,.game-question-number,.game-score').count(),0);
     assert.match(await page.locator('.game-paper').evaluate(node=>getComputedStyle(node).backdropFilter),/blur/);
     await page.locator('#backToInvitation').click();await page.locator('#preloaderOverlay[data-state=ready]').waitFor();await page.locator('#btnEnterInvitation').click();await page.locator('#blessingEntry').click();
     assert.equal(await page.locator('#blessingName').inputValue(),'注册的新称呼');assert.equal(await page.locator('#blessingName').getAttribute('readonly'),'');
-    await page.locator('.blessing-ai-write:not([hidden])').waitFor();assert.match(await page.locator('.blessing-ai-write').innerText(),/写一句/);
+    await page.locator('.blessing-ai-write:not([hidden])').waitFor();assert.equal(await page.locator('.blessing-ai-write').innerText(),'✧ AI');
+    const aiBounds=await page.locator('.blessing-ai-write').evaluate(node=>{const r=node.getBoundingClientRect(),p=node.parentElement.getBoundingClientRect();return {right:p.right-r.right,bottom:p.bottom-r.bottom};});
+    assert.ok(aiBounds.right>=8&&aiBounds.bottom>=8);
+    assert.doesNotMatch(await page.locator('#blessingCompose').innerText(),/选填/);
+    assert.equal(await page.locator('.blessing-send').innerText(),'送出祝福');
+    if(process.env.WEDDING_QA_DIR)await page.screenshot({path:process.env.WEDDING_QA_DIR+'/blessing-compose-ai.png',animations:'disabled'});
     await page.locator('.blessing-ai-write').click();await page.waitForFunction(()=>document.querySelector('#blessingMessage').value==='愿你们岁岁相伴，年年欢喜。');
     assert.equal((await b.db.query('SELECT count(*)::int AS count FROM wedding_blessings WHERE room_id=$1',[b.config.room])).rows[0].count,0,'AI生成不会发送祝福');
     delayed=true;await page.locator('#blessingMessage').fill('愿你们幸福');await page.locator('.blessing-ai-write').click();await waitFor(()=>Boolean(release));
@@ -54,7 +61,7 @@ test('手机授权弹窗、分段规则、称呼同步与AI写祝福草稿',{ski
     await page.locator('#gameEntry:not([hidden])').waitFor();
     for(const [width,height]of[[320,568],[390,844]]){
       await page.setViewportSize({width,height});
-      const layout=await page.evaluate(()=>{const bounds=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width};};return {entry:bounds('#gameEntry'),dock:bounds('.blessing-dock'),hint:bounds('#gameEntryHint'),blur:getComputedStyle(document.querySelector('.blessing-quick-gifts')).backdropFilter};});
+      const layout=await page.evaluate(()=>{const bounds=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width};};return {entry:bounds('#gameEntry'),dock:bounds('.blessing-dock'),hint:bounds('#gameEntryHint'),blur:getComputedStyle(document.querySelector('.blessing-dock')).backdropFilter};});
       assert.ok(layout.entry.width>=44&&layout.entry.right<=width);assert.ok(layout.entry.x>=layout.dock.right+4);assert.ok(layout.hint.bottom<layout.entry.y);assert.match(layout.blur,/blur/);
     }
   }finally{release?.();await browser?.close();await g.close();await b.close();}

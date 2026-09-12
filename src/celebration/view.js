@@ -1,6 +1,7 @@
 import { giftsForTheme, findGift, BLESSING_LIMITS } from './catalog.js';
 import { BlessingsClient } from './client.js';
 import { GiftEffects } from './gift-effects.js';
+import { BlessingHistory } from './history.js';
 import { QuickGifts } from './quick-gifts.js';
 import { guestName, registeredGuestName, rememberGuestName, watchGuestName, refreshRegisteredGuest } from '../guest-name.js';
 import { InvitationDialogs } from '../dialog.js';
@@ -71,7 +72,7 @@ export class Celebration {
   createView() {
     this.entry = document.createElement('button');
     this.entry.type = 'button'; this.entry.className = 'blessing-entry'; this.entry.id = 'blessingEntry'; this.entry.hidden = true;
-    this.entry.innerHTML = `${noteIcon}<span>送祝福</span>`;
+    this.entry.innerHTML = noteIcon; this.entry.setAttribute('aria-label', '送祝福'); this.entry.title = '送祝福';
     this.entry.setAttribute('aria-haspopup', 'dialog');
     this.entry.addEventListener('click', () => { this.openModal('blessingsModal'); this.selectTab('compose'); }, { signal: this.events.signal });
     this.lane = document.createElement('div'); this.lane.className = 'blessing-lane'; this.lane.setAttribute('aria-hidden', 'true');
@@ -92,14 +93,14 @@ export class Celebration {
       <button class="modal-close" type="button" data-close-modal="blessingsModal" aria-label="关闭祝福面板">×</button>
       <div class="blessings-tabs" role="tablist" aria-label="祝福面板"><button type="button" role="tab" id="blessingComposeTab" aria-controls="blessingCompose" aria-selected="true" data-tab="compose">送祝福</button><button type="button" role="tab" id="blessingHistoryTab" aria-controls="blessingHistory" aria-selected="false" data-tab="history" tabindex="-1">祝福簿</button></div>
       <form id="blessingCompose" role="tabpanel" aria-labelledby="blessingComposeTab">
-        <label class="blessing-label" for="blessingName">您的称呼 <span>选填</span></label><input id="blessingName" name="name" autocomplete="nickname" placeholder="让新人知道是谁的心意" maxlength="48">
-        <label class="blessing-label" for="blessingMessage">写下祝福 <span id="blessingCount">0 / 120</span></label><div class="blessing-writing-field"><textarea id="blessingMessage" name="text" rows="3" maxlength="240" placeholder="愿你们岁岁相伴，年年欢喜。"></textarea><button type="button" class="blessing-ai-write" hidden>✧ AI 写一句</button></div>
-        <fieldset class="blessing-gifts"><legend>捎上一份心意 <span>选填</span></legend><div class="blessing-gift-options"></div></fieldset>
+        <label class="blessing-label" for="blessingName">您的称呼</label><input id="blessingName" name="name" autocomplete="nickname" placeholder="让新人知道是谁的心意" maxlength="48">
+        <label class="blessing-label" for="blessingMessage">写下祝福 <span id="blessingCount">0 / 120</span></label><div class="blessing-writing-field"><textarea id="blessingMessage" name="text" rows="3" maxlength="240" placeholder="愿你们岁岁相伴，年年欢喜。"></textarea><button type="button" class="blessing-ai-write" hidden>✧ AI</button></div>
+        <fieldset class="blessing-gifts"><legend>捎上一份心意</legend><div class="blessing-gift-options"></div></fieldset>
         <p class="blessing-audience">祝福将收录于祝福簿，来宾均可看见。</p>
-        <button type="submit" class="blessing-send">送出祝福 <span aria-hidden="true">✧</span></button>
+        <button type="submit" class="blessing-send">送出祝福</button>
         <p class="blessing-result" role="status" aria-live="polite"></p>
       </form>
-      <div id="blessingHistory" role="tabpanel" aria-labelledby="blessingHistoryTab" hidden><button type="button" class="blessing-new" hidden>有新的祝福 · 查看</button><div class="blessing-history-list"></div><div class="blessing-history-nav"><button type="button" data-history="latest">最近祝福</button><button type="button" data-history="older">更早祝福</button></div></div>
+      <div id="blessingHistory" role="tabpanel" aria-labelledby="blessingHistoryTab" hidden><button type="button" class="blessing-new" hidden>有新的祝福 · 查看</button><div class="blessing-history-list" tabindex="0" aria-label="祝福簿，从最新祝福开始"></div></div>
     </section>`;
     document.body.append(this.modal);
     const fitKeyboard = () => {
@@ -137,7 +138,7 @@ export class Celebration {
       }, { signal: this.events.signal });
       options.append(button);
     });
-    const updateCount = () => { this.modal.querySelector('#blessingCount').textContent = `${[...this.textInput.value].length} / ${BLESSING_LIMITS.text}`;if(!this.writing)this.aiButton.textContent=this.textInput.value.trim()?'✧ AI 润色':'✧ AI 写一句'; };
+    const updateCount = () => { this.modal.querySelector('#blessingCount').textContent = `${[...this.textInput.value].length} / ${BLESSING_LIMITS.text}`;this.aiButton.setAttribute('aria-label',this.textInput.value.trim()?'AI 润色祝福':'AI 写一句祝福'); };
     this.textInput.addEventListener('input', updateCount, { signal: this.events.signal }); updateCount();
     this.form.addEventListener('submit', event => { event.preventDefault(); this.send(); }, { signal: this.events.signal });
     this.modal.querySelectorAll('[data-tab]').forEach(tab => {
@@ -149,9 +150,7 @@ export class Celebration {
         }
       }, { signal: this.events.signal });
     });
-    this.modal.querySelector('[data-history="latest"]').onclick = () => this.loadHistory();
-    this.modal.querySelector('[data-history="older"]').onclick = () => this.loadHistory(this.historyNext);
-    this.modal.querySelector('.blessing-new').onclick = () => this.loadHistory();
+    this.history = new BlessingHistory({ list: this.modal.querySelector('.blessing-history-list'), freshButton: this.modal.querySelector('.blessing-new'), client: { history: before => this.client.history(before) }, renderItem: message => this.historyItem(message) });
     this.modal.addEventListener('keydown', event => {
       if (event.key !== 'Tab') return;
       const controls = [...this.modal.querySelectorAll('button:not(:disabled),input,textarea,[tabindex="0"]')].filter(node => node.getClientRects().length && node.tabIndex >= 0);
@@ -187,7 +186,7 @@ export class Celebration {
     snapshot.messages.forEach(message => this.remember(message.id));
     if (!this.hadSnapshot) this.queue.push(...snapshot.messages.slice(-3).map(message => ({ message, historical: true })));
     this.hadSnapshot = true;
-    if (snapshot.messages.length) this.modal.querySelector('.blessing-new').hidden = false;
+    snapshot.messages.forEach(message => this.history.receive(message));
   }
   remember(id) {
     if (this.seen.has(id)) return false;
@@ -198,14 +197,14 @@ export class Celebration {
   receive(message, own = false) {
     this.messageVersion++;
     const fresh = this.remember(message.id);
-    this.modal.querySelector('.blessing-new').hidden = false;
+    this.history.receive(message);
     if (!fresh || document.hidden || this.quick.hasPlayed(message.requestId)) return;
     this.queue.push({ message, historical: false, own });
     if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
     this.flushBubble();
   }
   flushBubble() {
-    if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open')) return;
+    if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open,dialog[open],.invitation-game-layer:not([hidden])')) return;
     const { message, historical } = this.queue.shift();
     this.lastBubble = Date.now();
     const bubble = document.createElement('div'); bubble.className = 'blessing-bubble'; bubble.dataset.messageId = message.id;
@@ -230,36 +229,16 @@ export class Celebration {
       const panel = tab === 'compose' ? this.form : this.modal.querySelector('#blessingHistory');
       this.tabAnimation = panel.animate([{ opacity: .6, transform: `translateX(${tab === 'history' ? 6 : -6}px)` }, { opacity: 1, transform: 'translateX(0)' }], { duration: 160, easing: 'cubic-bezier(.2,.7,.2,1)' });
     }
-    if (tab === 'history') this.loadHistory();
+    if (tab === 'history') this.history.open();
   }
-  async loadHistory(before = null) {
-    const generation = this.historyGeneration = (this.historyGeneration || 0) + 1;
-    const version = this.messageVersion;
-    const list = this.modal.querySelector('.blessing-history-list');
-    const buttons = this.modal.querySelectorAll('[data-history]'); buttons.forEach(button => { button.disabled = true; });
-    list.replaceChildren(textNode('p', 'blessing-empty', '正在展开祝福簿…'));
-    try {
-      const result = await this.client.history(before);
-      if (this.destroyed || this.historyGeneration !== generation) return;
-      list.replaceChildren();
-      this.historyNext = result.next;
-      result.messages.forEach(message => {
-        const item = textNode('article', 'blessing-history-item', '');
-        const header = textNode('header', '', ''); header.append(textNode('strong', '', message.name), textNode('time', '', new Date(message.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })));
-        item.append(header);
-        if (message.text) item.append(textNode('p', '', message.text));
-        if (message.gift) { const gift = textNode('div', 'blessing-history-gift', ''); gift.append(giftIcon(message.gift), textNode('span', '', giftLabel(message))); item.append(gift); }
-        list.append(item);
-      });
-      if (!result.messages.length) list.append(textNode('p', 'blessing-empty', '祝福簿正等着第一份心意。'));
-      this.modal.querySelector('.blessing-new').hidden = version === this.messageVersion;
-      this.modal.querySelector('[data-history="older"]').disabled = !result.hasMore;
-      this.modal.querySelector('[data-history="latest"]').disabled = !before;
-    } catch (error) {
-      if (this.historyGeneration !== generation || this.destroyed) return;
-      list.replaceChildren(textNode('p', 'blessing-empty', error.message || '祝福簿暂时无法打开'));
-      this.modal.querySelector('[data-history="latest"]').disabled = false;
-    }
+  historyItem(message) {
+    const item = textNode('article', 'blessing-history-item', ''); item.dataset.messageId = message.id;
+    const header = textNode('header', '', '');
+    header.append(textNode('strong', '', message.name), textNode('time', '', new Date(message.createdAt).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })));
+    item.append(header);
+    if (message.text) item.append(textNode('p', '', message.text));
+    if (message.gift) { const gift = textNode('div', 'blessing-history-gift', ''); gift.append(giftIcon(message.gift), textNode('span', '', giftLabel(message))); item.append(gift); }
+    return item;
   }
   async send() {
     if (this.sending || this.writing) return;
@@ -280,9 +259,6 @@ export class Celebration {
       this.receive(result.message, true);
       this.result.textContent = '祝福已送达，收录于祝福簿。';
       this.announcement.textContent = this.result.textContent;
-      this.entry.querySelector('span').textContent = '已送达';
-      clearTimeout(this.confirmationTimer);
-      this.confirmationTimer = setTimeout(() => { this.entry.querySelector('span').textContent = '送祝福'; }, 4000);
       this.textInput.value = ''; this.selectedGift = '';
       this.modal.querySelector('#blessingCount').textContent = '0 / 120';
       this.modal.querySelectorAll('[data-gift]').forEach(button => button.setAttribute('aria-pressed', 'false'));
@@ -296,7 +272,7 @@ export class Celebration {
     if(this.writing||this.sending)return;
     const original=this.textInput.value;
     if([...original.trim()].length>BLESSING_LIMITS.text){await this.dialogs.alert('祝福请控制在120字以内，再试试润色。');return;}
-    this.writing=true;this.aiButton.disabled=true;this.aiButton.textContent='✧ 正在写…';this.submit.disabled=true;
+    this.writing=true;this.aiButton.disabled=true;this.aiButton.setAttribute('aria-busy','true');this.submit.disabled=true;
     try{
       const result=await this.client.polish({requestId:uuid(),clientId:this.clientId,text:original.trim(),theme:this.theme});
       if(this.destroyed)return;
@@ -305,10 +281,10 @@ export class Celebration {
       }
       this.textInput.value=result.text;this.textInput.dispatchEvent(new Event('input'));
     }catch(error){if(!this.destroyed)await this.dialogs.alert(error.message||'这次没能写好，原来的祝福已保留。');}
-    finally{this.writing=false;this.aiButton.disabled=false;this.submit.disabled=false;this.aiButton.textContent=this.textInput.value.trim()?'✧ AI 润色':'✧ AI 写一句';}
+    finally{this.writing=false;this.aiButton.disabled=false;this.submit.disabled=false;this.aiButton.removeAttribute('aria-busy');this.textInput.dispatchEvent(new Event('input'));}
   }
   destroy() {
-    this.destroyed = true; this.events.abort(); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
+    this.destroyed = true; this.events.abort(); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.history.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
     this.dialogs.destroy();this.dock.remove(); this.lane.remove(); this.canvas.remove(); this.modal.remove(); this.announcement.remove(); delete this.app.dataset.celebration;
   }
 }

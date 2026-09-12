@@ -367,6 +367,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '0', '第一页下拉不刷新或越界');
 
         await mobile.locator('.nav-dot[data-index="1"]').tap();
+        await mobile.waitForFunction(() => document.querySelector('.page.active').dataset.index === '1');
         await idle();
         await drag({ x: 70, y: 360 }, { x: 300, y: 450 });
         assert.equal(await mobile.locator('.page.active').getAttribute('data-index'), '1', '横向为主的手势不翻页');

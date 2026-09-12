@@ -1,4 +1,7 @@
-.blessing-dock { position: absolute; left: 12px; bottom: var(--page-next-bottom); z-index: 86; display: flex; gap: 4px; align-items: center; max-width: calc(100% - 76px); }
+.blessing-dock { position: absolute; left: 12px; bottom: var(--page-next-bottom); z-index: 86; display: flex; align-items: center; padding:3px; max-width: calc(100% - 76px); border:1px solid #fff2dba8; border-radius:30px; background:#fff6e6d1; box-shadow:inset 0 1px 0 #ffffffa8,inset 0 -1px 0 #b9935f40,0 5px 22px #391a2426; }
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .blessing-dock { background:linear-gradient(125deg,#fffbef78,#fff9ec26 55%,#f9e6c566); backdrop-filter:blur(14px) saturate(1.1); -webkit-backdrop-filter:blur(14px) saturate(1.1); }
+}
 .blessing-dock[hidden] { display: none; }
 .game-entry { position:absolute; right:12px; bottom:var(--page-next-bottom); z-index:86; width:44px; min-height:44px; padding:6px; display:flex; align-items:center; text-align:center; text-decoration:none; color:#7a1f2b; border:1px solid #b9935f; border-radius:50%; background:#fff5e1eb; box-shadow:0 4px 16px #58201825; }
 .game-entry[hidden] { display:none; }
@@ -8,18 +11,17 @@
 :root[data-theme='chinese'] .game-entry { border-radius:6px 17px; }
 #app[data-celebration='enabled'] .scroll-hint { left: auto; right: 12px; transform: none; }
 .blessing-entry {
-  flex: 0 0 auto; min-height: 44px; width: 86px; padding: 0 10px; display: flex; align-items: center; justify-content: center; gap: 5px;
-  border: 1px solid #bd9865; border-radius: 24px; background: rgba(255, 249, 238, .94);
-  box-shadow: 0 3px 14px #4c211d20, inset 0 0 0 3px #fffaf077;
+  flex: 0 0 44px; min-height: 44px; width: 44px; padding: 0; display: flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 50%; background: linear-gradient(135deg,#fffaf0b3,#fffaf026);
   color: var(--burgundy); font: 12px "Noto Serif SC", serif; cursor: pointer;
   transition: transform 180ms, background 180ms;
 }
 .blessing-entry[hidden] { display: none; }
 .blessing-announcement { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 .blessing-entry:active { transform: scale(.96); }
-.blessing-entry svg { width: 21px; height: 21px; }
-.blessing-entry > span { white-space: nowrap; }
-.blessing-quick-gifts { display:flex; border-radius:21px; background:linear-gradient(110deg,#fff9ecc9,#fffdf799 50%,#fbf1ddb8); backdrop-filter:blur(8px) saturate(.85); -webkit-backdrop-filter:blur(8px) saturate(.85); box-shadow:inset 0 0 0 1px #b9935f80,0 3px 14px #4c211d20; }
+.blessing-entry svg { width: 24px; height: 24px; }
+.blessing-quick-gifts { display:flex; position:relative; padding-left:5px; margin-left:3px; }
+.blessing-quick-gifts::before { content:''; position:absolute; left:0; top:10px; bottom:10px; width:1px; background:linear-gradient(transparent,#8e593e55,transparent); }
 .blessing-quick-gifts button { width: 44px; min-height: 44px; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 0; background: transparent; color: #754927; cursor: pointer; border-radius: 8px; text-shadow: 0 1px 3px #fff9ef; touch-action: none; -webkit-touch-callout: none; }
 .blessing-quick-gifts .blessing-gift-art { width: 31px; height: 31px; }
 .blessing-quick-label { font: 9px/1.3 "Noto Serif SC", serif; }
@@ -28,7 +30,7 @@
 .blessing-quick-gifts button:focus-visible { outline: 1px solid #86202b; outline-offset: 1px; }
 .blessing-lane { position: absolute; inset: 0; z-index: 84; pointer-events: none; overflow: hidden; }
 .blessing-bubble {
-  position: absolute; left: 16px; bottom: calc(var(--page-next-bottom) + 175px); display: flex; gap: 5px; align-items: center;
+  position: absolute; left: 16px; bottom: calc(var(--page-next-bottom) + 64px); display: flex; gap: 5px; align-items: center;
   width: fit-content; max-width: var(--blessing-message-width, min(180px, 48%)); padding: 5px 10px;
   border: 1px solid #c3a370ab; border-radius: 14px 14px 14px 4px;
   background: rgba(255, 249, 238, .9); color: #582b27; box-shadow: 0 4px 16px #31130f19;
@@ -56,7 +58,7 @@
 .blessings-card :is(#blessingCompose,.blessing-history-list)::-webkit-scrollbar-thumb { background: #b9935f80; border-radius: 4px; }
 .blessings-card { --blessing-accent: #7a1f2b; --blessing-line: #b9935f; padding: 24px 23px 18px; border-radius: 16px; }
 .blessings-card .modal-close { width: 44px; height: 44px; top: 4px; right: 5px; font-size: 26px; z-index: 1; }
-.blessings-tabs { position: relative; display: flex; border-bottom: 1px solid #b9935f55; margin: 0 30px 15px 0; }
+.blessings-tabs { position: relative; display: flex; margin: 0 30px 15px 0; }
 .blessings-tabs button { min-height: 44px; flex: 1; border: 0; background: transparent; color: #806958; font: 13px "Noto Serif SC", serif; cursor: pointer; position: relative; }
 .blessings-tabs [aria-selected='true'] { color: var(--blessing-accent); }
 .blessings-tabs::after { content: ''; position: absolute; bottom: -1px; height: 2px; background: linear-gradient(var(--blessing-accent),var(--blessing-accent)) center / 38px 2px no-repeat; width: 50%; left: 0; transition: transform 160ms cubic-bezier(.2,.7,.2,1); }
@@ -71,8 +73,10 @@
 .blessings-card input::placeholder, .blessings-card textarea::placeholder { color: #8d7b69; font-size: 12px; }
 .blessings-card textarea { resize: none; min-height: 85px; }
 .blessing-writing-field { position:relative; }
-.blessings-card .blessing-writing-field textarea { padding-bottom:38px; min-height:108px; height:108px; }
-.blessing-ai-write { position:absolute; right:6px; bottom:5px; min-height:32px; padding:4px 9px; background:#fff7e4c9; color:var(--blessing-accent); border:1px solid #b9935f44; border-radius:15px; font:10px "Noto Serif SC",serif; cursor:pointer; }
+.blessings-card .blessing-writing-field textarea { display:block; padding-bottom:56px; min-height:120px; height:120px; border-radius:12px; }
+.blessing-ai-write { position:absolute; right:9px; bottom:9px; min-width:48px; height:38px; padding:6px 10px; background:linear-gradient(125deg,#fffdf1a6,#f1dfc447); color:var(--blessing-accent); border:1px solid #b9935f47; box-shadow:inset 0 1px #ffffffa6; border-radius:12px; font:12px Georgia,serif; letter-spacing:.06em; cursor:pointer; }
+.blessing-ai-write[aria-busy=true] { animation:ai-breathe 900ms ease-in-out infinite alternate; }
+@keyframes ai-breathe { to { opacity:.4; } }
 .blessing-ai-write:disabled { opacity:.65;cursor:wait; }
 .blessings-card :is(button,input,textarea):focus-visible { outline: 2px solid var(--blessing-accent); outline-offset: 3px; }
 .blessing-gifts { border: 0; margin: 0; min-width: 0; }
@@ -85,7 +89,7 @@
 .blessing-send:disabled { opacity: .7; cursor: wait; }
 .blessing-result { font-size: 11px; color: #712b27; line-height: 1.7; text-align: center; margin: 9px 0 0; overflow-wrap: anywhere; }
 .blessing-result:empty { display: none; }
-.blessing-history-list { flex: 1; min-height: 0; padding-right: 5px; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.blessing-history-list { flex: 1; min-height: 0; padding:0 14px 12px 2px; overflow-y: auto; overflow-anchor:none; overscroll-behavior: contain; touch-action: pan-y; }
 .blessing-history-item { padding: 15px 0; border-bottom: 1px solid #b9935f33; }
 .blessing-history-item header { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; }
 .blessing-history-item strong { color: var(--blessing-accent); font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
@@ -99,7 +103,8 @@
 .blessing-new { width: 100%; background: #fff6e69c; border-radius: 4px; }
 .blessing-empty { text-align: center; padding: 50px 8px; color: #795e47; font-size: 12px; line-height: 1.9; }
 :root[data-theme='chinese'] .blessings-card { --blessing-accent: #8b171b; --blessing-line: #c89953; border-radius: 5px 19px 5px 19px; }
-:root[data-theme='chinese'] .blessing-entry { border-radius: 5px 16px; background: #fff4dfed; color: #8b171b; }
+:root[data-theme='chinese'] .blessing-dock { border-radius:12px 24px 12px 24px; border-color:#efcc94a6; }
+:root[data-theme='chinese'] .blessing-entry { border-radius: 9px 19px; color: #8b171b; }
 :root[data-theme='chinese'] .blessing-bubble { border-radius: 4px 13px 13px 4px; background: #fff4e0eb; color: #691b18; }
 :root[data-theme='chinese'] .blessing-send { border-radius: 6px 19px; }
 :root[data-theme='chinese'] .blessings-card :is(#blessingCompose,.blessing-history-list) { scrollbar-color: #983c2b88 #c8995314; }
@@ -107,10 +112,6 @@
 :root[data-theme='chinese'] .blessing-quick-gifts button { color: #8b171b; }
 :root[data-theme='chinese'] .blessing-quick-gifts { border-radius:6px 17px; }
 @media(prefers-reduced-motion:no-preference) { .page-4.active .game-entry small { animation:game-entry-invite 1900ms ease-in-out 2; } @keyframes game-entry-invite { 50% { transform:translateY(-3px); } } }
-@media (max-width: 360px) {
-  .blessing-entry { width: 64px; padding: 0 5px; }
-  .blessing-entry svg { display: none; }
-}
 @keyframes blessing-rise {
   0% { transform: translate(0, 12px) scale(.94); opacity: 0; }
   9% { transform: translate(0, -4px) scale(1); opacity: 1; }
