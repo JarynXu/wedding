@@ -6,14 +6,16 @@ import { WEDDING_CONFIG } from '../src/config.js';
 import { getShareMetadata } from '../src/share-metadata.js';
 import { InvalidInvitationLinkError } from '../src/family-invitation.js';
 import { renderShareMetadata } from '../src/share-html.js';
+import { blessingsRouter } from './blessings/http.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */
-export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG } = {}) {
+export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null } = {}) {
   const html = readFileSync(resolve(distDir, 'index.html'), 'utf8');
   renderShareMetadata(html, getShareMetadata(config));
   const app = express();
   app.disable('x-powered-by');
-  app.use(compression({ filter: (request, response) => !request.headers.range && compression.filter(request, response) }));
+  app.use(compression({ filter: (request, response) => !request.path.startsWith('/api/blessings') && !request.headers.range && compression.filter(request, response) }));
+  app.use('/api/blessings', blessingsRouter(blessings));
   app.get('/healthz', (_request, response) => response.type('text/plain').send('ok\n'));
   app.get(['/', '/index.html'], (request, response, next) => {
     try {

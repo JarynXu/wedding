@@ -1,0 +1,14 @@
+{
+  "source": "gifts-source.png",
+  "method": "ImageGen 生成透明六宫格，等比缩小编码 WebP",
+  "cells": [
+    "玫瑰",
+    "香槟",
+    "烟花",
+    "喜灯",
+    "同心结",
+    "双喜"
+  ],
+  "columns": 3,
+  "rows": 2
+}

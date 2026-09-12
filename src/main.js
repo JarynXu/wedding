@@ -12,6 +12,7 @@ import { resolveInvitationTheme } from './invitation-theme.js';
 import { applyChineseTheme } from './themes/chinese.js';
 import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
+import { Celebration } from './celebration/view.js';
 
 // 分享配置独立于请柬素材加载，不阻塞开场或音乐。
 configureWechatShare(getShareMetadata(WEDDING_CONFIG, location.search), WEDDING_CONFIG.share.wechatSignatureEndpoint).then(state => {
@@ -384,6 +385,7 @@ function initializeInvitation() {
     if (invitationTheme === 'chinese') applyChineseTheme();
 
     const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
+    const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
     const weddingPreloader = new WeddingPreloader({
       audio,
       audioUrl: config.assets?.bgMusic || new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href,
@@ -397,6 +399,7 @@ function initializeInvitation() {
         document.querySelector('.music-player').inert = false;
         if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
         syncWelcomeGlass();
+        celebration.enter();
         // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
         if (audio && audio.paused) {
           audio.play().then(() => {
@@ -421,6 +424,7 @@ function initializeInvitation() {
     if (import.meta.hot) import.meta.hot.dispose(() => {
       weddingPreloader.destroy();
       rosePetals.destroy();
+      celebration.destroy();
     });
     document.addEventListener('visibilitychange', () => {
       document.body.classList.toggle('invitation-paused', document.hidden);

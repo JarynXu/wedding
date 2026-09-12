@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "blessings:migrate": "node server/blessings/migrate.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "compression": "^1.8.1",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
   }
 }
