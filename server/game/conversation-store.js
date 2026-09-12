@@ -29,6 +29,8 @@ export class ConversationStore {
         if(!conversation.active_question||gamePhase(event,event.now.getTime())!=='open')return {id:null};
         const priorNudge=(await client.query("SELECT id FROM wedding_game_chat_turns WHERE participant_id=$1 AND question_id=$2 AND kind='nudge'",[participantId,conversation.active_question])).rows[0];if(priorNudge)return {id:String(priorNudge.id)};
         if(event.now.getTime()-conversation.updated_at.getTime()<30000)return {id:null};
+        const lastMessage=(await client.query("SELECT audit FROM wedding_game_chat_turns WHERE participant_id=$1 AND kind='message' ORDER BY id DESC LIMIT 1",[participantId])).rows[0];
+        if(lastMessage?.audit?.intent?.intent==='pause')return {id:null};
       }
       const rate=(await client.query(`SELECT count(*) FILTER(WHERE created_at>clock_timestamp()-interval '1 hour')::int AS count,
         count(*) FILTER(WHERE state<>'complete')::int AS pending FROM wedding_game_chat_turns WHERE participant_id=$1`,[participantId])).rows[0];
@@ -60,8 +62,13 @@ export class ConversationStore {
   async context(turn){
     const event=await this.game.event(),me=await this.game.participant(turn.participant_id);
     const conversation=(await this.pool.query('SELECT * FROM wedding_game_conversations WHERE participant_id=$1 AND room_id=$2',[turn.participant_id,this.room])).rows[0];
-    const recent=(await this.pool.query("SELECT input,reply,audit FROM wedding_game_chat_turns WHERE participant_id=$1 AND state='complete' ORDER BY id DESC LIMIT 6",[turn.participant_id])).rows.reverse();
-    return {event,me,conversation,recent:recent.flatMap(row=>[...((row.audit?.safeMessage||row.audit?.intent?.summary)?[{role:'guest',text:row.audit.safeMessage||row.audit.intent.summary}]:[]),...(row.reply?.messages||[]).map(message=>({role:'host',text:message}))])};
+    const recent=(await this.pool.query("SELECT input,reply,audit,question_id FROM wedding_game_chat_turns WHERE participant_id=$1 AND state='complete' ORDER BY id DESC LIMIT 6",[turn.participant_id])).rows.reverse();
+    let offTopicTurns=0;
+    for(const row of [...recent].reverse()){
+      if(row.question_id!==conversation.active_question||row.audit?.intent?.intent!=='chat')break;
+      offTopicTurns++;
+    }
+    return {event,me,conversation,offTopicTurns,recent:recent.flatMap(row=>[...((row.audit?.safeMessage||row.audit?.intent?.summary)?[{role:'guest',text:row.audit.safeMessage||row.audit.intent.summary}]:[]),...(row.reply?.messages||[]).map(message=>({role:'host',text:message}))])};
   }
   async deck(event,question){
     if(!question)return null;

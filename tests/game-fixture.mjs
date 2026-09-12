@@ -30,7 +30,7 @@ export async function gameFixture() {
   await store.saveConfig({expectedVersion:1,config},'test-admin');
   await store.publish(2,integrations);
   const conversation=new ConversationStore(store);
-  const intent={async classify(question,input){const kind=/忽略|发奖|改分/.test(input)?'injection':/答对|成绩/.test(input)?'score':/提示/.test(input)?'hint':/选项/.test(input)?'options':/继续|开始/.test(input)?'continue':/你好|紧张/.test(input)?'chat':'answer';return {intent:kind,summary:kind==='chat'?'宾客向主持人问好':'',reason:'隔离测试分类'};}};
+  const intent={async classify(question,input){const kind=/暂时不玩|等会再/.test(input)?'pause':/忽略|发奖|改分/.test(input)?'injection':/答对|成绩/.test(input)?'score':/提示/.test(input)?'hint':/选项/.test(input)?'options':/继续|开始/.test(input)?'continue':/你好|紧张/.test(input)?'chat':'answer';return {intent:kind,summary:kind==='chat'?'宾客向主持人问好':'',reason:'隔离测试分类'};}};
   const judge={config:{model:'test'},async evaluate(_model,answer){return {verdict:answer.text.includes(answer.question.answer)?'correct':'incorrect',reason:'隔离测试判定',evidence:answer.text};}};
   const show=new GameConversation({store:conversation,game:store,intent,judge,host:new ShowHost(null)});let chatting;
   const service={store,identity,runtime,integrations,conversation,ensure:async()=>{},tick(){chatting??=(async()=>{let turn;while((turn=await conversation.claim()))await show.process(turn,new AbortController().signal);})().finally(()=>{chatting=null;});return chatting;}};

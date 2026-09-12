@@ -8,3 +8,8 @@ export function publicGameRules(config) {
     { title: '记住你的心意', paragraphs: ['手机号用于记住你的进度和现场领奖，不会展示给其他来宾。这台设备会为你保留30天登录，退出或换设备后需要重新验证。', '榜单和祝福簿会显示你的称呼。如需更正或删除参与记录，请联系新人。'] },
   ];
 }
+
+/** 开场只介绍达标、名额和现场领奖，数字与奖品名称来自活动配置。 */
+export function gameOpeningInvitation(config) {
+  return `${config.questions.length} 个小问题，答对 ${config.requiredCorrect} 题就达标！前 ${config.maxWinners} 位达标来宾有奖，前三名按成绩排定，其余获奖来宾领取${config.prizes.participation}。婚礼当天，凭领礼凭证来领奖。`;
+}

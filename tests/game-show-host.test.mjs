@@ -5,8 +5,17 @@ import { publicGameRules } from '../src/game-rules.js';
 import { publicWeddingFacts } from '../server/game/public-context.js';
 import { WEDDING_CONFIG } from '../src/config.js';
 import { initialGameConfig } from '../server/game/model.js';
+import { gameOpeningInvitation } from '../src/game-rules.js';
 
 const context={scene:'score',shouldAsk:false,score:1,answered:2,pending:0,variantSeed:0,recent:[],deck:{id:'q1',phrasings:['第一次旅行去了哪座城市？'],hints:['想想旅途里的湖水。'],choices:['杭州','上海','南京','苏州']}};
+test('开场先说明活动资格，不把达标说成人人获奖，不公开主持要求',()=>{
+  const config=initialGameConfig();config.requiredCorrect=3;config.maxWinners=15;config.prizes.participation='纪念熊';
+  const invitation=gameOpeningInvitation(config),host=new ShowHost(null);
+  const reply=host.render({...context,scene:'welcome',shouldAsk:true,invitation},{messages:['咱们不紧不慢地聊，我会用轻松的方式陪你。','{{question}}'],help:'none',quickReplies:['我负责活跃气氛','慢慢聊聊吧']},'ai');
+  assert.match(reply.messages.join(''),/答对 3 题.*前 15 位.*纪念熊/s);
+  assert.ok(reply.messages.indexOf(invitation)<reply.messages.indexOf(reply.questionText));
+  assert.doesNotMatch(reply.messages.join(''),/不紧不慢|我会用|轻松的方式|我负责/);assert.deepEqual(reply.quickReplies,[]);
+});
 test('主持人公开资料包含完整规则和婚礼日程，不包含答案、评分依据或私人联系方式',()=>{
   const config=initialGameConfig();config.questions[0].answer='私有答案';config.judgeInstructions='私有评分说明';
   const rules=publicGameRules(config),wedding=publicWeddingFacts(WEDDING_CONFIG),text=JSON.stringify({rules,wedding});
@@ -23,6 +32,10 @@ test('主持人保留自然接话，成绩与线索标记不会泄漏或重复�
   assert.match(invalid.messages.join(''),/答对 1 题/);
   const pronoun=host.render({...context,scene:'welcome',shouldAsk:true},{messages:['你们第一次出游去哪里？'],approvedQuestion:'你们第一次出游去哪里？',help:'none'},'ai');
   assert.doesNotMatch(pronoun.messages.join(''),/你们/);assert.match(pronoun.messages.join(''),/第一次旅行/);
+  const clue=host.render({...context,scene:'hint'},{messages:['提示来了：想想旅途里的湖水。'],help:'hint'},'ai');
+  assert.equal(clue.messages.join('').match(/想想旅途里的湖水/g).length,1);
+  const reordered=host.render(context,{messages:['{{question}}','{{score}}'],help:'none'},'ai');
+  assert.match(reordered.messages[0],/答对 1 题/);
 });
 test('发言核对失败时不得使用未经核对的线索；主动接话可选择沉默',async()=>{
   const host=new ShowHost({model:'host',reviewModel:'review',baseUrl:'https://example.invalid',key:'test'});

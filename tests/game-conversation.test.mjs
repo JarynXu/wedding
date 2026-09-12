@@ -64,3 +64,18 @@ test('截止前进入聊天的回答保留原时间；未处理聊天阻止提�
     assert.equal((await f.store.settlementPreview()).ready,true);
   }finally{await f.close();}
 });
+
+test('连续闲聊带回当前题目，暂停保留题目且不主动催答',{skip:!gameTestDatabase&&'需要隔离数据库'},async()=>{
+  const f=await gameFixture();
+  try{
+    const person=await f.participant(79),id=person.participantId;
+    const send=async(text,kind='message')=>{await f.service.conversation.enqueue(id,{requestId:randomUUID(),text},kind);await f.service.tick();return (await f.service.conversation.snapshot(id)).turns.at(-1).reply;};
+    const opening=await send('','start');assert.match(opening.messages.join(''),/答对 2 题.*前 20 位/s);
+    await send('你好呀，我有点紧张');const guided=await send('你好呀，今天心情不错');
+    assert.equal(guided.questionText,'隔离测试题 1');assert.equal((await f.store.participant(id)).answers.length,0);
+    const pause=await send('暂时不玩，等会再答');assert.equal(pause.questionText,null);assert.doesNotMatch(pause.messages.join(''),/隔离测试题/);
+    await f.pool.query("UPDATE wedding_game_conversations SET updated_at=clock_timestamp()-interval '40 seconds' WHERE participant_id=$1",[id]);
+    assert.equal((await f.service.conversation.enqueue(id,{requestId:randomUUID()},'nudge')).id,null);
+    const resumed=await send('继续');assert.equal(resumed.questionText,'隔离测试题 1');assert.equal((await f.store.participant(id)).answers.length,0);
+  }finally{await f.close();}
+});

@@ -1,4 +1,4 @@
-import { publicGameRules } from '../../src/game-rules.js';
+import { publicGameRules, gameOpeningInvitation } from '../../src/game-rules.js';
 import { randomUUID } from 'node:crypto';
 import { gamePhase } from './model.js';
 
@@ -19,7 +19,7 @@ export class GameConversation {
           questionChanged=!old||['title','answer','rubric'].some(key=>old[key]!==asked[key])||JSON.stringify(old.aliases)!==JSON.stringify(asked.aliases)||previous.judgeInstructions!==event.config.judgeInstructions;
         }
         const decision=turn.audit?.intent||await this.intent.classify(asked,turn.input,bounded,{recent:original.recent,offeredChoices:conversation.offered_choices});audit={...turn.audit,intent:decision};scene=decision.intent;
-        audit.safeMessage=['chat','score','standing','hint','options','repeat','continue','rules','wedding'].includes(decision.intent)?turn.input:'';
+        audit.safeMessage=['chat','pause','score','standing','hint','options','repeat','continue','rules','wedding'].includes(decision.intent)?turn.input:'';
         const already=me.answers.find(answer=>answer.questionId===asked?.id);
         const canAnswer=asked&&(!already||already.requestId===turn.request_id)&&!questionChanged&&gamePhase(event,new Date(turn.created_at).getTime())==='open';
         if(['answer','skip'].includes(decision.intent)&&canAnswer){
@@ -51,7 +51,7 @@ export class GameConversation {
       await this.store.finish(turn,{messages:['刚才那句我还没接住，再给我一次机会好吗？'],choices:[],quickReplies:[],retryable:true,source:'template'},audit,conversation.active_question,conversation.offered_choices,conversation.active_config_version||event.version);
       return;
     }
-    if(gamePhase(event,event.now.getTime())!=='open'){active=null;if(!graded&&!['score','standing','rules','wedding','chat'].includes(scene))scene='complete';shouldAsk=false;}
+    if(gamePhase(event,event.now.getTime())!=='open'){active=null;if(!graded&&!['score','standing','rules','wedding','chat','pause'].includes(scene))scene='complete';shouldAsk=false;}
     if(!active&&['welcome','repeat','nudge','hint','options'].includes(scene))scene='complete';
     const deck=await this.store.deck(event,active);
     let standing='';
@@ -61,8 +61,10 @@ export class GameConversation {
     }
     const publicRules = publicGameRules(event.config);
     const rules = publicRules.flatMap(section => section.paragraphs).join('\n');
+    const returnToQuestion=scene==='chat'&&Boolean(deck)&&original.offTopicTurns>=1;
+    if(returnToQuestion)shouldAsk=true;
     await this.store.progress(turn,'replying');
-    const reply=await this.host.speak({wedding:this.wedding,publicRules,scene,shouldAsk:shouldAsk&&Boolean(deck),deck,score:me.participant.score,answered:me.participant.answered,pending:me.answers.filter(answer=>['pending','judging','review'].includes(answer.status)).length,standing,rules,guestMessage:audit.safeMessage||'',guestSummary:audit.intent?.summary||'',recent:original.recent,variantSeed:Number(turn.id)%3},bounded);
+    const reply=await this.host.speak({wedding:this.wedding,publicRules,invitation:scene==='welcome'?gameOpeningInvitation(event.config):'',returnToQuestion,scene,shouldAsk:shouldAsk&&Boolean(deck),deck,score:me.participant.score,answered:me.participant.answered,pending:me.answers.filter(answer=>['pending','judging','review'].includes(answer.status)).length,standing,rules,guestMessage:audit.safeMessage||'',guestSummary:audit.intent?.summary||'',recent:original.recent,variantSeed:Number(turn.id)%3},bounded);
     if(graded){reply.answerId=graded.id;reply.answerVersion=graded.version;}
     const offered=reply.choices.length?reply.choices:!questionChanged&&active?.id===conversation.active_question?conversation.offered_choices:[];
     await this.store.finish(turn,reply,audit,active?.id||null,offered,event.version);
