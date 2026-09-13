@@ -61,3 +61,26 @@ test('宾客一条消息问多个事项时，遗漏部分会触发补全并再�
   assert.deepEqual(reply.messages,['婚礼在嘉臣酒店。','11:30宾客进场。']);assert.equal(calls.length,4);
   assert.match(JSON.stringify(calls[2].messages),/几点到/);
 });
+
+
+test('本题回应只得到已判题意，下一题由审定提法承接',async()=>{
+  const calls=[],host=new ShowHost({model:'host',reviewModel:'review'},{async complete(call){calls.push(call);return {text:JSON.stringify(calls.length===1?{messages:['地点这题答对啦！'],variant:0,help:'none',quickReplies:[]}:{keepMessages:[0],keepQuickReplies:[],questionMessage:null,resultConsistent:true,unansweredRequests:[]})};}});
+  const input={...context,scene:'answer_correct',shouldAsk:true,completedTurn:{questionId:'place',title:'婚礼在哪举行？',outcome:'correct'},deck:{id:'groom',phrasings:['新郎的名字是什么？'],hints:[],choices:[]},wedding:{groom:'下一题名字'},guestMessage:'不可传给回应者的答案',recent:[{role:'host',text:'错误历史中的下一题名字'}]};
+  const reply=await host.speak(input,new AbortController().signal);
+  assert.ok(calls.every(call=>!JSON.stringify(call.messages).includes('下一题名字')));
+  assert.ok(calls.every(call=>!JSON.stringify(call.messages).includes('不可传给回应者的答案')));
+  assert.match(JSON.stringify(calls[0].messages),/婚礼在哪举行/);
+  assert.deepEqual(reply.messages,['地点这题答对啦！','新郎的名字是什么？']);assert.equal(reply.presentationVersion,2);
+});
+
+test('发言核对误认了自由改写的题目时，公开提问仍绑定原题',async()=>{
+  let calls=0;const host=new ShowHost({model:'host',reviewModel:'review'},{async complete(){return {text:JSON.stringify(++calls===1?{messages:['宾客几点进场？'],variant:0,help:'none',quickReplies:[]}:{keepMessages:[0],keepQuickReplies:[],questionMessage:0,resultConsistent:true,unansweredRequests:[]})};}});
+  const reply=await host.speak({...context,scene:'repeat',shouldAsk:true,deck:{id:'bride',phrasings:['新娘的名字是什么？'],hints:[],choices:[]}},new AbortController().signal);
+  assert.equal(reply.questionId,'bride');assert.equal(reply.questionText,'新娘的名字是什么？');assert.doesNotMatch(reply.messages.join(''),/进场/);
+});
+
+test('错位的答题评语未通过核对时仍明确反馈本题判定',async()=>{
+  let calls=0;const host=new ShowHost({model:'host',reviewModel:'review'},{async complete(){return {text:JSON.stringify(++calls===1?{messages:['新郎的名字答对了，是周明朗！'],variant:0,help:'none',quickReplies:[]}:{keepMessages:[],keepQuickReplies:[],questionMessage:null,resultConsistent:false,unansweredRequests:[]})};}});
+  const reply=await host.speak({...context,scene:'answer_correct',shouldAsk:true,completedTurn:{questionId:'place',title:'婚礼在哪举行？',outcome:'correct'}},new AbortController().signal);
+  assert.match(reply.messages[0],/答对/);assert.doesNotMatch(reply.messages.join(''),/周明朗|新郎/);assert.equal(reply.source,'template');
+});

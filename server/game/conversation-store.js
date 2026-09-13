@@ -3,6 +3,7 @@ import { GameError,gamePhase,text,uuid } from './model.js';
 import { fallbackDeck } from './question-deck.js';
 import { numericId } from './store.js';
 import { traceContext, log } from '../observability.js';
+import { guestReply } from './reply.js';
 
 /** 一位宾客的对话顺序、当前问题和重复消息由数据库拥有。 */
 export class ConversationStore {
@@ -11,7 +12,7 @@ export class ConversationStore {
     const requestId=uuid(body.requestId),input=kind==='message'?text(body.text,'消息',320):'';
     return this.game.transaction(async client=>{
       const event=await this.game.event(client);
-      if(!event.published)throw new GameError('NOT_OPEN','主持人还在准备，稍后再来看看。',409);
+      if(!event.published)throw new GameError('NOT_OPEN','喜宴司仪还在准备，稍后再来看看。',409);
       await client.query('INSERT INTO wedding_game_conversations(participant_id,room_id) VALUES($1,$2) ON CONFLICT DO NOTHING',[participantId,this.room]);
       const conversation=(await client.query('SELECT * FROM wedding_game_conversations WHERE participant_id=$1 AND room_id=$2 FOR UPDATE',[participantId,this.room])).rows[0];
       const prior=(await client.query('SELECT * FROM wedding_game_chat_turns WHERE participant_id=$1 AND request_id=$2',[participantId,requestId])).rows[0];
@@ -71,6 +72,7 @@ export class ConversationStore {
     const event=await this.game.event(),me=await this.game.participant(turn.participant_id);
     const conversation=(await this.pool.query('SELECT * FROM wedding_game_conversations WHERE participant_id=$1 AND room_id=$2',[turn.participant_id,this.room])).rows[0];
     const recent=(await this.pool.query("SELECT input,reply,audit,question_id FROM wedding_game_chat_turns WHERE participant_id=$1 AND state='complete' ORDER BY id DESC LIMIT 6",[turn.participant_id])).rows.reverse();
+    for(const row of recent)row.reply=guestReply(row,me.answers,event.config.questions);
     let offTopicTurns=0;
     for(const row of [...recent].reverse()){
       if(row.question_id!==conversation.active_question||row.audit?.intent?.intent!=='chat')break;
@@ -95,9 +97,9 @@ export class ConversationStore {
     const conversation=(await this.pool.query('SELECT * FROM wedding_game_conversations WHERE room_id=$1 AND participant_id=$2',[this.room,participantId])).rows[0];
     const rows=(await this.pool.query('SELECT id,request_id,kind,input,question_id,state,progress,reply,created_at FROM wedding_game_chat_turns WHERE room_id=$1 AND participant_id=$2 ORDER BY id DESC LIMIT 160',[this.room,participantId])).rows.reverse();
     const answers=(await this.game.participant(participantId)).answers;
+    const event=await this.game.event();
     return {revision:conversation?.revision||0,activeQuestion:conversation?.active_question||null,turns:rows.map(row=>{
-      const reply=row.reply?structuredClone(row.reply):null;
-      if(reply?.answerId){const current=answers.find(answer=>answer.id===reply.answerId);if(current&&current.version!==reply.answerVersion)reply.messages=[current.status==='correct'?'刚收到一份更新：你刚才那份默契答对了，我已经帮你记上。':current.status==='incorrect'?'刚才那份回答已经核对过了，这次没答中。别忘了，祝福的心意我们都收到了。':'刚才那份回答还在核对，先别着急。',...(reply.questionText?[reply.questionText]:[])];}
+      const reply=guestReply(row,answers,event.config.questions);
       return {id:String(row.id),requestId:row.request_id,kind:row.kind,input:row.input,state:row.state,progress:row.progress,reply,createdAt:row.created_at};
     })};
   }

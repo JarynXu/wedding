@@ -1,0 +1,135 @@
+{
+  "evaluatedAt": "2026-09-13T05:05:06.280Z",
+  "model": "deepseek-flash",
+  "scope": "虚构婚礼、六道相邻话题、真实模型、本机隔离数据库；下一题采用预先核对的题目提法，不发送短信。",
+  "passed": 6,
+  "total": 6,
+  "cases": [
+    {
+      "title": "婚礼仪式在什么时候举行？",
+      "input": "10月17日",
+      "score": 0,
+      "expectedScore": 0,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3068",
+        "messages": [
+          "这题没猜中，喜气不减，咱们接着乐呵！",
+          "婚礼在哪举行？"
+        ],
+        "questionId": "q2",
+        "questionText": "婚礼在哪举行？",
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "婚礼在哪举行？",
+      "input": "松风礼堂",
+      "score": 1,
+      "expectedScore": 1,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3069",
+        "messages": [
+          "这题答对啦，喜气直接拉满！",
+          "婚礼在哪举行都藏不住这份默契，掌声送上～",
+          "新郎的名字是什么？"
+        ],
+        "questionId": "q3",
+        "questionText": "新郎的名字是什么？",
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "新郎的名字是什么？",
+      "input": "周明朗",
+      "score": 2,
+      "expectedScore": 2,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3070",
+        "messages": [
+          "这题答对啦，新郎的名字都被你稳稳接住了！",
+          "新娘的名字是什么？"
+        ],
+        "questionId": "q4",
+        "questionText": "新娘的名字是什么？",
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "新娘的名字是什么？",
+      "input": "林一宁",
+      "score": 3,
+      "expectedScore": 3,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3071",
+        "messages": [
+          "新娘的名字都能答对，这份心意真是甜到心里啦！",
+          "宾客几点入场？"
+        ],
+        "questionId": "q5",
+        "questionText": "宾客几点入场？",
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "宾客几点入场？",
+      "input": "十一点半",
+      "score": 4,
+      "expectedScore": 4,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3072",
+        "messages": [
+          "这份默契太稳啦，这题答对，喜气直接翻倍！",
+          "喜宴几点开席？"
+        ],
+        "questionId": "q6",
+        "questionText": "喜宴几点开席？",
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "喜宴几点开席？",
+      "input": "十二点二十八分",
+      "score": 5,
+      "expectedScore": 5,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3073",
+        "messages": [
+          "开席的点儿都猜中啦，这默契真够喜气！"
+        ],
+        "questionId": null,
+        "questionText": null,
+        "quickReplies": [],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    }
+  ]
+}

@@ -9,7 +9,7 @@ export class GameConversation {
   async process(turn,signal){
     const bounded=AbortSignal.any([signal,AbortSignal.timeout(75000)]);
     const original=await this.store.context(turn),{event,conversation}=original;
-    let guestKnowledge=[],assignedAnswer=null;
+    let guestKnowledge=[],assignedAnswer=null,completedTurn=null;
     let me=original.me,scene=turn.kind==='start'?'welcome':turn.kind==='nudge'?'nudge':'chat',audit={},graded=null,shouldAsk=turn.kind==='start',questionChanged=false;
     let active=event.config.questions.find(question=>question.id===conversation.active_question)||event.config.questions.find(question=>!me.answers.some(answer=>answer.questionId===question.id))||null;
     try{
@@ -44,8 +44,11 @@ export class GameConversation {
             await this.game.finishJob(answer,result);graded={id:String(answer.id),version:answer.version,status:result.status};
           }else graded={id:String(answer.id),version:answer.version,status:answer.status};
           me=await this.game.participant(turn.participant_id);
+          const recorded=me.answers.find(item=>item.id===String(answer.id));
+          graded={id:recorded.id,version:recorded.version,status:recorded.status};
+          completedTurn={questionId:asked.id,title:asked.title,outcome:recorded.status};
           active=event.config.questions.find(question=>!me.answers.some(answer=>answer.questionId===question.id))||null;
-          scene=graded.status==='review'?'review':graded.status==='correct'?'answer_correct':'answer_incorrect';shouldAsk=Boolean(active);
+          scene=graded.status==='correct'?'answer_correct':graded.status==='incorrect'?'answer_incorrect':'review';shouldAsk=Boolean(active);
         }else if(['answer','skip'].includes(scene)){scene=already?'chat':'clarify';audit.intent.summary=already?'宾客还想谈谈刚才的回答；那一题已记过答案，不要重记。':'主持人还没抛出这道题，先接话。';}
         else if(['continue','repeat'].includes(scene)){scene='repeat';shouldAsk=Boolean(active);}
         if(questionChanged){scene='repeat';shouldAsk=Boolean(active);audit.intent.summary='新人刚调整了当前问题，请说明这句话还不计作答案，并重新抛出更新后的问题。';}
@@ -71,8 +74,8 @@ export class GameConversation {
     const returnToQuestion=scene==='chat'&&Boolean(deck)&&original.offTopicTurns>=1;
     if(returnToQuestion)shouldAsk=true;
     await this.store.progress(turn,'replying');
-    const reply=await this.host.speak({wedding:this.wedding,guestKnowledge,purpose:active?'quiz':'guest-assistant',publicRules,invitation:scene==='welcome'?gameOpeningInvitation(event.config):'',returnToQuestion,scene,shouldAsk:shouldAsk&&Boolean(deck),deck,score:me.participant.score,rank:me.participant.rank,rankingFinal:Boolean(event.settled_at),answered:me.participant.answered,pending:me.answers.filter(answer=>['pending','judging','review'].includes(answer.status)).length,standing,rules,guestMessage:audit.safeMessage||'',guestSummary:audit.intent?.summary||'',recent:original.recent,variantSeed:Number(turn.id)%3},bounded);
-    if(graded){reply.answerId=graded.id;reply.answerVersion=graded.version;}
+    const reply=await this.host.speak({completedTurn,wedding:this.wedding,guestKnowledge,purpose:active?'quiz':'guest-assistant',publicRules,invitation:scene==='welcome'?gameOpeningInvitation(event.config):'',returnToQuestion,scene,shouldAsk:shouldAsk&&Boolean(deck),deck,score:me.participant.score,rank:me.participant.rank,rankingFinal:Boolean(event.settled_at),answered:me.participant.answered,pending:me.answers.filter(answer=>['pending','judging','review'].includes(answer.status)).length,standing,rules,guestMessage:audit.safeMessage||'',guestSummary:audit.intent?.summary||'',recent:original.recent,variantSeed:Number(turn.id)%3},bounded);
+    if(graded){reply.answerId=graded.id;reply.answerVersion=graded.version;reply.answerStatus=graded.status;}
     log('conversation.reply',{source:reply.source,verdict:graded?.status,version:event.version});
     const offered=reply.choices.length?reply.choices:!questionChanged&&active?.id===conversation.active_question?conversation.offered_choices:[];
     await this.store.finish(turn,reply,audit,active?.id||null,offered,event.version);

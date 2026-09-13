@@ -83,12 +83,12 @@ export function gameAdminRouter(service, actor) {
   router.post('/redemption', async (request, response) => {const result=await service.store.redemption(request.body.code, actor, request.body.requestId);log('game.redeemed',{room:service.store.room,business_id:request.body.requestId,status:result.alreadyRedeemed?'replayed':'redeemed'});response.json(result);});
   router.use(gameErrors); return router;
 }
-function ready(service) { return async (_request, _response, next) => { if (!service) return next(new GameError('GAME_UNAVAILABLE', '主持人还在准备，稍后再来看看。', 503)); await service.ensure(); next(); }; }
+function ready(service) { return async (_request, _response, next) => { if (!service) return next(new GameError('GAME_UNAVAILABLE', '喜宴司仪还在准备，稍后再来看看。', 503)); await service.ensure(); next(); }; }
 function noCache(_request, response, next) { response.set('Cache-Control', 'no-store'); next(); }
 function cookie(value, secure, age) { return `wedding_game=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${age}${secure ? '; Secure' : ''}`; }
 function guestGameErrors(error,request,response,next){
   if(error instanceof GameError){
-    const messages={INVALID_ID:'这次没能送达，请刷新后再试。',VERSION_CONFLICT:'这份默契刚有些调整，请刷新后再聊。',REQUEST_CONFLICT:'这句话似乎改过了，请重新发一次。',INVALID_QUESTION:'我们先回到主持人刚才的话题吧。',ALREADY_ANSWERED:'刚才的答案已经记下，不用重复啦。',GAME_UNAVAILABLE:'主持人还在准备，稍后再来看看。',SMS_UNAVAILABLE:'暂时还不能完成验证，请稍后再试。',CAPTCHA_UNAVAILABLE:'暂时还不能完成验证，请稍后再试。'};
+    const messages={INVALID_ID:'这次没能送达，请刷新后再试。',VERSION_CONFLICT:'这份默契刚有些调整，请刷新后再聊。',REQUEST_CONFLICT:'这句话似乎改过了，请重新发一次。',INVALID_QUESTION:'我们先回到喜宴司仪刚才的话题吧。',ALREADY_ANSWERED:'刚才的答案已经记下，不用重复啦。',GAME_UNAVAILABLE:'喜宴司仪还在准备，稍后再来看看。',SMS_UNAVAILABLE:'暂时还不能完成验证，请稍后再试。',CAPTCHA_UNAVAILABLE:'暂时还不能完成验证，请稍后再试。'};
     if(messages[error.code])error=new GameError(error.code,messages[error.code],error.status,error.retryAfter);
   }
   return gameErrors(error,request,response,next);
