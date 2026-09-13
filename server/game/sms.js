@@ -1,3 +1,4 @@
+import { log, logError } from '../observability.js';
 import Dypns from '@alicloud/dypnsapi20170525';
 import Core from '@alicloud/openapi-core';
 import Dara from '@darabonba/typescript';
@@ -18,8 +19,8 @@ export class AliyunGameSms {
         outId:requestId,codeLength:6,validTime:300,duplicatePolicy:1,interval:60,codeType:1,returnVerifyCode:false,autoRetry:0,
       }),this.options());
       if(result.body?.code==='OK'&&result.body?.success===true)return {delivery:'sent',bizId:result.body.model?.bizId||null};
-      console.error('阿里云短信认证拒绝发送',result.body?.code||'unknown');return {delivery:'failed'};
-    }catch(error){console.error('阿里云短信发送结果未确认',error.code||error.name);return {delivery:error.statusCode>=400&&error.statusCode<500?'failed':'unknown'};}
+      log('sms.provider_rejected',{error_code:result.body?.code||'unknown'},'error');return {delivery:'failed'};
+    }catch(error){logError('sms.send_unconfirmed',error);return {delivery:error.statusCode>=400&&error.statusCode<500?'failed':'unknown'};}
   }
   async verify(phone,code,requestId) {
     if(!this.client)return 'unavailable';
@@ -30,6 +31,6 @@ export class AliyunGameSms {
       // PNVS 文档将 UNKNOWN 定义为“验证码核验失败”；网络与响应异常走 unavailable。
       if(result.body.model?.verifyResult==='UNKNOWN')return 'fail';
       return 'unavailable';
-    }catch(error){console.error('阿里云短信验证码核验未完成',error.code||error.name);return 'unavailable';}
+    }catch(error){logError('sms.verify_failed',error);return 'unavailable';}
   }
 }

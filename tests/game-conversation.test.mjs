@@ -79,3 +79,24 @@ test('连续闲聊带回当前题目，暂停保留题目且不主动催答',{sk
     const resumed=await send('继续');assert.equal(resumed.questionText,'隔离测试题 1');assert.equal((await f.store.participant(id)).answers.length,0);
   }finally{await f.close();}
 });
+
+
+test('供应商限流保留原回答并延后处理，不误判、不重复计分',{skip:!gameTestDatabase&&'需要隔离数据库'},async()=>{
+  const f=await gameFixture();
+  try{
+    const {participantId:id}=await f.participant(88);
+    await f.service.conversation.enqueue(id,{requestId:randomUUID()},'start');await f.service.tick();
+    await f.service.conversation.enqueue(id,{requestId:randomUUID(),text:'测试答案 1'});
+    const turn=await f.service.conversation.claim();
+    const limited=new GameConversation({store:f.service.conversation,game:f.store,intent:{async classify(){return {intent:'answer'};}},judge:{config:{model:'test'},async evaluate(){throw Object.assign(new Error('busy'),{code:'AI_HTTP_429',retryable:true,retryAfterMs:2000});}},host:new ShowHost(null)});
+    await limited.process(turn,new AbortController().signal);
+    assert.equal((await f.service.conversation.snapshot(id)).turns.at(-1).state,'pending');
+    assert.equal((await f.store.participant(id)).participant.score,0);
+    assert.equal(await f.store.claimJob(),null,'聊天持有的答案不会被旧判题队列接走');
+    assert.equal(await f.service.conversation.claim(),null,'退避期间不发起下一轮');
+    await f.pool.query('UPDATE wedding_game_chat_turns SET available_at=clock_timestamp() WHERE id=$1',[turn.id]);
+    await f.service.tick();const me=await f.store.participant(id);
+    assert.equal(me.answers.length,1);assert.equal(me.participant.score,1);
+    assert.equal(new Date(me.answers[0].receivedAt).getTime(),new Date(turn.created_at).getTime());
+  }finally{await f.close();}
+});

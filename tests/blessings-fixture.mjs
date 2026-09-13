@@ -12,6 +12,7 @@ export const waitFor = async (condition, timeout = 10000) => {
 export async function fixture(overrides = {}, { writing = null } = {}) {
   const config = readBlessingsConfig({ BLESSINGS_DATABASE_URL: databaseUrl, BLESSINGS_DB_SSL: 'false', BLESSINGS_RATE_SECRET: 'isolated-test-secret-32-characters-minimum', BLESSINGS_ROOM: `test-${randomUUID()}`, BLESSINGS_MIN_INTERVAL_MS: '0', BLESSINGS_CLIENT_LIMIT: '120', ...overrides });
   const db = new pg.Client(config.database); await db.connect();
+  await db.query(await readFile(new URL('../server/operations-schema.sql',import.meta.url),'utf8'));
   await db.query(await readFile(new URL('../server/blessings/schema.sql', import.meta.url), 'utf8'));
   const instances = [];
   async function instance() {

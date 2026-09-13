@@ -19,6 +19,11 @@ test('祝福边界：文本、礼物、主题、幂等键、游标与显式错�
   assert.equal(readBlessingsConfig({}), null);
   assert.throws(() => readBlessingsConfig({ BLESSINGS_ENABLED: 'true' }));
   assert.throws(() => readBlessingsConfig({ BLESSINGS_ENABLED: 'yes' }));
+  const env={BLESSINGS_DATABASE_URL:'postgresql://test@localhost/test',BLESSINGS_RATE_SECRET:'x'.repeat(32)};
+  assert.equal(readBlessingsConfig(env).database.max,3);
+  assert.equal(readBlessingsConfig({...env,BLESSINGS_DB_POOL_SIZE:'5',WEDDING_MAX_INSTANCES:'10'}).database.max,3);
+  assert.equal(readBlessingsConfig({...env,BLESSINGS_DB_POOL_SIZE:'2'}).database.max,2);
+  assert.throws(()=>readBlessingsConfig({...env,WEDDING_DB_CONNECTION_BUDGET:'20',WEDDING_MAX_INSTANCES:'10'}));
 });
 
 test('未配置数据库：明确关闭，发送不能伪装成功', async () => {

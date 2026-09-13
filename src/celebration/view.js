@@ -51,7 +51,7 @@ export class Celebration {
     this.dialogs = new InvitationDialogs();
     this.createView();
     this.effects = new GiftEffects(this.canvas, theme);
-    this.client = new BlessingsClient({ onSync: snapshot => this.sync(snapshot), onMessage: message => this.receive(message), onState: state => this.connectionState(state) });
+    this.client = new BlessingsClient({ onSync: snapshot => this.sync(snapshot), onMessage: message => this.receive(message), onState: state => this.connectionState(state),generation:memory.read('generation')||0,onReset:generation=>{memory.write('generation',generation);memory.write('pending',null);memory.write('pendingGift',null);try{localStorage.removeItem('wedding.guest.profile');localStorage.removeItem('wedding.blessings.name');sessionStorage.removeItem('wedding.game.chat.pending');sessionStorage.removeItem('wedding.game.pending');}catch{}location.reload();} });
     this.quick = new QuickGifts({
       buttons: this.dock.querySelectorAll('[data-quick-gift]'), client: this.client, pending: this.pendingGift,
       play: id => this.effects.play(id), persist: message => memory.write('pendingGift', message), recorded: message => this.receive(message, true),
@@ -59,7 +59,7 @@ export class Celebration {
         const name = this.nameInput.value.trim().normalize('NFC');
         if ([...name].length > BLESSING_LIMITS.name) return null;
         rememberGuestName(name);
-        return { requestId: uuid(), clientId: this.clientId, name, text: '', gift, giftCount, theme: this.theme };
+        return { requestId: uuid(), clientId: this.clientId, name, text: '', gift, giftCount, theme: this.theme, generation:this.client.generation };
       },
     });
     watchGuestName(name => { if (!this.pending) { this.nameInput.value=name;this.nameInput.readOnly=Boolean(registeredGuestName()); } }, this.events.signal);
@@ -251,7 +251,7 @@ export class Celebration {
     if ([...name].length > BLESSING_LIMITS.name || [...text].length > BLESSING_LIMITS.text) { this.result.textContent = '称呼请在 24 字内，祝福请在 120 字内。'; return; }
     if (!text && !this.selectedGift) { this.result.textContent = '写一句祝福，或选一份心意。'; this.textInput.focus(); return; }
     const samePending = this.pending && this.pending.name === name && this.pending.text === text && this.pending.gift === this.selectedGift;
-    if (!samePending) this.pending = { requestId: uuid(), clientId: this.clientId, name, text, gift: this.selectedGift, theme: this.theme };
+    if (!samePending) this.pending = { requestId: uuid(), clientId: this.clientId, name, text, gift: this.selectedGift, theme: this.theme, generation:this.client.generation };
     memory.write('pending', this.pending); rememberGuestName(name);
     this.sending = true; this.submit.disabled = true; this.form.setAttribute('aria-busy', 'true');
     this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = true; });
@@ -278,7 +278,7 @@ export class Celebration {
     if([...original.trim()].length>BLESSING_LIMITS.text){await this.dialogs.alert('祝福请控制在120字以内，再试试润色。');return;}
     this.writing=true;this.aiButton.disabled=true;this.aiButton.setAttribute('aria-busy','true');this.submit.disabled=true;
     try{
-      const result=await this.client.polish({requestId:uuid(),clientId:this.clientId,text:original.trim(),theme:this.theme});
+      const result=await this.client.polish({requestId:uuid(),clientId:this.clientId,text:original.trim(),theme:this.theme,generation:this.client.generation});
       if(this.destroyed)return;
       if(this.textInput.value!==original){
         const accepted=await this.dialogs.show({title:'AI写好了一份祝福',content:result.text,confirmText:'使用这一句',cancelText:'保留我的修改'});if(!accepted)return;

@@ -1,15 +1,18 @@
+import { logError } from '../observability.js';
 import pg from 'pg';
 import { createHmac } from 'node:crypto';
 import { BlessingError, publicBlessing } from './model.js';
+import { acceptBlessing, roomState } from '../room-operations.js';
 
 /** PostgreSQL 是历史与重放的唯一来源，通知只负责唤醒读取。 */
 export class BlessingStore {
   constructor(config) {
     this.config = config;
     this.pool = new pg.Pool(config.database);
-    this.pool.on('error', error => console.error('祝福数据库连接中断', error.code || error.name));
+    this.pool.on('error', error => logError('blessings.db_connection_lost',error));
   }
   async verify() { await this.pool.query('SELECT id, request_id, fingerprint, gift_count FROM wedding_blessings LIMIT 0'); }
+  state(){return roomState(this.pool,this.config.room);}
   async latestId() { const { rows } = await this.pool.query('SELECT id FROM wedding_blessings WHERE room_id=$1 ORDER BY id DESC LIMIT 1', [this.config.room]); return rows[0]?.id || '0'; }
   async dashboardStats() {
     const { rows } = await this.pool.query('SELECT count(*)::text AS total_count, max(created_at) AS last_saved_at FROM wedding_blessings WHERE room_id=$1', [this.config.room]);
@@ -35,6 +38,7 @@ export class BlessingStore {
       await client.query("SET LOCAL lock_timeout = '4s'");
       // 同一请柬先取得锁再分配序号，保证游标顺序与提交顺序一致。
       await client.query('SELECT pg_advisory_xact_lock(1279440461, hashtext($1))', [this.config.room]);
+      await acceptBlessing(client,this.config.room,message.generation);
       const prior = await client.query('SELECT * FROM wedding_blessings WHERE room_id=$1 AND request_id=$2', [this.config.room, message.requestId]);
       if (prior.rows.length) {
         if (prior.rows[0].fingerprint !== message.fingerprint || prior.rows[0].sender_hash !== senderHash) throw new BlessingError('REQUEST_CONFLICT', '这次发送的内容已改变，请重新发送', 409);
@@ -71,6 +75,7 @@ export class BlessingStore {
     try{
       await client.query('BEGIN');await client.query("SET LOCAL lock_timeout='4s'");
       await client.query('SELECT pg_advisory_xact_lock(1279440461,hashtext($1))',[this.config.room+':writing']);
+      await acceptBlessing(client,this.config.room,message.generation);
       const prior=(await client.query('SELECT * FROM wedding_blessing_writing WHERE room_id=$1 AND request_id=$2',[this.config.room,message.requestId])).rows[0];
       if(prior){
         if(prior.sender_hash!==sender||prior.fingerprint!==message.fingerprint)throw new BlessingError('REQUEST_CONFLICT','本次润色内容已改变',409);

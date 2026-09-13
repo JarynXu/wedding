@@ -1,6 +1,7 @@
 import { publicGameRules, gameOpeningInvitation } from '../../src/game-rules.js';
 import { randomUUID } from 'node:crypto';
 import { gamePhase } from './model.js';
+import { log } from '../observability.js';
 
 /** 主持自由接话；答案、问题切换和成绩只按受控状态推进。 */
 export class GameConversation {
@@ -8,7 +9,7 @@ export class GameConversation {
   async process(turn,signal){
     const bounded=AbortSignal.any([signal,AbortSignal.timeout(75000)]);
     const original=await this.store.context(turn),{event,conversation}=original;
-    let guestKnowledge=[];
+    let guestKnowledge=[],assignedAnswer=null;
     let me=original.me,scene=turn.kind==='start'?'welcome':turn.kind==='nudge'?'nudge':'chat',audit={},graded=null,shouldAsk=turn.kind==='start',questionChanged=false;
     let active=event.config.questions.find(question=>question.id===conversation.active_question)||event.config.questions.find(question=>!me.answers.some(answer=>answer.questionId===question.id))||null;
     try{
@@ -21,6 +22,7 @@ export class GameConversation {
           questionChanged=!old||['title','answer','rubric'].some(key=>old[key]!==asked[key])||JSON.stringify(old.aliases)!==JSON.stringify(asked.aliases)||previous.judgeInstructions!==event.config.judgeInstructions;
         }
         const decision=turn.audit?.intent||await this.intent.classify(asked,turn.input,bounded,{recent:original.recent,offeredChoices:conversation.offered_choices,publicTopics:guestKnowledge.map(({question,teaser})=>({question,teaser}))});audit={...turn.audit,intent:decision};scene=decision.intent;
+        log('conversation.routed',{verdict:decision.intent,version:event.version});
         audit.safeMessage=['chat','pause','score','standing','hint','options','repeat','continue','rules','wedding','onsite'].includes(decision.intent)?turn.input:'';
         const already=me.answers.find(answer=>answer.questionId===asked?.id);
         const canAnswer=asked&&(!already||already.requestId===turn.request_id)&&!questionChanged&&gamePhase(event,new Date(turn.created_at).getTime())==='open';
@@ -30,13 +32,14 @@ export class GameConversation {
           if(!already&&!audit.normalizedInput&&conversation.active_question===asked.id&&conversation.offered_choices.length===4){if(decision.choiceIndex!=null)input=conversation.offered_choices[decision.choiceIndex];else if(letter)input=conversation.offered_choices[letter.toUpperCase().charCodeAt(0)-65];}
           audit.normalizedInput=input;await this.store.saveDecision(turn,audit);
           const answer=await this.game.submit(turn.participant_id,{requestId:turn.request_id,questionId:asked.id,text:input,configVersion:event.version},{receivedAt:turn.created_at,leaseToken:randomUUID()});
+          assignedAnswer=answer;
           if(['pending','judging'].includes(answer.status)){
             let result;
             if(decision.intent==='skip')result={status:'incorrect',reason:'宾客选择跳过',judge:null,reviewer:decision,host:null};
             else{
               await this.store.progress(turn,'checking');await this.game.updateJobStage(answer,'checking');
               try{const verdict=await this.judge.evaluate(this.judge.config.model,{question:answer.question,text:answer.text,instructions:answer.instructions},bounded);result={status:verdict.verdict,reason:verdict.reason,judge:verdict,reviewer:decision,host:null};}
-              catch{result={status:'review',reason:'答案尚需核对',judge:null,reviewer:decision,host:null};}
+              catch(error){if(error.retryable)throw error;result={status:'review',reason:'答案尚需核对',judge:null,reviewer:decision,host:null};}
             }
             await this.game.finishJob(answer,result);graded={id:String(answer.id),version:answer.version,status:result.status};
           }else graded={id:String(answer.id),version:answer.version,status:answer.status};
@@ -49,6 +52,8 @@ export class GameConversation {
       }
     }catch(error){
       if(signal.aborted)throw error;
+      if(error.retryable&&assignedAnswer)await this.game.releaseJob(assignedAnswer);
+      if(error.retryable&&turn.attempts<4){await this.store.defer(turn,Math.max(2000,error.retryAfterMs||0));return;}
       audit.failure=error.code||error.name;
       await this.store.finish(turn,{messages:['刚才那句我还没接住，再给我一次机会好吗？'],choices:[],quickReplies:[],retryable:true,source:'template'},audit,conversation.active_question,conversation.offered_choices,conversation.active_config_version||event.version);
       return;
@@ -68,6 +73,7 @@ export class GameConversation {
     await this.store.progress(turn,'replying');
     const reply=await this.host.speak({wedding:this.wedding,guestKnowledge,purpose:active?'quiz':'guest-assistant',publicRules,invitation:scene==='welcome'?gameOpeningInvitation(event.config):'',returnToQuestion,scene,shouldAsk:shouldAsk&&Boolean(deck),deck,score:me.participant.score,rank:me.participant.rank,rankingFinal:Boolean(event.settled_at),answered:me.participant.answered,pending:me.answers.filter(answer=>['pending','judging','review'].includes(answer.status)).length,standing,rules,guestMessage:audit.safeMessage||'',guestSummary:audit.intent?.summary||'',recent:original.recent,variantSeed:Number(turn.id)%3},bounded);
     if(graded){reply.answerId=graded.id;reply.answerVersion=graded.version;}
+    log('conversation.reply',{source:reply.source,verdict:graded?.status,version:event.version});
     const offered=reply.choices.length?reply.choices:!questionChanged&&active?.id===conversation.active_question?conversation.offered_choices:[];
     await this.store.finish(turn,reply,audit,active?.id||null,offered,event.version);
   }

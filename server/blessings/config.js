@@ -17,8 +17,14 @@ export function readBlessingsConfig(env = process.env) {
   if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password) throw new Error('BLESSINGS_PUBLIC_ORIGIN 须为本站 HTTP(S) 地址');
   const clientIpHeader = env.BLESSINGS_CLIENT_IP_HEADER || '';
   if (clientIpHeader && !['x-original-forwarded-for', 'x-forwarded-for', 'x-real-ip'].includes(clientIpHeader)) throw new Error('BLESSINGS_CLIENT_IP_HEADER 不在支持范围内');
+  const maxInstances = integer(env.WEDDING_MAX_INSTANCES, 10, 1, 100);
+  const connectionBudget = integer(env.WEDDING_DB_CONNECTION_BUDGET, 80, 3, 1000);
+  // 每实例两个连接池及一个 LISTEN 连接；预算限制优先于单池申请值。
+  const poolCap = Math.floor((connectionBudget / maxInstances - 1) / 2);
+  if (poolCap < 1) throw new Error('数据库连接预算不足以支持指定实例数');
   return {
     room, secret, origin: origin.origin, clientIpHeader,
+    maxInstances, connectionBudget,
     maxStreams: integer(env.BLESSINGS_MAX_STREAMS, 500, 1, 3000),
     clientLimit: integer(env.BLESSINGS_CLIENT_LIMIT, 12, 1, 120),
     networkLimit: integer(env.BLESSINGS_NETWORK_LIMIT, 600, 1, 10000),
@@ -26,7 +32,7 @@ export function readBlessingsConfig(env = process.env) {
     database: {
       connectionString: url.href,
       ssl: ssl === 'true' ? { rejectUnauthorized: true, ...(env.BLESSINGS_DB_CA_PEM ? { ca: env.BLESSINGS_DB_CA_PEM.replaceAll('\\n', '\n') } : {}) } : false,
-      max: integer(env.BLESSINGS_DB_POOL_SIZE, 5, 1, 30),
+      max: Math.min(integer(env.BLESSINGS_DB_POOL_SIZE, 3, 1, 30), poolCap),
       connectionTimeoutMillis: 5000, idleTimeoutMillis: 30000, statement_timeout: 8000,
       application_name: 'wedding-blessings', keepAlive: true,
     },

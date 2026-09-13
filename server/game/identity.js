@@ -1,3 +1,4 @@
+import { log } from '../observability.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { GameError, phoneNumber, text, uuid } from './model.js';
 import { gameTransaction } from './persistence.js';
@@ -20,12 +21,13 @@ export class GameIdentity {
       count(*) FILTER(WHERE network_hash=$3 AND created_at>clock_timestamp()-interval '1 hour')::int AS network_count,
       extract(epoch FROM (clock_timestamp()-max(created_at) FILTER(WHERE phone_hash=$2))) AS since_last
       FROM wedding_game_otps WHERE room_id=$1 AND created_at>clock_timestamp()-interval '24 hours'`,[this.room,phoneHash,networkHash])).rows[0];
-    if(rate.total>=this.runtime.dailyLimit||rate.phone_count>=5||rate.network_count>=100||(rate.since_last!=null&&Number(rate.since_last)<60))throw new GameError('SMS_RATE_LIMITED','验证码发送频繁，请稍后再试',429,60);
+    if(rate.total>=this.runtime.dailyLimit||rate.phone_count>=5||rate.network_count>=(this.runtime.networkHourlyLimit||500)||(rate.since_last!=null&&Number(rate.since_last)<60))throw new GameError('SMS_RATE_LIMITED','验证码发送频繁，请稍后再试',429,60);
   }
   async requestCode(body,network) {
     if(!this.sms.configured)throw new GameError('SMS_UNAVAILABLE','验证码服务尚未开放',503);
     if(!this.captcha?.configured)throw new GameError('CAPTCHA_UNAVAILABLE','图形验证服务尚未开放',503);
     const phone=phoneNumber(body.phone),id=uuid(body.requestId),phoneHash=this.secrets.digest('phone',phone),networkHash=this.secrets.digest('network',network);
+    log('sms.requested',{room:this.room,business_id:id});
     const prior=await this.priorRequest(this.pool,id,phoneHash);if(prior)return prior;
     await this.checkRate(this.pool,phoneHash,networkHash);
     const lot=await this.captcha.verify(body.captcha);
@@ -41,6 +43,7 @@ export class GameIdentity {
     if(reservation.prior)return reservation.prior;
     const result=await this.sms.send(phone,id);
     const updated=await this.pool.query("UPDATE wedding_game_otps SET state=$2,provider_biz_id=$3 WHERE id=$1 AND state='queued' RETURNING expires_at",[id,result.delivery,result.bizId||null]);
+    log('sms.delivery',{room:this.room,business_id:id,status:result.delivery});
     if(result.delivery==='failed')throw new GameError('SMS_FAILED','验证码未能发送，请稍后重试',503);
     return {challengeId:id,delivery:result.delivery,expiresAt:updated.rows[0]?.expires_at||reservation.expiresAt,retryAfter:60};
   }
@@ -55,6 +58,7 @@ export class GameIdentity {
       await client.query("UPDATE wedding_game_otps SET attempts=attempts+1,verify_token=$2,verify_until=clock_timestamp()+interval '25 seconds' WHERE id=$1",[challenge,lease]);
     });
     const verified=await this.sms.verify(phone,body.code,challenge);
+    log('sms.verified',{room:this.room,business_id:challenge,verdict:verified});
     const result=await gameTransaction(this.pool,this.room,async client=>{
       const otp=(await client.query('SELECT *,clock_timestamp() AS now FROM wedding_game_otps WHERE id=$1 AND room_id=$2 AND phone_hash=$3 FOR UPDATE',[challenge,this.room,phoneHash])).rows[0];
       if(!otp||otp.verify_token!==lease||otp.state==='used'||otp.expires_at<=otp.now)return {error:'验证码已失效，请重新获取'};

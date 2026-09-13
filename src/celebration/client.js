@@ -1,13 +1,14 @@
 /** 浏览器连接拥有 SSE 生命周期；断线游标只来自已收到的事件。 */
 export class BlessingsClient {
-  constructor({ onSync, onMessage, onState }) {
-    this.handlers = { onSync, onMessage, onState };
+  constructor({ onSync, onMessage, onState, onReset, generation=0 }) {
+    this.handlers = { onSync, onMessage, onState, onReset };this.generation=generation;
     this.cursor = null;
     this.stopped = false;
     this.controllers = new Set();
   }
   async available() {
     const config = await this.request('/config');
+    if((config.generation||0)!==this.generation)this.reset(config.generation);
     this.giftRecordIntervalMs = Number.isFinite(config.giftRecordIntervalMs) ? Math.max(1000, config.giftRecordIntervalMs) : 5000;
     this.writingEnabled=config.aiWritingEnabled===true;
     return config.enabled === true;
@@ -21,6 +22,7 @@ export class BlessingsClient {
     this.source = source;
     source.addEventListener('sync', event => {
       const snapshot = JSON.parse(event.data);
+      if((snapshot.generation||0)!==this.generation){this.reset(snapshot.generation);return;}
       this.cursor = snapshot.cursor;
       this.handlers.onSync(snapshot);
       this.handlers.onState('connected');
@@ -40,6 +42,7 @@ export class BlessingsClient {
       }
     };
   }
+  reset(generation){this.generation=generation;this.stopped=true;this.pause();this.handlers.onReset?.(generation);}
   pause() { clearTimeout(this.retry); this.source?.close(); this.source = null; }
   destroy() { this.stopped = true; this.pause(); for (const controller of this.controllers) controller.abort(); this.controllers.clear(); }
   history(before = null) { return this.request(`/history${before ? `?before=${encodeURIComponent(before)}` : ''}`); }
@@ -55,7 +58,8 @@ export class BlessingsClient {
       try { body = await response.json(); } catch { throw new Error('祝福服务暂时无法连接，请稍后重试'); }
       if (!response.ok) {
         const error = new Error(body.message || '祝福服务暂时无法连接，请稍后重试');
-        error.status = response.status;
+        error.status = response.status;error.code=body.error;
+        if(body.error==='ROOM_RESET')this.available().catch(()=>{});
         error.retryAfter = Number(response.headers.get('Retry-After')) || 0;
         throw error;
       }

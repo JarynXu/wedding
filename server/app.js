@@ -10,6 +10,7 @@ import { blessingsRouter } from './blessings/http.js';
 import { adminRouter } from './admin/http.js';
 import { readBuildInfo } from './admin/status.js';
 import { gamePublicRouter } from './game/http.js';
+import { requestTracing, logError } from './observability.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */
 export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, game = null, gameOrigin, startedAt = new Date(), buildInfo } = {}) {
@@ -18,6 +19,7 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
   const app = express();
   const applicationBuildInfo = buildInfo ?? readBuildInfo({ distDir });
   app.disable('x-powered-by');
+  app.use(requestTracing(applicationBuildInfo));
   app.use(compression({ filter: (request, response) => !request.path.startsWith('/api/blessings') && !request.headers.range && compression.filter(request, response) }));
   app.use('/api/blessings', blessingsRouter(blessings));
   app.use('/admin', adminRouter({ config: admin, blessings, game, startedAt, buildInfo: applicationBuildInfo }));
@@ -49,7 +51,7 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
   app.use((error, _request, response, next) => {
     if (response.headersSent) return next(error);
     const status = error.status === 400 || error.status === 403 ? error.status : 500;
-    if (status === 500) console.error('请柬服务响应失败', error);
+    if (status === 500) logError('http.unhandled_error',error);
     response.status(status).type('text/plain').send(status === 500 ? '页面暂时无法打开，请稍后重试。' : '请求地址无效。');
   });
   return app;

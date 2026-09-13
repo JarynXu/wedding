@@ -20,7 +20,7 @@ export function validateBlessing(body) {
   const payload = { name, text, gift, theme: body.theme };
   // 单份礼物沿用旧指纹，部署前未确认的请求仍能按原标识重试。
   const fingerprint = createHash('sha256').update(JSON.stringify(giftCount > 1 ? { ...payload, giftCount } : payload)).digest('hex');
-  return { ...payload, giftCount, requestId: body.requestId, clientId: body.clientId, fingerprint };
+  return { ...payload, giftCount, requestId: body.requestId, clientId: body.clientId, fingerprint, generation:readGeneration(body.generation) };
 }
 
 export function parseCursor(value) {
@@ -32,8 +32,9 @@ export function validateWriting(body) {
   if (!body || !isUuid(body.requestId) || !isUuid(body.clientId)) throw new BlessingError('INVALID_ID','请求凭据无效');
   if (!['classic','chinese'].includes(body.theme)) throw new BlessingError('INVALID_THEME','请柬主题无效');
   const text=cleanText(body.text ?? '',BLESSING_LIMITS.text,true);
-  return {requestId:body.requestId,clientId:body.clientId,text,theme:body.theme,fingerprint:createHash('sha256').update(JSON.stringify({text,theme:body.theme})).digest('hex')};
+  return {requestId:body.requestId,clientId:body.clientId,text,theme:body.theme,fingerprint:createHash('sha256').update(JSON.stringify({text,theme:body.theme})).digest('hex'),generation:readGeneration(body.generation)};
 }
+function readGeneration(value=0){if(!Number.isSafeInteger(value)||value<0)throw new BlessingError('INVALID_MESSAGE','请重新打开请柬');return value;}
 
 export function publicBlessing(row) {
   return { id: String(row.id), requestId: row.request_id, name: row.guest_name, text: row.message, gift: row.gift_id, giftCount: row.gift_id ? (row.gift_count ?? 1) : 0, giftName: findGift(row.gift_id)?.name || (row.gift_id ? '心意礼物' : ''), theme: row.sender_theme, createdAt: new Date(row.created_at).toISOString() };

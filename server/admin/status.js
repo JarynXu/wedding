@@ -1,3 +1,4 @@
+import { logError } from '../observability.js';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -75,7 +76,7 @@ async function readBlessingStats(blessings) {
       lastSavedAt: stats.lastSavedAt == null ? null : dateValue(stats.lastSavedAt)?.toISOString() || UNKNOWN,
     };
   } catch (error) {
-    console.error('管理后台读取祝福状态失败', error.code || error.name);
+    logError('admin.status_failed',error);
     return { connection: 'unavailable', read: 'unavailable', totalCount: null, lastSavedAt: null };
   }
 }

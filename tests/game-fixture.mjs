@@ -16,6 +16,7 @@ import { GameKnowledge } from '../server/game/knowledge.js';
 export const gameTestDatabase=process.env.BLESSINGS_TEST_DATABASE_URL;
 export async function gameFixture() {
   const pool=new pg.Pool({connectionString:gameTestDatabase,ssl:false,max:5});
+  await pool.query(await readFile(new URL('../server/operations-schema.sql',import.meta.url),'utf8'));
   await pool.query(await readFile(new URL('../server/game/schema.sql',import.meta.url),'utf8'));
   const room='game-test-'+randomUUID(),runtime={dataKey:randomBytes(32),sessionSecret:randomBytes(32).toString('hex'),dailyLimit:300,cookieSecure:false,captcha:{appId:'isolated-test-captcha'}};
   const codes=new Map();

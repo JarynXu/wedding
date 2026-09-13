@@ -1,3 +1,4 @@
+import { logError } from '../observability.js';
 import pg from 'pg';
 
 /** 每个进程共享一条通知连接；数据库游标负责恢复，订阅者只持有有界队列。 */
@@ -50,7 +51,7 @@ export class BlessingHub {
       if (this.cursor == null) this.cursor = await this.store.latestId();
       if (!this.stopped && this.listener === client) await this.refresh();
     } catch (error) {
-      console.error('祝福实时连接未就绪', error.code || error.name);
+      logError('blessings.listener_failed',error);
       lost();
     } finally { this.connecting = false; }
   }
@@ -64,6 +65,10 @@ export class BlessingHub {
     try {
       do {
         this.dirty = false;
+        const state=await this.store.state();
+        if(state.paused){this.unavailable();return;}
+        if(this.generation!==undefined&&this.generation!==state.generation){this.unavailable();this.cursor=await this.store.latestId();}
+        this.generation=state.generation;
         const messages = await this.store.since(this.cursor);
         if (this.stopped) return;
         for (const message of messages) {
@@ -74,7 +79,7 @@ export class BlessingHub {
       } while (this.dirty && !this.stopped);
       this.ready = Boolean(this.listener) && !this.stopped;
     } catch (error) {
-      console.error('祝福消息读取失败', error.code || error.name);
+      logError('blessings.poll_failed',error);
       this.unavailable();
     }
   }

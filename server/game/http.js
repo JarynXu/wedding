@@ -1,3 +1,5 @@
+import { prizeKind } from './store.js';
+import { withTrace, log, logError } from '../observability.js';
 import express from 'express';
 import { GameError, gamePhase } from './model.js';
 
@@ -25,16 +27,29 @@ export function gamePublicRouter(service, origin) {
     response.set('Set-Cookie', cookie(result.token, service.runtime.cookieSecure, 30 * 86400)).json({ authenticated: true });
   });
   router.post('/auth/logout', async (request, response) => { await service.identity.logout(request.get('Cookie')); response.set('Set-Cookie', cookie('', service.runtime.cookieSecure, 0)).json({ authenticated: false }); });
-  router.get('/leaderboard', async (_request, response) => {
-    const event = await service.store.event();
-    if (!event.published) throw new GameError('NOT_OPEN', '活动尚未开放', 409);
-    const { ordered, standings, candidates } = await service.store.ranking();
-    response.json({ provisional: !event.settled_at, qualifiedCount: standings.filter(row => row.qualifiedAt).length, entries: ordered.map(row => ({ id:row.id, rank:row.rank, name:row.name, score:row.score, podiumPlace:row.podiumPlace||null, ...(event.settled_at ? { prize:candidates.find(candidate=>candidate.id===row.id)?.prize||null } : {}) })) });
+  router.get('/leaderboard', async (request, response) => {
+    const participantId = await service.identity.session(request.get('Cookie'));
+    const board = await service.store.transaction(async client => {
+      const event = await service.store.event(client);
+      if (!event.published) throw new GameError('NOT_OPEN', '活动尚未开放', 409);
+      const { ordered, standings, candidates } = await service.store.ranking(client, event);
+      const prizes = new Map(candidates.map(candidate => [candidate.id, candidate]));
+      const entries = ordered.map(row => {
+        const candidate = prizes.get(row.id);
+        return { id:row.id, rank:row.rank, name:row.name, score:row.score, podiumPlace:row.podiumPlace||null,
+          potentialPrize:candidate?{name:candidate.prize,kind:prizeKind(candidate.slot),awarded:Boolean(event.settled_at)}:null,
+          ...(event.settled_at?{prize:candidate?.prize||null}:{}) };
+      });
+      const person = entries.find(entry => entry.id === participantId);
+      return { provisional:!event.settled_at, qualifiedCount:standings.filter(row => row.qualifiedAt).length,
+        entries, personal:person?{participant:{score:person.score},potentialPrize:person.potentialPrize}:null };
+    });
+    response.json(board);
   });
   router.use(async (request, _response, next) => {
     const id = await service.identity.session(request.get('Cookie'));
     if (!id) return next(new GameError('AUTH_REQUIRED', '请用手机号验证后参与', 401));
-    request.gameParticipantId = id; next();
+    request.gameParticipantId = id; withTrace({participant_id:id,room:service.store.room},next);
   });
   router.get('/me', async (request, response) => response.json(await service.store.participant(request.gameParticipantId)));
   router.get('/conversation',async(request,response)=>response.json(await service.conversation.snapshot(request.gameParticipantId)));
@@ -63,9 +78,9 @@ export function gameAdminRouter(service, actor) {
   router.post('/review/:id', async (request, response) => { await service.store.manualReview(request.params.id, request.body, actor); response.json({ ok: true }); });
   router.post('/conversation/:id/resolve',async(request,response)=>response.json(await service.conversation.resolveFailure(request.params.id,request.body,actor)));
   router.get('/settlement-preview', async (_request, response) => response.json(await service.store.settlementPreview()));
-  router.post('/settle', async (request, response) => response.json(await service.store.settle(request.body,actor)));
+  router.post('/settle', async (request, response) => {const result=await service.store.settle(request.body,actor);log('game.settled',{room:service.store.room,counts:{awarded:result.awarded},status:result.alreadySettled?'replayed':'settled'});response.json(result);});
   router.post('/redemption/check', async (request, response) => response.json(await service.store.redemption(request.body.code)));
-  router.post('/redemption', async (request, response) => response.json(await service.store.redemption(request.body.code, actor, request.body.requestId)));
+  router.post('/redemption', async (request, response) => {const result=await service.store.redemption(request.body.code, actor, request.body.requestId);log('game.redeemed',{room:service.store.room,business_id:request.body.requestId,status:result.alreadyRedeemed?'replayed':'redeemed'});response.json(result);});
   router.use(gameErrors); return router;
 }
 function ready(service) { return async (_request, _response, next) => { if (!service) return next(new GameError('GAME_UNAVAILABLE', '主持人还在准备，稍后再来看看。', 503)); await service.ensure(); next(); }; }
@@ -81,7 +96,7 @@ function guestGameErrors(error,request,response,next){
 function gameErrors(error, _request, response, next) {
   if (response.headersSent) return next(error);
   const known = error instanceof GameError, invalid = error.type === 'entity.parse.failed' || error.type === 'entity.too.large';
-  if (!known && !invalid) console.error('游戏请求失败', error.code || error.name);
+  if (!known && !invalid) logError('game.request_failed',error);else log('game.request_rejected',{error_code:error.code||'INVALID_JSON',status:error.status||400},'warn');
   if (error.retryAfter) response.set('Retry-After', String(error.retryAfter));
   response.status(known ? error.status : invalid ? 400 : 503).json({ error: known ? error.code : invalid ? 'INVALID_JSON' : 'UNAVAILABLE', message: known ? error.message : invalid ? '这句话没能送出去，请再试一次。' : '刚才没有连上，请稍后再试。' });
 }

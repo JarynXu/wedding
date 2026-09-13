@@ -12,7 +12,9 @@ export function readGameRuntime(env = process.env) {
     if(!['openai-compatible','deepseek'].includes(provider))throw new Error('GAME_AI_PROVIDER 须为 openai-compatible 或 deepseek');
     const url = new URL(env.GAME_AI_BASE_URL);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('GAME_AI_BASE_URL 须为模型 API 基础地址');
-    ai = { provider,baseUrl: url.href.replace(/\/$/, ''), key: env.GAME_AI_API_KEY, model: env.GAME_AI_MODEL, reviewModel: env.GAME_AI_REVIEW_MODEL, hostModel: env.GAME_AI_HOST_MODEL || env.GAME_AI_MODEL };
+    const maxInflight=Number(env.GAME_AI_MAX_INFLIGHT||120);if(!Number.isInteger(maxInflight)||maxInflight<1||maxInflight>2000)throw new Error('GAME_AI_MAX_INFLIGHT 须为 1–2000');
+    const accountScope=env.GAME_AI_ACCOUNT_SCOPE||'deepseek-main';if(!/^[a-zA-Z0-9_-]{1,100}$/.test(accountScope))throw new Error('GAME_AI_ACCOUNT_SCOPE 格式无效');
+    ai = { maxInflight,accountScope,provider,baseUrl: url.href.replace(/\/$/, ''), key: env.GAME_AI_API_KEY, model: env.GAME_AI_MODEL, reviewModel: env.GAME_AI_REVIEW_MODEL, hostModel: env.GAME_AI_HOST_MODEL || env.GAME_AI_MODEL };
   }
   const smsFields = [env.GAME_ALIYUN_ACCESS_KEY_ID, env.GAME_ALIYUN_ACCESS_KEY_SECRET, env.GAME_SMS_SIGN_NAME, env.GAME_SMS_TEMPLATE_CODE];
   if (smsFields.some(Boolean) && !smsFields.every(Boolean)) throw new Error('阿里云短信认证密钥、签名和模板 Code 须一并配置');
@@ -22,6 +24,7 @@ export function readGameRuntime(env = process.env) {
   const captcha=env.GAME_CAPTCHA_APP_ID?{appId:env.GAME_CAPTCHA_APP_ID,appKey:env.GAME_CAPTCHA_APP_KEY}:null;
   const dailyLimit = Number(env.GAME_SMS_DAILY_LIMIT || 300);
   if (!Number.isInteger(dailyLimit) || dailyLimit < 1 || dailyLimit > 5000) throw new Error('GAME_SMS_DAILY_LIMIT 须为 1–5000');
+  const networkHourlyLimit=Number(env.GAME_SMS_NETWORK_HOURLY_LIMIT||500);if(!Number.isInteger(networkHourlyLimit)||networkHourlyLimit<1||networkHourlyLimit>10000)throw new Error('GAME_SMS_NETWORK_HOURLY_LIMIT 须为 1–10000');
   const workers=Number(env.GAME_AI_CONCURRENCY||8);if(!Number.isInteger(workers)||workers<1||workers>32)throw new Error('GAME_AI_CONCURRENCY 须为 1–32');
-  return { dataKey: Buffer.from(dataKey, 'hex'), sessionSecret: env.GAME_SESSION_SECRET, ai, sms, captcha, dailyLimit, workers, cookieSecure: env.NODE_ENV === 'production' };
+  return { dataKey: Buffer.from(dataKey, 'hex'), sessionSecret: env.GAME_SESSION_SECRET, ai, sms, captcha, dailyLimit, networkHourlyLimit, workers, cookieSecure: env.NODE_ENV === 'production' };
 }

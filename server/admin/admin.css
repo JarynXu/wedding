@@ -270,3 +270,9 @@ dd { min-width: 0; margin: 0; color: #47212a; font-size: 0.98rem; font-weight: 6
   .settlement-prize { grid-column: 2; text-align: left; }
   .redemption-form { grid-template-columns: 1fr; }
 }
+
+#roomOperationsPanel [data-summary] { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:14px 0; font-size:13px; }
+#roomOperationsPanel [data-summary] p { margin:0; }
+#roomOperationsPanel form { display:grid; gap:14px; }
+#roomOperationsPanel form[hidden] { display:none; }
+.danger-button { min-height:44px; padding:10px 16px; background:#7b2935; color:#fff4e1; border:1px solid #bd925d; border-radius:9px; font:inherit; }

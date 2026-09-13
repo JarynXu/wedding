@@ -124,6 +124,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS wedding_game_chat_nudge ON wedding_game_chat_t
 CREATE INDEX IF NOT EXISTS wedding_game_chat_work ON wedding_game_chat_turns(room_id,state,id);
 ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS attempts INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS last_attempt_at TIMESTAMPTZ;
+ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS trace_id VARCHAR(32);
+ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS parent_span_id VARCHAR(16);
+ALTER TABLE wedding_game_chat_turns ADD COLUMN IF NOT EXISTS available_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp();
+ALTER TABLE wedding_game_answers ADD COLUMN IF NOT EXISTS trace_id VARCHAR(32);
+ALTER TABLE wedding_game_answers ADD COLUMN IF NOT EXISTS parent_span_id VARCHAR(16);
 CREATE TABLE IF NOT EXISTS wedding_game_reviews (
   id BIGSERIAL PRIMARY KEY,
   answer_id BIGINT NOT NULL REFERENCES wedding_game_answers(id),

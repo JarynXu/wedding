@@ -1,3 +1,4 @@
+import { logError } from '../observability.js';
 import { createHmac } from 'node:crypto';
 import { GameError,text } from './model.js';
 
@@ -14,7 +15,7 @@ export class AliyunGameCaptcha {
       const response=await this.fetcher('https://captcha.alicaptcha.com/validate?captcha_id='+encodeURIComponent(this.config.appId),{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({...fields,sign_token:signature}),signal:AbortSignal.timeout(10000)});
       if(!response.ok)throw new Error('CAPTCHA_HTTP_'+response.status);
       result=await response.json();
-    }catch(error){console.error('图形二次校验未完成',error.code||error.name);throw new GameError('CAPTCHA_UNAVAILABLE','图形验证暂时无法完成，请稍后重试',503);}
+    }catch(error){logError('captcha.failed',error);throw new GameError('CAPTCHA_UNAVAILABLE','图形验证暂时无法完成，请稍后重试',503);}
     if(result.status!=='success'||result.result!=='success'||result.captcha_args?.lot_number!==fields.lot_number)throw new GameError('CAPTCHA_FAILED','图形验证未通过，请重新验证');
     return fields.lot_number;
   }

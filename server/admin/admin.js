@@ -1,4 +1,6 @@
+import { OperationsPanel } from './operations.js';
 import { KnowledgeEditor } from './knowledge.js';
+const operationsPanel=new OperationsPanel({root:document.querySelector('#roomOperationsPanel'),request,onChange:()=>loadGame()});
 const knowledgeEditor=new KnowledgeEditor({root:document.querySelector('#gameKnowledgeEditor'),request,onAuthError:handleAuthError});
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 const $ = selector => document.querySelector(selector);

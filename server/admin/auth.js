@@ -2,27 +2,29 @@ import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { verifyPassword } from './password.js';
 
 export class AdminAuth {
-  constructor(config, { clock = () => Date.now() } = {}) {
+  constructor(config, { clock = () => Date.now(), store = null } = {}) {
     this.config = config;
     this.clock = clock;
+    this.store=store;
     this.attempts = new Map();
     this.username = Buffer.from(config.username, 'utf8');
   }
 
   async login(username, password, clientKey) {
     const key = clientKey || 'unknown';
-    const limit = this.consumeAttempt(key);
+    const limit = this.store?await this.store.consumeAttempt(key):this.consumeAttempt(key);
     if (!limit.allowed) return { ok: false, rateLimited: true, retryAfter: limit.retryAfter };
     const sameUsername = typeof username === 'string' && equalBuffer(Buffer.from(username, 'utf8'), this.username);
     const validPassword = await verifyPassword(typeof password === 'string' ? password : '', this.config.passwordHash);
     if (!sameUsername || !validPassword) return { ok: false, rateLimited: false };
     this.attempts.delete(key);
+    await this.store?.resetAttempts(key);
     const now = Math.floor(this.clock() / 1000);
     const payload = Buffer.from(JSON.stringify({ sub: this.config.username, iat: now, exp: now + this.config.sessionTtlSeconds, nonce: randomBytes(16).toString('base64url') })).toString('base64url');
     return { ok: true, cookieValue: `${payload}.${sign(payload, this.config.sessionSecret)}`, maxAge: this.config.sessionTtlSeconds };
   }
 
-  sessionFromCookie(header) {
+  #readSignedSession(header) {
     const value = readCookie(header, this.config.cookieName);
     const session = decodeSession(value, this.config.sessionSecret);
     if (!session || !equalBuffer(Buffer.from(session.sub, 'utf8'), this.username)) return null;
@@ -31,7 +33,8 @@ export class AdminAuth {
     return session;
   }
 
-  logout(_header) { /* 无状态会话由客户端清除 Cookie；旧 Cookie 在过期前仍可验证。 */ }
+  async authenticateCookie(header){const session=this.#readSignedSession(header);return session&&(!this.store||!await this.store.revoked(session.nonce))?session:null;}
+  async logout(header) { const session=this.#readSignedSession(header);if(session)await this.store?.revoke(session.nonce,session.exp); }
 
   consumeAttempt(key) {
     const now = this.clock();

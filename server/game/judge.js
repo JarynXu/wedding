@@ -11,7 +11,7 @@ const schema = { type: 'object', properties: { verdict: { type: 'string', enum: 
 
 /** 审查、仲裁与对话依次运行；对话角色只取得枚举状态。 */
 export class GameJudge {
-  constructor(config) { this.config = config; this.configured = Boolean(config); this.client = config ? new JsonModelClient(config) : null; this.host = new GameHost(config); }
+  constructor(config,client) { this.config = config; this.configured = Boolean(config); this.client = client || (config ? new JsonModelClient(config) : null); this.host = new GameHost(config,client); }
   async grade(answer, signal, progress = async () => {}) {
     const bounded = AbortSignal.any([...(signal ? [signal] : []), AbortSignal.timeout(70000)]);
     let reviewer = null, judge = null, status = 'review', reason = '判题暂未完成，等待人工复核';
@@ -33,7 +33,7 @@ export class GameJudge {
   }
   async evaluate(model, answer, signal) {
     const trusted = { question: answer.question.title, standardAnswer: answer.question.answer, acceptedAliases: answer.question.aliases, scoringRubric: answer.question.rubric, organizerNotes: answer.instructions };
-    const response = await this.client.complete({model,messages:[
+    const response = await this.client.complete({operation:'judging',model,messages:[
         { role: 'system', content: policy + '\n可信题目资料：\n' + JSON.stringify(trusted) },
         { role: 'user', content: JSON.stringify({ untrustedAnswer: answer.text }) },
     ],schema},signal);

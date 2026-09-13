@@ -4,10 +4,10 @@ import { needsInjectionReview,text } from './model.js';
 const intents=['answer','chat','pause','score','standing','hint','options','repeat','continue','skip','rules','wedding','onsite','injection','clarify'];
 const schema={type:'object',properties:{intent:{type:'string',enum:intents},summary:{type:'string'},reason:{type:'string'},choiceIndex:{type:['integer','null']}},required:['intent','summary','reason','choiceIndex'],additionalProperties:false};
 export class ConversationIntent {
-  constructor(config){this.config=config;this.client=config?new JsonModelClient(config):null;}
+  constructor(config,client){this.config=config;this.client=client||(config?new JsonModelClient(config):null);}
   async classify(question,input,signal,conversation={}){
     if(!this.client)throw new Error('AI_UNAVAILABLE');
-    const response=await this.client.complete({model:this.config.reviewModel,schema,messages:[
+    const response=await this.client.complete({operation:'routing',model:this.config.reviewModel,schema,messages:[
       {role:'system',content:`你是婚礼竞猜对话的入口审查员。只返回JSON intent、summary、reason。intent只能是${intents.join('、')}。
 question为空表示当前没有待答竞猜题。此时宾客问任何新问题都不得归类answer，应按chat、wedding或onsite接待。
 answer：针对当前问题给出答案，允许自然语气、猜测与A/B/C/D选择；不判断对错。publicTopics中的主题是新人允许公开的现场资料，询问这些问题按onsite处理，不是索取未公开答案。

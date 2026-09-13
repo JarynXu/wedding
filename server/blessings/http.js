@@ -1,11 +1,13 @@
 import express from 'express';
 import { isIP } from 'node:net';
 import { BlessingError, parseCursor, validateBlessing, validateWriting } from './model.js';
+import { GameError } from '../game/model.js';
+import { log, logError } from '../observability.js';
 
 export function blessingsRouter(service) {
   const router = express.Router();
   router.use((_request, response, next) => { response.set('Cache-Control', 'no-store'); next(); });
-  router.get('/config', (_request, response) => response.json({ enabled: Boolean(service), ...(service ? { aiWritingEnabled:Boolean(service.writing?.configured), giftRecordIntervalMs: Math.max(1000, service.config?.minIntervalMs ?? 3000, Math.ceil(60000 / (service.config?.clientLimit || 12))) } : {}) }));
+  router.get('/config', async (_request, response) => {const state=service?await service.store.state():null;response.json({ enabled:Boolean(service)&&!state.paused,...(state?{generation:state.generation}:{}),...(service?{aiWritingEnabled:Boolean(service.writing?.configured),giftRecordIntervalMs:Math.max(1000,service.config?.minIntervalMs??3000,Math.ceil(60000/(service.config?.clientLimit||12)))}:{})});});
   router.use((_request, _response, next) => next(service ? undefined : new BlessingError('DISABLED', '祝福功能尚未开放', 503)));
   router.get('/history', async (request, response) => {
     const before = parseCursor(singleQuery(request, 'before'));
@@ -26,14 +28,15 @@ export function blessingsRouter(service) {
   }, express.json({ limit: '4kb', strict: true }), async (request, response) => {
     const message = validateBlessing(request.body);
     const result = await service.store.save(message, clientNetwork(request, service.config));
+    log('blessing.saved',{room:service.config.room,business_id:message.requestId,job_id:result.message.id,generation:message.generation,status:result.created?'created':'replayed'});
     response.status(result.created ? 201 : 200).json(result);
     service.hub.refresh();
   });
   router.use((error, _request, response, next) => {
     if (response.headersSent) return next(error);
-    const known = error instanceof BlessingError;
+    const known = error instanceof BlessingError || error instanceof GameError;
     const invalid = error.type === 'entity.parse.failed' || error.type === 'entity.too.large';
-    if (!known && !invalid) console.error('祝福请求失败', error.code || error.name);
+    if (!known && !invalid) logError('blessing.request_failed',error);else log('blessing.rejected',{error_code:error.code,status:error.status},'warn');
     const status = known ? error.status : invalid ? 400 : 503;
     if (error.retryAfter) response.set('Retry-After', String(error.retryAfter));
     response.status(status).json({ error: known ? error.code : invalid ? 'INVALID_JSON' : 'UNAVAILABLE', message: known ? error.message : invalid ? '发送内容格式有误' : '祝福服务暂时无法连接，请稍后重试' });
@@ -53,6 +56,7 @@ function clientNetwork(request, config) {
 
 /** 先订阅并暂存更新，再读取快照；写入快照后按序号排除重复。 */
 async function openStream(request, response, { store, hub, config, streams }, after) {
+  const state=await store.state();if(state.paused)throw new BlessingError('PAUSED','互动暂歇，稍后再来看看。',503);
   if (!hub.ready) throw new BlessingError('UNAVAILABLE', '祝福正在重连', 503);
   if (streams.size >= config.maxStreams) throw new BlessingError('BUSY', '祝福连接繁忙，请稍后重试', 503);
   let closed = false;
@@ -103,7 +107,7 @@ async function openStream(request, response, { store, hub, config, streams }, af
     response.status(200).set({ 'Content-Type': 'text/event-stream; charset=utf-8', 'Cache-Control': 'no-cache, no-transform', 'X-Accel-Buffering': 'no', 'Connection': 'keep-alive' });
     response.flushHeaders();
     response.write('retry: 3000\n\n');
-    send('sync', { messages, cursor, reset }, cursor);
+    send('sync', { messages, cursor, reset, generation:state.generation }, cursor);
     syncing = false;
     pending.forEach(deliver);
     pending = [];
@@ -112,5 +116,5 @@ async function openStream(request, response, { store, hub, config, streams }, af
       else response.write(': heartbeat\n\n');
     }, 10000);
     heartbeat.unref();
-  } catch (error) { console.error('祝福同步失败', error.code || error.name); close(); }
+  } catch (error) { logError('blessings.sync_failed',error); close(); }
 }

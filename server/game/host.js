@@ -8,7 +8,7 @@ const policy = `你是婚礼默契小游戏里的问答伙伴，正在与一位�
 
 /** 对话角色只接受公开题目和状态，不接受答案对象或评审自由文本。 */
 export class GameHost {
-  constructor(config) { this.config = config; this.client = config ? new JsonModelClient(config) : null; }
+  constructor(config,client) { this.config = config; this.client = client || (config ? new JsonModelClient(config) : null); }
   async opening(question, index, signal) {
     return this.compose({ task: 'opening', question, number: index + 1 }, questionGreeting(index), signal);
   }

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { GameError,gamePhase,text,uuid } from './model.js';
 import { fallbackDeck } from './question-deck.js';
 import { numericId } from './store.js';
+import { traceContext, log } from '../observability.js';
 
 /** 一位宾客的对话顺序、当前问题和重复消息由数据库拥有。 */
 export class ConversationStore {
@@ -36,15 +37,17 @@ export class ConversationStore {
         count(*) FILTER(WHERE state<>'complete')::int AS pending FROM wedding_game_chat_turns WHERE participant_id=$1`,[participantId])).rows[0];
       if(rate.pending>=3)throw new GameError('CHAT_BUSY','让我先接住前面那句，马上回来～',429,2);
       if(rate.count>=80)throw new GameError('CHAT_RATE_LIMITED','让我们歇一小会儿，稍后继续聊。',429,60);
-      const row=(await client.query(`INSERT INTO wedding_game_chat_turns(room_id,participant_id,request_id,kind,input,question_id,config_version)
-        VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id`,[this.room,participantId,requestId,kind,input,conversation.active_question,conversation.active_config_version||event.version])).rows[0];
+      const trace=traceContext();
+      const row=(await client.query(`INSERT INTO wedding_game_chat_turns(room_id,participant_id,request_id,kind,input,question_id,config_version,trace_id,parent_span_id)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,[this.room,participantId,requestId,kind,input,conversation.active_question,conversation.active_config_version||event.version,trace.trace_id||null,trace.span_id||null])).rows[0];
       return {id:String(row.id)};
-    });
+    }).then(result=>{log('conversation.accepted',{room:this.room,participant_id:participantId,business_id:requestId,job_id:result.id,job_kind:kind});return result;});
   }
   async claim(){
     return this.game.transaction(async client=>{
       const {rows}=await client.query(`WITH candidate AS (
-        SELECT t.id FROM wedding_game_chat_turns t WHERE t.room_id=$1
+        SELECT t.id FROM wedding_game_chat_turns t WHERE t.room_id=$1 AND t.available_at<=clock_timestamp()
+        AND EXISTS(SELECT 1 FROM wedding_games g WHERE g.room_id=t.room_id AND g.published)
         AND (t.state='pending' OR (t.state='processing' AND t.lease_until<clock_timestamp()))
         AND NOT EXISTS(SELECT 1 FROM wedding_game_chat_turns earlier WHERE earlier.participant_id=t.participant_id AND earlier.id<t.id AND earlier.state<>'complete')
         ORDER BY t.id FOR UPDATE SKIP LOCKED LIMIT 1)
@@ -56,6 +59,11 @@ export class ConversationStore {
   async progress(turn,stage){
     const updated=await this.pool.query("UPDATE wedding_game_chat_turns SET progress=$3 WHERE id=$1 AND lease_token=$2 AND state='processing'",[turn.id,turn.lease_token,stage]);
     if(!updated.rowCount)throw new Error('CHAT_SUPERSEDED');
+    log('conversation.stage',{stage});
+  }
+  async defer(turn,waitMs) {
+    await this.pool.query("UPDATE wedding_game_chat_turns SET state='pending',progress='thinking',lease_token=NULL,lease_until=NULL,available_at=clock_timestamp()+$3*interval '1 millisecond' WHERE id=$1 AND lease_token=$2 AND state='processing'",[turn.id,turn.lease_token,waitMs]);
+    log('conversation.deferred',{wait_ms:waitMs,attempt:turn.attempts},'warn');
   }
   async saveDecision(turn,audit){const updated=await this.pool.query("UPDATE wedding_game_chat_turns SET audit=$3 WHERE id=$1 AND lease_token=$2 AND state='processing'",[turn.id,turn.lease_token,audit]);if(!updated.rowCount)throw new Error('CHAT_SUPERSEDED');}
   async release(turn){await this.pool.query("UPDATE wedding_game_chat_turns SET state='pending',lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2 AND state='processing'",[turn.id,turn.lease_token]);}
