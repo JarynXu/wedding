@@ -1,3 +1,4 @@
+import { haptic } from '../haptics.js';
 import { ThemeFireworks } from './fireworks.js';
 import { findGift } from './catalog.js';
 import { rosePetalsUrl } from '../petals.js';
@@ -37,9 +38,10 @@ export class GiftEffects {
     this.canvas.height = this.height * ratio;
     this.context?.setTransform(ratio, 0, 0, ratio, 0, 0);
   }
-  play(id) {
+  play(id,{local=false}={}) {
     const gift = findGift(id);
     if (!gift || !this.context || this.motion.matches || document.hidden) return;
+    if(local)haptic('tap');
     const seed = Math.random() * Math.PI;
     const sparks = Array.from({ length: gift.effect === 'fireworks' ? (this.active.length ? 28 : 60) : (this.active.length ? 12 : 28) }, (_, i) => ({
       angle: i * 2.39996 + seed, speed: gift.effect==='fireworks'?44+Math.random()*62:18+Math.random()*50,
@@ -47,7 +49,7 @@ export class GiftEffects {
     }));
     this.canvas.dataset.gift = id;
     this.canvas.dataset.state = 'playing';
-    this.active.push({ gift, sparks, started: performance.now(), variant: this.effectSequence++ % 3 });
+    this.active.push({ gift, sparks, local, started: performance.now(), variant: this.effectSequence++ % 3 });
     // 每次新操作均入场；密集点击时释放最早的一批，避免无界叠加和长队列。
     if (this.active.length > 10) this.active.shift();
     this.canvas.dataset.activeCount = String(this.active.length);
@@ -58,7 +60,7 @@ export class GiftEffects {
     this.active = this.active.filter(effect => now - effect.started < 3400);
     if (!this.active.length) return this.clear();
     this.context.clearRect(0, 0, this.width, this.height);
-    for (const effect of this.active) this.draw(effect, Math.max(0, now - effect.started) / 1000);
+    for (const effect of this.active) {const elapsed=Math.max(0,now-effect.started)/1000;if(effect.local&&effect.gift.effect==='fireworks'&&elapsed>=.55&&!effect.burstFelt){effect.burstFelt=true;haptic('fireworks');}this.draw(effect,elapsed);}
     this.canvas.dataset.activeCount = String(this.active.length);
     this.frame = requestAnimationFrame(time => this.tick(time));
   }

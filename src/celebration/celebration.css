@@ -136,3 +136,10 @@
   @keyframes blessing-still { 0%, 100% { opacity: 0; } 5%, 95% { opacity: 1; } }
 }
 @keyframes gift-press { from { transform: scale(.92); } to { transform: scale(1.06) translateY(-2px); } }
+
+.blessing-signature { display:flex; align-items:baseline; gap:9px; margin:12px 0 14px; font-size:11px; color:var(--ink-light); }
+.blessing-signature strong { color:var(--burgundy); font-size:14px; font-weight:400; overflow-wrap:anywhere; }
+.blessing-signature[hidden],.blessing-name-field[hidden] { display:none; }
+.blessing-ai-write { overflow:hidden; min-width:62px; }
+.blessing-ai-write[data-state=cooling] { color:#927554; opacity:.78; cursor:default; }
+.blessing-ai-write[data-state=cooling]::after { content:''; position:absolute; left:8px; right:8px; bottom:4px; height:1px; background:var(--gold); transform-origin:left; transform:scaleX(var(--ai-ready,0)); }

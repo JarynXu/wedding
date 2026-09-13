@@ -1,3 +1,5 @@
+import { WritingCooldown } from './writing-cooldown.js';
+import { haptic,bindHapticControls } from '../haptics.js';
 import { giftsForTheme, findGift, BLESSING_LIMITS } from './catalog.js';
 import { BlessingsClient } from './client.js';
 import { GiftEffects } from './gift-effects.js';
@@ -34,7 +36,7 @@ function giftIcon(id) {
 export class Celebration {
   constructor({ app, theme, openModal, closeModal }) {
     this.app = app; this.theme = theme; this.openModal = openModal; this.closeModal = closeModal;
-    this.events = new AbortController();
+    this.events = new AbortController();bindHapticControls(document,this.events.signal);
     this.messageVersion = 0;
     this.seen = new Set();
     this.queue = [];
@@ -51,10 +53,10 @@ export class Celebration {
     this.dialogs = new InvitationDialogs();
     this.createView();
     this.effects = new GiftEffects(this.canvas, theme);
-    this.client = new BlessingsClient({ onSync: snapshot => this.sync(snapshot), onMessage: message => this.receive(message), onState: state => this.connectionState(state),generation:memory.read('generation')||0,onReset:generation=>{memory.write('generation',generation);memory.write('pending',null);memory.write('pendingGift',null);try{localStorage.removeItem('wedding.guest.profile');localStorage.removeItem('wedding.blessings.name');sessionStorage.removeItem('wedding.game.chat.pending');sessionStorage.removeItem('wedding.game.pending');}catch{}location.reload();} });
+    this.client = new BlessingsClient({ onSync: snapshot => this.sync(snapshot), onMessage: message => this.receive(message), onState: state => this.connectionState(state),generation:memory.read('generation')||0,onReset:generation=>{memory.write('generation',generation);memory.write('pending',null);memory.write('pendingGift',null);memory.write('writingCooldown',null);try{localStorage.removeItem('wedding.guest.profile');localStorage.removeItem('wedding.blessings.name');sessionStorage.removeItem('wedding.game.chat.pending');sessionStorage.removeItem('wedding.game.pending');}catch{}location.reload();} });
     this.quick = new QuickGifts({
       buttons: this.dock.querySelectorAll('[data-quick-gift]'), client: this.client, pending: this.pendingGift,
-      play: id => this.effects.play(id), persist: message => memory.write('pendingGift', message), recorded: message => this.receive(message, true),
+      play: id => this.effects.play(id,{local:true}), persist: message => memory.write('pendingGift', message), recorded: message => this.receive(message, true),
       createMessage: (gift, giftCount) => {
         const name = this.nameInput.value.trim().normalize('NFC');
         if ([...name].length > BLESSING_LIMITS.name) return null;
@@ -62,7 +64,7 @@ export class Celebration {
         return { requestId: uuid(), clientId: this.clientId, name, text: '', gift, giftCount, theme: this.theme, generation:this.client.generation };
       },
     });
-    watchGuestName(name => { if (!this.pending) { this.nameInput.value=name;this.nameInput.readOnly=Boolean(registeredGuestName()); } }, this.events.signal);
+    watchGuestName(name => { if (!this.pending) { this.nameInput.value=name;this.updateSignature(); } }, this.events.signal);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { this.client.pause(); this.clearVisuals(); }
       else if (this.enabled && this.entered) this.client.connect();
@@ -97,7 +99,7 @@ export class Celebration {
       <button class="modal-close" type="button" data-close-modal="blessingsModal" aria-label="关闭祝福面板">×</button>
       <div class="blessings-tabs" role="tablist" aria-label="祝福面板"><button type="button" role="tab" id="blessingComposeTab" aria-controls="blessingCompose" aria-selected="true" data-tab="compose">送祝福</button><button type="button" role="tab" id="blessingHistoryTab" aria-controls="blessingHistory" aria-selected="false" data-tab="history" tabindex="-1">祝福簿</button></div>
       <form id="blessingCompose" role="tabpanel" aria-labelledby="blessingComposeTab">
-        <label class="blessing-label" for="blessingName">您的称呼</label><input id="blessingName" name="name" autocomplete="nickname" placeholder="让新人知道是谁的心意" maxlength="48">
+        <div class="blessing-signature" hidden><span>来自</span><strong></strong></div><div class="blessing-name-field"><label class="blessing-label" for="blessingName">您的称呼</label><input id="blessingName" name="name" autocomplete="nickname" placeholder="让新人知道是谁的心意" maxlength="48"></div>
         <label class="blessing-label" for="blessingMessage">写下祝福 <span id="blessingCount">0 / 120</span></label><div class="blessing-writing-field"><textarea id="blessingMessage" name="text" rows="3" maxlength="240" placeholder="愿你们岁岁相伴，年年欢喜。"></textarea><button type="button" class="blessing-ai-write" hidden>✧ AI</button></div>
         <fieldset class="blessing-gifts"><legend>捎上一份心意</legend><div class="blessing-gift-options"></div></fieldset>
         <p class="blessing-audience">祝福将收录于祝福簿，来宾均可看见。</p>
@@ -118,7 +120,7 @@ export class Celebration {
     this.form = this.modal.querySelector('form');
     this.nameInput = this.form.elements.name;
     this.textInput = this.form.elements.text;
-    this.aiButton=this.modal.querySelector('.blessing-ai-write');this.aiButton.onclick=()=>this.polishBlessing();
+    this.aiButton=this.modal.querySelector('.blessing-ai-write');this.cooldown=new WritingCooldown(this.aiButton,{blocked:()=>this.sending,read:()=>memory.read('writingCooldown'),write:value=>memory.write('writingCooldown',value),label:()=>this.textInput.value.trim()?'AI 润色祝福':'AI 写一句祝福'});this.aiButton.onclick=()=>this.polishBlessing();
     this.result = this.modal.querySelector('.blessing-result');
     this.submit = this.modal.querySelector('.blessing-send');
     this.nameInput.value = guestName(); this.nameInput.readOnly=Boolean(registeredGuestName());
@@ -131,6 +133,7 @@ export class Celebration {
       if (this.selectedGift && !availableGifts.some(gift => gift.id === this.selectedGift)) availableGifts.push(findGift(this.selectedGift));
       this.result.textContent = '上次发送的结果待确认。点击送出可确认或重试。';
     } else this.pending = null;
+    this.updateSignature();
     const options = this.modal.querySelector('.blessing-gift-options');
     availableGifts.forEach(gift => {
       const button = document.createElement('button'); button.type = 'button'; button.dataset.gift = gift.id;
@@ -142,7 +145,7 @@ export class Celebration {
       }, { signal: this.events.signal });
       options.append(button);
     });
-    const updateCount = () => { this.modal.querySelector('#blessingCount').textContent = `${[...this.textInput.value].length} / ${BLESSING_LIMITS.text}`;this.aiButton.setAttribute('aria-label',this.textInput.value.trim()?'AI 润色祝福':'AI 写一句祝福'); };
+    const updateCount = () => { this.modal.querySelector('#blessingCount').textContent = `${[...this.textInput.value].length} / ${BLESSING_LIMITS.text}`;this.cooldown.refresh(); };
     this.textInput.addEventListener('input', updateCount, { signal: this.events.signal }); updateCount();
     this.form.addEventListener('submit', event => { event.preventDefault(); this.send(); }, { signal: this.events.signal });
     this.modal.querySelectorAll('[data-tab]').forEach(tab => {
@@ -161,6 +164,11 @@ export class Celebration {
       if (event.shiftKey && document.activeElement === controls[0]) { event.preventDefault(); controls.at(-1).focus(); }
       else if (!event.shiftKey && document.activeElement === controls.at(-1)) { event.preventDefault(); controls[0].focus(); }
     }, { signal: this.events.signal });
+  }
+  updateSignature(){
+    const registered=Boolean(registeredGuestName()),signature=this.form.querySelector('.blessing-signature');
+    this.nameInput.readOnly=registered;this.form.querySelector('.blessing-name-field').hidden=registered;signature.hidden=!registered;
+    signature.querySelector('strong').textContent=this.nameInput.value;
   }
   async enter() {
     this.entered = true;
@@ -260,7 +268,7 @@ export class Celebration {
       const result = await this.client.send(this.pending);
       if (this.destroyed) return;
       this.pending = null; memory.write('pending', null);
-      this.receive(result.message, true);
+      this.receive(result.message, true);haptic('send');
       this.result.textContent = '祝福已送达，收录于祝福簿。';
       this.announcement.textContent = this.result.textContent;
       this.textInput.value = ''; this.selectedGift = '';
@@ -270,25 +278,26 @@ export class Celebration {
     } catch (error) {
       if (this.destroyed) return;
       this.result.textContent = error.status && error.status < 500 ? error.message : '暂未确认送达。内容已保留，点击送出可确认或重试。';
-    } finally { this.sending = false; this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = false; }); this.form.removeAttribute('aria-busy'); }
+    } finally { this.sending = false; this.form.querySelectorAll('input,textarea,button').forEach(control => { control.disabled = false; }); this.form.removeAttribute('aria-busy');this.cooldown.refresh();this.updateSignature(); }
   }
   async polishBlessing() {
-    if(this.writing||this.sending)return;
+    if(this.writing||this.sending||this.cooldown.remaining)return;
     const original=this.textInput.value;
     if([...original.trim()].length>BLESSING_LIMITS.text){await this.dialogs.alert('祝福请控制在120字以内，再试试润色。');return;}
-    this.writing=true;this.aiButton.disabled=true;this.aiButton.setAttribute('aria-busy','true');this.submit.disabled=true;
+    this.writing=true;this.cooldown.wait(this.client.writingCooldownSeconds||20);this.cooldown.setBusy(true);this.submit.disabled=true;
     try{
       const result=await this.client.polish({requestId:uuid(),clientId:this.clientId,text:original.trim(),theme:this.theme,generation:this.client.generation});
       if(this.destroyed)return;
+      this.cooldown.wait(result.retryAfter||this.client.writingCooldownSeconds||20);
       if(this.textInput.value!==original){
         const accepted=await this.dialogs.show({title:'AI写好了一份祝福',content:result.text,confirmText:'使用这一句',cancelText:'保留我的修改'});if(!accepted)return;
       }
       this.textInput.value=result.text;this.textInput.dispatchEvent(new Event('input'));
-    }catch(error){if(!this.destroyed)await this.dialogs.alert(error.message||'这次没能写好，原来的祝福已保留。');}
-    finally{this.writing=false;this.aiButton.disabled=false;this.submit.disabled=false;this.aiButton.removeAttribute('aria-busy');this.textInput.dispatchEvent(new Event('input'));}
+    }catch(error){if(!this.destroyed){if(error.status===429)this.cooldown.wait(error.retryAfter||20);else await this.dialogs.alert(error.message||'这次没能写好，原来的祝福已保留。');}}
+    finally{this.writing=false;this.cooldown.setBusy(false);this.submit.disabled=false;this.textInput.dispatchEvent(new Event('input'));}
   }
   destroy() {
-    this.destroyed = true; this.events.abort(); clearTimeout(this.holdHintTimer); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.history.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
+    this.destroyed = true; this.cooldown.destroy();this.events.abort(); clearTimeout(this.holdHintTimer); clearInterval(this.timer); clearTimeout(this.confirmationTimer); this.quick.destroy(); this.history.destroy(); this.tabAnimation?.cancel(); this.clearVisuals(); this.client.destroy(); this.effects.destroy();
     this.dialogs.destroy();this.dock.remove(); this.lane.remove(); this.canvas.remove(); this.modal.remove(); this.announcement.remove(); delete this.app.dataset.celebration;
   }
 }

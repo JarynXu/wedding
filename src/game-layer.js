@@ -31,7 +31,7 @@ export class InvitationGame {
     this.dialog = document.createElement('dialog'); this.dialog.className = 'invitation-game-layer'; this.dialog.setAttribute('aria-label', '默契挑战');
     this.pending = document.createElement('div'); this.pending.className = 'game-layer-pending';
     const back = document.createElement('button'); back.type = 'button'; back.textContent = '返回请柬'; back.onclick = () => this.back();
-    this.status = document.createElement('p'); this.status.textContent = '主持人正在过来…';
+    this.status = document.createElement('p'); this.status.textContent = '喜宴司仪正在过来…';
     this.retry = document.createElement('button'); this.retry.type = 'button'; this.retry.textContent = '再试一次'; this.retry.hidden = true; this.retry.onclick = () => this.load();
     this.pending.append(back, this.status, this.retry);
     this.frame = document.createElement('iframe'); this.frame.title = '默契挑战'; this.frame.hidden = true;
@@ -40,7 +40,7 @@ export class InvitationGame {
     this.load();
   }
   load() {
-    this.retry.hidden = true; this.status.textContent = '主持人正在过来…';
+    this.retry.hidden = true; this.status.textContent = '喜宴司仪正在过来…';
     const url = new URL(this.entry.href); url.searchParams.set('embedded', '1'); this.frame.src = url.href;
     clearTimeout(this.timeout);
     this.timeout = setTimeout(() => { this.status.textContent = '这场小聚还没打开'; this.retry.hidden = false; }, 15000);

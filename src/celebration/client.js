@@ -10,7 +10,7 @@ export class BlessingsClient {
     const config = await this.request('/config');
     if((config.generation||0)!==this.generation)this.reset(config.generation);
     this.giftRecordIntervalMs = Number.isFinite(config.giftRecordIntervalMs) ? Math.max(1000, config.giftRecordIntervalMs) : 5000;
-    this.writingEnabled=config.aiWritingEnabled===true;
+    this.writingEnabled=config.aiWritingEnabled===true;this.writingCooldownSeconds=config.aiWritingCooldownSeconds||20;
     return config.enabled === true;
   }
   connect() {

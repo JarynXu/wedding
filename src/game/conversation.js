@@ -1,3 +1,4 @@
+import { haptic } from '../haptics.js';
 const node=(tag,className,text='')=>{const element=document.createElement(tag);element.className=className;element.textContent=text;return element;};
 
 /** 连续对话保留节点、草稿与阅读位置；翻看旧消息不强行跳回底部。 */
@@ -6,7 +7,7 @@ export class ConversationView {
     Object.assign(this,{request,notice,uuid,owner,showClaim,onActivity,isActive});
     this.elements=new Map();this.nudged=new Set();this.lastInteraction=Date.now();this.snapshot={turns:[]};
     try{const saved=JSON.parse(sessionStorage.getItem('wedding.game.chat.pending'));if(saved?.owner===owner)this.pending=saved;}catch{}
-    this.root=node('section','conversation-room');this.root.setAttribute('aria-label','与婚礼主持人的聊天');
+    this.root=node('section','conversation-room');this.root.setAttribute('aria-label','与喜宴司仪的聊天');
     this.log=node('div','conversation-log');this.log.setAttribute('role','log');this.log.setAttribute('aria-live','polite');this.root.append(this.log);
     this.typing=node('div','conversation-typing');this.typing.setAttribute('role','status');this.root.append(this.typing);
     this.claim=node('button','conversation-claim','查看领礼凭证');this.claim.type='button';this.claim.hidden=true;this.claim.onclick=showClaim;this.root.append(this.claim);
@@ -24,10 +25,10 @@ export class ConversationView {
   }
   async start(){
     this.starting=true;
-    this.typing.textContent='主持人正在过来…';
+    this.typing.textContent='喜宴司仪正在过来…';
     try{await this.request('/conversation/start',{requestId:this.uuid()});await this.refresh();}catch(error){this.notice(error.message);}finally{this.starting=false;this.render();}
   }
-  update(me,config){this.me=me;this.config=config;this.claim.hidden=!me.claim;this.input.placeholder=me.participant.answered>=config.questions.length||config.phase!=='open'?'婚礼时间、地点，都可以问我…':'说说你的答案…';this.render();}
+  update(me,config){if(this.me&&me.participant.score>this.me.participant.score&&this.isActive()&&!document.hidden)haptic('correct');this.me=me;this.config=config;this.claim.hidden=!me.claim;this.input.placeholder=me.participant.answered>=config.questions.length||config.phase!=='open'?'婚礼时间、地点，都可以问我…':'说说你的答案…';this.render();}
   get waiting(){return this.snapshot.turns.some(turn=>turn.state!=='complete');}
   atBottom(){return this.log.scrollHeight-this.log.scrollTop-this.log.clientHeight<70;}
   savePending(){try{sessionStorage.setItem('wedding.game.chat.pending',JSON.stringify(this.pending||null));}catch{}}
@@ -81,7 +82,7 @@ export class ConversationView {
     });
     for(const [key,element]of this.elements)if(!retained.has(key)){element.remove();this.elements.delete(key);}
     const pending=this.snapshot.turns.find(turn=>turn.state!=='complete');
-    this.typing.textContent=pending?({thinking:'让我想想…',checking:'让我核对一下…',replying:'主持人正在接话…'}[pending.progress]||'主持人正在接话…'):this.starting?'主持人正在过来…':'';
+    this.typing.textContent=pending?({thinking:'让我想想…',checking:'让我核对一下…',replying:'喜宴司仪正在接话…'}[pending.progress]||'喜宴司仪正在接话…'):this.starting?'喜宴司仪正在过来…':'';
     this.typing.hidden=!pending&&!this.starting;
     if(bottom)requestAnimationFrame(()=>{if(!this.destroyed)this.log.scrollTop=this.log.scrollHeight;});
   }

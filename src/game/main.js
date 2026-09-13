@@ -1,3 +1,4 @@
+import { bindHapticControls } from '../haptics.js';
 import { LeaderboardView } from './leaderboard.js';
 import '../fonts.css';
 import './style.css';
@@ -20,6 +21,8 @@ window.addEventListener('pagehide',event=>{if(!event.persisted)petals.destroy();
 const app = document.getElementById('gameApp');
 const view = document.getElementById('gameContent');
 const dialogs = new InvitationDialogs();
+const hapticControls=new AbortController();bindHapticControls(document,hapticControls.signal);
+window.addEventListener('pagehide',event=>{if(!event.persisted)hapticControls.abort();});
 const tabs = document.querySelectorAll('[data-game-tab]');
 const state = { config: null, me: null, tab: ['board','rules'].includes(history.state?.gameView)?history.state.gameView:'play', busy: false, current: null, draft: '', pending: null, challenge: null, phone: '', name: guestName(), consent: false, countdown: 0, identityGeneration:0, refreshing:false, boardGeneration:0 };
 try { const saved = JSON.parse(sessionStorage.getItem('wedding.game.pending') || 'null'); if (saved?.requestId && saved?.questionId) state.pending = saved; } catch { /* 存储不可用时保留当前页面内存。 */ }
@@ -134,7 +137,7 @@ function renderLogin() {
   const consent=el('label','game-consent'),checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.name='consent';checkbox.checked=state.consent;checkbox.onchange=()=>{state.consent=checkbox.checked;};
   consent.append(checkbox,document.createTextNode('我已阅读并同意'));
   const privacy=button('参与说明',showRules,'game-text-button');consent.append(privacy);form.append(consent);
-  const submit=el('button','game-button',state.config.phase==='open'?'请主持人开场':'回到聊天');submit.type='submit';form.append(submit);
+  const submit=el('button','game-button',state.config.phase==='open'?'请喜宴司仪开场':'回到聊天');submit.type='submit';form.append(submit);
   form.oninput=()=>{state.phone=form.elements.phone.value;state.name=form.elements.name.value;};
   form.onsubmit=async event=>{
     event.preventDefault();if(state.busy)return;

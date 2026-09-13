@@ -15,10 +15,10 @@ export function createBlessingsService(config, { writing = null } = {}) {
     async write(message,network) {
       if(closing||!writing?.configured)throw new BlessingError('AI_UNAVAILABLE','AI写祝福正在准备中',503);
       const work=(async()=>{
-        const prior=await store.beginWriting(message,network);if(prior.result)return {text:prior.result};
+        const prior=await store.beginWriting(message,network);if(prior.result)return {text:prior.result,retryAfter:config.writingCooldownSeconds??20};
         let result;
         try{result=await writing.compose(message.text,message.theme);}catch(error){await store.finishWriting(message.requestId,null);throw error;}
-        await store.finishWriting(message.requestId,result);return {text:result};
+        await store.finishWriting(message.requestId,result);return {text:result,retryAfter:config.writingCooldownSeconds??20};
       })();
       writingJobs.add(work);try{return await work;}finally{writingJobs.delete(work);}
     },

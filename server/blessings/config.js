@@ -25,6 +25,8 @@ export function readBlessingsConfig(env = process.env) {
   return {
     room, secret, origin: origin.origin, clientIpHeader,
     maxInstances, connectionBudget,
+    writingCooldownSeconds: integer(env.BLESSINGS_AI_COOLDOWN_SECONDS, 20, 5, 300),
+    writingHourlyLimit: integer(env.BLESSINGS_AI_HOURLY_LIMIT, 20, 1, 300),
     maxStreams: integer(env.BLESSINGS_MAX_STREAMS, 500, 1, 3000),
     clientLimit: integer(env.BLESSINGS_CLIENT_LIMIT, 12, 1, 120),
     networkLimit: integer(env.BLESSINGS_NETWORK_LIMIT, 600, 1, 10000),

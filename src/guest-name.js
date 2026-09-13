@@ -16,7 +16,7 @@ export function rememberRegisteredGuest(participant) {
   window.dispatchEvent(new Event('wedding-guest-name-change'));
 }
 export async function refreshRegisteredGuest() {
-  try { const response=await fetch('/api/game/me',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();rememberRegisteredGuest(data.participant);} } catch { /* 身份读取不阻止祝福入口；已有称呼继续使用。 */ }
+  try { const response=await fetch('/api/game/me',{cache:'no-store',signal:AbortSignal.timeout(5000)});if(response.ok){const data=await response.json();rememberRegisteredGuest(data.participant);}else if(response.status===401){registered=null;try{localStorage.removeItem(profileKey);}catch{}window.dispatchEvent(new Event('wedding-guest-name-change'));} } catch { /* 身份读取不阻止祝福入口；已有称呼继续使用。 */ }
 }
 export function watchGuestName(listener,signal) {
   window.addEventListener('storage',event=>{if(event.key===profileKey||event.key===aliasKey)listener(guestName());},{signal});

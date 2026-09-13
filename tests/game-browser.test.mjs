@@ -22,7 +22,7 @@ test('宾客手机验证码、六题、榜单与兑奖凭据，使用隔离短�
       await page.locator('#getGameCode').click();await waitFor(()=>f.codes.has('+86'+phone));
       await page.locator('[name=code]').fill(f.codes.get('+86'+phone));
       if(process.env.WEDDING_QA_DIR)await page.screenshot({path:join(process.env.WEDDING_QA_DIR,`game-${theme}-login.png`)});
-      await page.getByRole('button',{name:'请主持人开场',exact:true}).click();await page.locator('#gameAnswer').waitFor();
+      await page.getByRole('button',{name:'请喜宴司仪开场',exact:true}).click();await page.locator('#gameAnswer').waitFor();
       await page.locator('.conversation-host').filter({hasText:'隔离测试题 1'}).waitFor();
       assert.equal(await page.locator('.game-question-nav,.game-question-number,.game-score,.game-verdict').count(),0);
       const say=async value=>{await page.locator('#gameAnswer').fill(value);await page.getByRole('button',{name:'发送',exact:true}).click();};
