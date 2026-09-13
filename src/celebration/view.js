@@ -211,13 +211,13 @@ export class Celebration {
     const fresh = this.remember(message.id);
     this.history.receive(message);
     if (!fresh || document.hidden || this.quick.hasPlayed(message.requestId)) return;
-    this.queue.push({ message, historical: false, own });
+    this.queue.push({ message, historical: false, own:own||message.requestId===this.pending?.requestId });
     if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
     this.flushBubble();
   }
   flushBubble() {
     if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open,dialog[open],.invitation-game-layer:not([hidden])')) return;
-    const { message, historical } = this.queue.shift();
+    const { message, historical, own } = this.queue.shift();
     this.lastBubble = Date.now();
     const bubble = document.createElement('div'); bubble.className = 'blessing-bubble'; bubble.dataset.messageId = message.id;
     if (message.gift) bubble.append(giftIcon(message.gift));
@@ -227,7 +227,7 @@ export class Celebration {
     bubble.append(content); this.lane.append(bubble);
     const timeout = setTimeout(() => { bubble.remove(); this.bubbleTimers.delete(timeout); }, 7200);
     this.bubbleTimers.add(timeout);
-    if (!historical && message.gift) this.effects.play(message.gift);
+    if (!historical && message.gift) this.effects.play(message.gift,{local:Boolean(own)});
   }
   clearVisuals() { this.queue = []; this.lane.replaceChildren(); this.effects.clear(); for (const timer of this.bubbleTimers) clearTimeout(timer); this.bubbleTimers.clear(); }
   selectTab(tab) {
