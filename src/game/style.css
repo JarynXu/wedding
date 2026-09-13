@@ -17,7 +17,7 @@ body::before { content:''; position:fixed; inset:0; max-width:450px; margin:auto
 .game-toolbar { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; min-height:58px; padding:6px 10px; position:relative; z-index:3; background:linear-gradient(#fffaf24d,#fffaf200); }
 .game-toolbar::after { content:''; position:absolute; bottom:0; left:20px; right:20px; height:1px; background:linear-gradient(90deg,#b9935f55,transparent 40%,transparent 60%,#b9935f55); }
 .game-back-link,.game-menu-button { min-height:44px; display:flex; align-items:center; justify-content:center; gap:2px; padding:8px; border:0; background:transparent; color:var(--game-ink); text-decoration:none; border-radius:6px; font:12px "Noto Serif SC",serif; }
-.game-back-link { padding-left:0; padding-right:12px; }
+.game-back-link { width:44px; padding:10px; }
 .game-back-link svg { width:20px; height:20px; }
 .game-menu-button { width:44px; }
 .game-menu-button svg { width:23px; height:23px; }
@@ -28,6 +28,10 @@ body::before { content:''; position:fixed; inset:0; max-width:450px; margin:auto
 .game-header-state { position:absolute; left:50%; transform:translateX(-50%); border:0; background:none; padding:5px 8px; color:var(--game-ink); font:12px/1.6 "Noto Serif SC",serif; white-space:nowrap; }
 button.game-header-state { min-height:44px; }
 .game-header-state small { color:#947048; font-size:9px; margin-left:5px; }
+#gameContent[data-mode=rules] { overflow:hidden; }
+.game-rules-page { flex:1; overflow-y:auto; min-height:0; overscroll-behavior:contain; touch-action:pan-y; padding:0 8px 18px 0; font-size:13px; line-height:1.95; scrollbar-width:thin; scrollbar-color:#b9935f80 transparent; }
+.game-rules-page h3 { margin:20px 0 8px; font-size:15px; font-weight:500; color:var(--game-ink); }
+.game-rules-page p { margin:6px 0 14px; }
 .game-menu-wrap { position:relative; }
 .game-menu.glass-surface { position:absolute; right:0; top:48px; width:146px; padding:7px; border:1px solid #cba36b96; border-radius:12px 3px 12px 12px; box-shadow:0 8px 26px #33130c30; --glass-background:linear-gradient(120deg,#fffaede8,#f9eddad9); --glass-backdrop:blur(16px); }
 .game-menu::before { content:''; position:absolute; right:17px; top:-5px; width:8px; height:8px; border-left:1px solid #cba36b96; border-top:1px solid #cba36b96; transform:rotate(45deg); background:#fff7e8; }
@@ -55,6 +59,14 @@ input:focus,textarea:focus { outline:none; border-color:#a77452; box-shadow:inse
 .game-small-button,.game-logout { display:block; min-height:44px; border:0; background:none; color:var(--game-ink); font:12px "Noto Serif SC",serif; padding:10px 0; }
 .game-logout { margin:15px auto 0; font-size:10px; color:#877258; }
 .leaderboard-room { display:flex; flex-direction:column; flex:1; min-height:0; }
+.game-pull-refresh { flex-shrink:0; height:0; overflow:hidden; display:grid; place-items:center; font-size:10px; color:#9a7548; transition:height 160ms; }
+.game-prize-art { mix-blend-mode:multiply; display:block; width:50px; height:58px; flex:0 0 auto; overflow:hidden; }
+.game-personal-prize { display:flex; align-items:center; gap:12px; padding:10px 12px; margin-bottom:10px; border:1px solid #c7a46e55; border-radius:12px; background:#fff8e966; }
+.game-personal-prize > div { display:flex; flex-direction:column; gap:3px; }
+.game-personal-prize strong { font-size:13px; font-weight:500; color:var(--game-ink); }
+.game-personal-prize small,.game-personal-prize span { font-size:10px; color:#92704d; }
+.game-rank-prize { grid-column:2/4; display:flex; align-items:center; gap:8px; font-size:10px; color:#8c623e; }
+.game-rank-prize .game-prize-art { width:30px; height:34px; }
 #gameContent[data-mode=board] { overflow:hidden; }
 .game-leaderboard { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; touch-action:pan-y; scrollbar-width:thin; scrollbar-color:#b9935f80 transparent; margin:6px 0; padding:0 9px 0 0; list-style:none; }
 .game-leaderboard li { display:grid; grid-template-columns:35px 1fr auto; gap:7px; padding:16px 0; border-bottom:1px solid #b9935f33; font-size:13px; }

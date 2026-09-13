@@ -16,7 +16,7 @@ test('宾客手机验证码、六题、榜单与兑奖凭据，使用隔离短�
       const page=await browser.newPage({viewport:{width,height:844},isMobile:true,hasTouch:true});page.on('pageerror',error=>errors.push(error.message));
       await page.addInitScript(()=>{window.initAlicom4=(_options,callback)=>{let success;const instance={onSuccess(fn){success=fn;return this;},onError(){return this;},onClose(){return this;},onNextReady(fn){queueMicrotask(fn);return this;},showCaptcha(){success();},getValidate(){return {lot_number:crypto.randomUUID().replaceAll('-',''),captcha_output:'test',pass_token:'test',gen_time:String(Math.floor(Date.now()/1000)),testPassed:true};},destroy(){}};callback(instance);};});
       const phone=String(13900000000+index);
-      await page.goto(origin+'/game.html?theme='+theme);await page.locator('#gameLogin').waitFor();await page.locator('dialog[data-kind=first-rules][open]').waitFor();await page.locator('.dialog-primary').click();
+      await page.goto(origin+'/game.html?theme='+theme);await page.locator('.game-rules-page').waitFor();await page.getByRole('button',{name:'开始挑战',exact:true}).click();await page.locator('#gameLogin').waitFor();
       await page.locator('[name=name]').fill('隔离测试来宾'+index);await page.locator('[name=phone]').fill(phone);
       await page.locator('[name=consent]').check();
       await page.locator('#getGameCode').click();await waitFor(()=>f.codes.has('+86'+phone));
@@ -46,7 +46,7 @@ test('宾客手机验证码、六题、榜单与兑奖凭据，使用隔离短�
       assert.ok(await page.locator('.conversation-host').count()>10,'上下文保留为连续聊天');
       assert.ok(await page.evaluate(()=>document.body.scrollWidth<=innerWidth));
       if(process.env.WEDDING_QA_DIR)await page.screenshot({path:join(process.env.WEDDING_QA_DIR,`game-${theme}-conversation.png`),animations:'disabled'});
-      await page.locator('#gameMenuToggle').click();await page.locator('[data-game-tab=board]').click();await page.locator('.game-leaderboard li').first().waitFor();assert.equal(await page.locator('#gameBoardPhase').innerText(),'暂定');await page.locator('#backToInvitation').click();await page.locator('#gameAnswer').waitFor();
+      await page.locator('#gameMenuToggle').click();await page.locator('[data-game-tab=board]').click();await page.locator('.game-leaderboard li').first().waitFor();assert.equal(await page.locator('#gameBoardPhase').innerText(),'暂定');assert.equal(await page.locator('.game-personal-prize strong').innerText(),index===1?'大号毛绒玩偶':'中号毛绒玩偶');if(process.env.WEDDING_QA_DIR)await page.screenshot({path:join(process.env.WEDDING_QA_DIR,'prize-board-'+theme+'.png'),animations:'disabled'});await page.locator('#backToInvitation').click();await page.locator('#gameAnswer').waitFor();
       const sentCount=f.sms.calls.length;await page.reload();await page.locator('.conversation-host').filter({hasText:'答对 6 题'}).waitFor();assert.equal(f.sms.calls.length,sentCount);
       if(index===1)winner=page;
       else await page.close();

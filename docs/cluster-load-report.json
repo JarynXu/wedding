@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-09-13T04:12:51.342Z",
+  "scope": "本机五个Node进程、100个验证会话、轮询负载均衡、真实PostgreSQL；模型为250ms本机模拟器，不发送短信。",
+  "replicas": 5,
+  "visitors": 100,
+  "modelDelayMs": 250,
+  "sharedModelLimit": 12,
+  "peakModelConcurrency": 12,
+  "modelCalls": 600,
+  "httpRequests": 1500,
+  "httpFailures": 0,
+  "staticBytes": 1536811100,
+  "staticPaths": [
+    "/",
+    "/game.html",
+    "/assets/invitation-Cz9q1ceU.js",
+    "/assets/game-LWMCEwdD.js",
+    "/assets/invitation-CVkD-gJ5.css",
+    "/assets/game-DubMkvxc.css",
+    "/assets/cover-welcome-art-KaIa2rhg.webp",
+    "/assets/card_02_hd-C8e3kVu-.jpg",
+    "/assets/card_03_hd-B-CH-vjd.jpg",
+    "/assets/card_04_hd-C1ohZs8r.jpg",
+    "/assets/Close%20to%20You-Olivia%20Ong-CRabstyN.mp3",
+    "/assets/rose-petals-DZwSKpdw.webp",
+    "/assets/prize-plush-DE5aemm4.webp"
+  ],
+  "answerLatencyMs": {
+    "p50": 5955.983,
+    "p95": 9725.068,
+    "max": 10004.94
+  },
+  "answerPhaseMs": 10876,
+  "totalMs": 20476,
+  "workers": [
+    "load-1",
+    "load-0",
+    "load-2",
+    "load-3",
+    "load-4"
+  ],
+  "traceIdsPersisted": 100,
+  "passed": true
+}

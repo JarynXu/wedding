@@ -16,7 +16,7 @@
 2. 将 [.env.blessings.example](../.env.blessings.example) 中的配置填入云托管服务端环境变量。数据库密码中的 URI 保留字符需要百分号编码。
 3. `BLESSINGS_RATE_SECRET` 使用至少 32 字符的随机值，所有实例保持一致。可用 `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"` 生成。
 4. 配置 TLS：`BLESSINGS_DB_SSL=true` 使用受信证书；私有 CA 填入 `BLESSINGS_DB_CA_PEM`。TLS 参数不要写入数据库 URI。
-5. 使用有建表权限的账号执行 `npm run blessings:migrate`。迁移脚本可重复执行。生产应用账号需要表的 SELECT/INSERT、序列的 USAGE/SELECT 权限。
+5. 使用有建表权限的账号执行 `npm run blessings:migrate`。迁移脚本可重复执行。生产应用账号需要业务与运营表的 SELECT/INSERT/UPDATE/DELETE、序列的 USAGE/SELECT 权限。
 6. 启动服务。`/api/blessings/config` 返回 `enabled:true` 表示功能已配置；`/api/blessings/stream` 返回 `sync` 事件表示数据库实时链路就绪。
 
 `BLESSINGS_PUBLIC_ORIGIN` 当前为 `https://wedding.jaryn.com.cn`，发送接口校验浏览器 Origin。云托管网关须支持流式响应，关闭 SSE 路径缓存和响应缓冲，允许持续连接。服务每 10 秒发送心跳。网关关闭连接时，客户端使用收到的游标重连。服务器不为每个来宾建立数据库连接。
@@ -40,7 +40,7 @@ node --env-file=.env.local server/index.js
 
 ## 保存与重连契约
 
-- `POST /api/blessings` 接受 `requestId`、`clientId`、`name`、`text`、`gift`、`giftCount`、`theme`。UUID 为版本 4。礼物数量是 1–999 的整数，省略时为 1，无礼物时为 0。同一逻辑发送重用 requestId；重复请求返回同一记录。相同键更改文字或数量返回 409。数量是前端播放计数，不代表付费资产或经认证的身份。
+- `POST /api/blessings` 接受 `requestId`、`clientId`、`name`、`text`、`gift`、`giftCount`、`theme`、`generation`。generation 取自配置或 sync 快照，创建请求时固定；清理后重放旧代次请求会被拒绝。UUID 为版本 4。礼物数量是 1–999 的整数，省略时为 1，无礼物时为 0。同一逻辑发送重用 requestId；重复请求返回同一记录。相同键更改文字或数量返回 409。数量是前端播放计数，不代表付费资产或经认证的身份。
 - 保存使用事务。提交完成才返回成功或发出通知。按请柬加事务锁，再分配消息序号，保证同一请柬的序号顺序与提交顺序一致。
 - `GET /api/blessings/history?before=序号` 按时间倒序读取，每页 30 条。历史时间来自数据库。数据库不保存原始 IP 或浏览器标识，只保存其 HMAC 摘要用于限额。
 - `GET /api/blessings/stream?after=序号` 使用 SSE；`Last-Event-ID` 优先。`sync` 为历史/重连快照，`blessing` 为新消息。首次快照最多 6 条。重连缺口超过 200 条时返回最近快照及 `reset:true`；完整记录仍可通过祝福簿读取。
@@ -76,3 +76,5 @@ node --test --test-concurrency=1 tests/blessings.test.mjs tests/blessings-browse
 `POST /api/blessings/polish` 使用独立请求标识和记录表，相同请求可读取已完成结果。每分钟限制为浏览器 6 次、来源网络 60 次、活动 120 次，不消耗普通祝福的发送名额。润色中不接收并发重复请求；结果与指纹保留供短期重试，下次申请会清理本活动 30 分钟前的辅助记录。草稿原文不写入数据库，成功结果也不作为公开祝福展示。
 
 底部浮条使用连续的毛玻璃底，默认主题增加金色对戒。烟花使用主题颜色的细光尾与发光祝福字：默认主题为香槟金、玫瑰粉和 Love，中式为暖金和囍；光晕使用缓存位图，仍受右侧画布边界约束。礼物旁提示长按，完成长按后收起。最后一页的游戏入口位于右下角，提示气泡说明用途。新素材来源与生成提示见 `design/gift-rings-generation.json`。
+
+清理会提升本场 generation 并断开旧订阅。客户端重新同步时清除旧待发请求，刷新页面。清理步骤与连接预算见 [上线与运行维护](operations.md)。

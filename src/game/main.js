@@ -21,7 +21,7 @@ const app = document.getElementById('gameApp');
 const view = document.getElementById('gameContent');
 const dialogs = new InvitationDialogs();
 const tabs = document.querySelectorAll('[data-game-tab]');
-const state = { config: null, me: null, tab: history.state?.gameView==='board'?'board':'play', busy: false, current: null, draft: '', pending: null, challenge: null, phone: '', name: guestName(), consent: false, countdown: 0, identityGeneration:0, refreshing:false, boardGeneration:0 };
+const state = { config: null, me: null, tab: ['board','rules'].includes(history.state?.gameView)?history.state.gameView:'play', busy: false, current: null, draft: '', pending: null, challenge: null, phone: '', name: guestName(), consent: false, countdown: 0, identityGeneration:0, refreshing:false, boardGeneration:0 };
 try { const saved = JSON.parse(sessionStorage.getItem('wedding.game.pending') || 'null'); if (saved?.requestId && saved?.questionId) state.pending = saved; } catch { /* 存储不可用时保留当前页面内存。 */ }
 const el = (tag, className = '', content = '') => { const node = document.createElement(tag); node.className = className; node.textContent = content; return node; };
 const button = (label, action, className = 'game-button') => { const node = el('button', className, label); node.type = 'button'; node.onclick = action; return node; };
@@ -39,24 +39,25 @@ const menu = document.getElementById('gameMenu'), menuToggle = document.getEleme
 function selectView(tab) {
   closeMenu();
   if(tab===state.tab)return;
-  if(tab==='play'&&history.state?.gameView==='board'){history.back();return;}
+  if(tab==='play'&&['board','rules'].includes(state.tab)){history.back();return;}
+  if(tab!=='rules')state.introRules=false;
   state.tab=tab;history.pushState({...history.state,gameView:tab},'');render();
 }
-window.addEventListener('popstate',event=>{dialogs.finish(false);state.tab=event.state?.gameView==='board'?'board':'play';render();});
+window.addEventListener('popstate',event=>{dialogs.finish(false);state.tab=['board','rules'].includes(event.state?.gameView)?event.state.gameView:'play';if(state.tab!=='rules')state.introRules=false;render();});
 function updateNavigation(){
-  const board=state.tab==='board',back=document.getElementById('backToInvitation'),rank=document.getElementById('gameLiveRank');
-  back.setAttribute('aria-label',board?'回到聊天':'返回请柬');back.querySelector('span').textContent=board?'聊天':'请柬';
-  document.getElementById('gameBoardHeading').hidden=!board;document.getElementById('refreshGameBoard').hidden=!board;
-  rank.hidden=board||!state.me?.participant.rank;rank.textContent=state.me?.participant.rank?(state.config?.phase==='settled'?'第 ':'暂列第 ')+state.me.participant.rank+' 名':'';
-  document.querySelector('.game-header-mark').hidden=board||!rank.hidden;
+  const board=state.tab==='board',rules=state.tab==='rules',back=document.getElementById('backToInvitation'),rank=document.getElementById('gameLiveRank');
+  back.setAttribute('aria-label',state.tab==='play'?'关闭互动':'返回上一页');back.querySelector('path').setAttribute('d',state.tab==='play'?'m6 6 12 12M6 18 18 6':'m14 6-6 6 6 6');
+  document.getElementById('gameBoardHeading').hidden=!(board||rules);document.getElementById('gameViewTitle').textContent=board?'默契榜':'游戏规则';document.getElementById('gameBoardPhase').hidden=!board;document.getElementById('showGameRules').hidden=rules;
+  rank.hidden=board||rules||!state.me?.participant.rank;rank.textContent=state.me?.participant.rank?(state.config?.phase==='settled'?'第 ':'暂列第 ')+state.me.participant.rank+' 名':'';
+  document.querySelector('.game-header-mark').hidden=board||rules||!rank.hidden;
 }
 document.getElementById('gameLiveRank').onclick=()=>selectView('board');
-document.getElementById('refreshGameBoard').onclick=()=>{closeMenu();renderBoard();};
+
 function closeMenu() { menu.hidden = true; menuToggle.setAttribute('aria-expanded', 'false'); }
 menuToggle.onclick = () => { menu.hidden = !menu.hidden; menuToggle.setAttribute('aria-expanded', String(!menu.hidden)); };
 document.addEventListener('pointerdown', event => { if (!event.target.closest('.game-menu-wrap')) closeMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !menu.hidden) { closeMenu(); menuToggle.focus(); } });
-const showRules = () => { closeMenu(); if (state.config?.enabled) return dialogs.show({ title: '来玩一场默契', content: gameRules(state.config), kind: 'rules' }); };
+const showRules=()=>selectView('rules');
 document.getElementById('showGameRules').onclick = showRules;
 document.getElementById('gameLogout').onclick = async () => {
   closeMenu();
@@ -80,8 +81,8 @@ function labelledInput(label, name, value, attributes = {}) {
 }
 function render() {
   updateNavigation();
-  app.dataset.view = state.tab === 'board' ? 'board' : state.me ? 'chat' : 'login';
-  tabs.forEach(tab => { tab.setAttribute('aria-pressed', String(tab.dataset.gameTab === state.tab)); tab.hidden = tab.dataset.gameTab === 'play' && state.tab !== 'board'; });
+  app.dataset.view = state.tab !== 'play' ? state.tab : state.me ? 'chat' : 'login';
+  tabs.forEach(tab => { tab.setAttribute('aria-pressed', String(tab.dataset.gameTab === state.tab)); tab.hidden = tab.dataset.gameTab === state.tab; });
   view.dataset.mode = state.tab === 'play' && state.me ? 'chat' : state.tab;
   document.getElementById('gameLogout').hidden = !state.me;
   document.getElementById('showGameRules').disabled=!state.config?.enabled;
@@ -89,6 +90,7 @@ function render() {
   view.replaceChildren();
   if (!state.config?.enabled) { view.append(el('p', 'game-empty', '默契挑战正在准备中。')); return; }
   if (state.tab === 'board') { renderBoard(); return; }
+  if (state.tab === 'rules') { const content=gameRules(state.config);content.classList.add('game-rules-page');view.append(content);if(state.introRules)view.append(button('开始挑战',()=>history.back()));return; }
   if (!state.me) { renderLogin(); return; }
   renderPlay();
 }
@@ -105,7 +107,7 @@ function renderLogin() {
   row.append(labelledInput('短信验证码','code','',{type:'text',inputMode:'numeric',autoComplete:'one-time-code',maxLength:6,placeholder:'输入验证码'}));
   const ensureConsent=async()=>{
     if(form.elements.consent.checked)return true;
-    const agreed=await dialogs.show({title:'记住这份默契',content:'用手机号记住你的进度，方便婚礼当天领取礼物。手机号不会公开，这台设备会为你保留30天登录。同意继续吗？',confirmText:'同意并继续',cancelText:'暂不同意',kind:'consent',focusAfter:form.elements.code});
+    const agreed=await dialogs.show({title:'记住这份默契',content:'用手机号记住你的进度，方便婚礼当天领取礼物。手机号不会公开，同意继续吗？',confirmText:'同意并继续',cancelText:'暂不同意',kind:'consent',focusAfter:form.elements.code});
     if(agreed){form.elements.consent.checked=true;state.consent=true;}
     return agreed;
   };
@@ -169,19 +171,19 @@ function showClaim(){
 }
 async function renderBoard(background=false) {
   const generation=++state.boardGeneration;
-  state.board ||= new LeaderboardView();
+  state.board ||= new LeaderboardView({refresh:()=>renderBoard()});
   if(!view.contains(state.board.root))view.replaceChildren(state.board.root);
-  const refreshButton=document.getElementById('refreshGameBoard');refreshButton.disabled=true;
+  state.board.root.setAttribute('aria-busy','true');
   if(!background)document.getElementById('gameBoardPhase').textContent='更新中';
   try {
     const board=await request('/leaderboard');if(state.tab!=='board'||generation!==state.boardGeneration)return;
-    state.board.update(board);state.boardErrorShown=false;
+    state.board.update(board,state.me);state.boardErrorShown=false;
     document.getElementById('gameBoardPhase').textContent=board.provisional?'暂定':'已揭晓';
   }catch(error){if(state.tab==='board'&&generation===state.boardGeneration){
     document.getElementById('gameBoardPhase').textContent='待更新';
     if(!state.board.rows.size)state.board.empty.textContent='榜单暂时没能展开。';
     if(!background||!state.boardErrorShown){state.boardErrorShown=true;notice(error.message);}
-  }}finally{refreshButton.disabled=false;}
+  }}finally{state.board.root.removeAttribute('aria-busy');}
 }
 async function refresh() {
   if (!active || document.hidden || state.busy || state.refreshing || !state.config?.enabled) return;
@@ -223,7 +225,7 @@ function showFirstRules(){
   if(!state.config?.enabled||state.firstRulesShown)return;
   const signature=JSON.stringify([state.config.closesAt,state.config.requiredCorrect,state.config.participationLimit,'six-perfect']);
   try{if(localStorage.getItem('wedding.game.rules.seen')===signature)return;localStorage.setItem('wedding.game.rules.seen',signature);}catch{}
-  state.firstRulesShown=true;dialogs.show({title:'先看看怎么玩',content:gameRules(state.config),kind:'first-rules',confirmText:'来试试'});
+  state.firstRulesShown=true;state.introRules=true;selectView('rules');
 }
 async function initialize() {
   try { state.config = await request('/config'); if (state.config.enabled) { try { state.me = await request('/me'); rememberRegisteredGuest(state.me.participant); reconcilePending(state.me); } catch (error) { if (error.status !== 401) throw error; } } render(); }
@@ -232,7 +234,7 @@ async function initialize() {
   if (embedded) parent.postMessage({type:'wedding-game-ready'}, location.origin);
   else showFirstRules();
 }
-back.onclick=event=>{if(dialogs.active){event.preventDefault();dialogs.finish(false);}else if(state.tab==='board'){event.preventDefault();selectView('play');}else if(embedded){event.preventDefault();parent.postMessage({type:'wedding-game-back'},location.origin);}};
+back.onclick=event=>{if(dialogs.active){event.preventDefault();dialogs.finish(false);}else if(state.tab!=='play'){event.preventDefault();history.back();}else if(embedded){event.preventDefault();parent.postMessage({type:'wedding-game-back'},location.origin);}};
 if (embedded) {
   window.addEventListener('message', event => {
     if (event.origin !== location.origin || event.source !== parent || event.data?.type !== 'wedding-game-visibility') return;
