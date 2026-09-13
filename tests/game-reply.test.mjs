@@ -20,3 +20,9 @@ test('修复已判题回应时保留原有开场的提问细节',()=>{
   const row={reply:{questionId:'date',questionText:'请说出婚礼的日期与具体时间。',messages:['请说出婚礼的日期与具体时间。']}};
   assert.deepEqual(guestReply(row,[],[{id:'date',title:'婚礼何时举行？'}]),row.reply);
 });
+
+test('旧的请求选项回复不能伪装成已经判对',()=>{
+  const row={question_id:'time',reply:{messages:['11:30，答对啦！','这一分收得漂亮。'],choices:['11:30','12:00'],questionId:'time'}};
+  const missing=guestReply(row,[],[]);assert.doesNotMatch(missing.messages.join(''),/答对啦|这一分/);assert.match(missing.messages[0],/再选/);
+  assert.match(guestReply(row,[{id:'another',questionId:'time',status:'correct'}],[]).messages[0],/已记下/);
+});

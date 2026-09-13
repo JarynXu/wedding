@@ -11,7 +11,8 @@ export class GameConversation {
     const original=await this.store.context(turn),{event,conversation}=original;
     let guestKnowledge=[],assignedAnswer=null,completedTurn=null;
     let me=original.me,scene=turn.kind==='start'?'welcome':turn.kind==='nudge'?'nudge':'chat',audit={},graded=null,shouldAsk=turn.kind==='start',questionChanged=false;
-    let active=event.config.questions.find(question=>question.id===conversation.active_question)||event.config.questions.find(question=>!me.answers.some(answer=>answer.questionId===question.id))||null;
+    const unanswered=event.config.questions.filter(question=>!me.answers.some(answer=>answer.questionId===question.id));
+    let active=unanswered.find(question=>question.id===conversation.active_question)||unanswered[0]||null;
     try{
       guestKnowledge=await this.knowledge?.forHost() || [];
       if(turn.kind==='message'){
@@ -21,7 +22,9 @@ export class GameConversation {
           const old=previous?.questions.find(question=>question.id===asked.id);
           questionChanged=!old||['title','answer','rubric'].some(key=>old[key]!==asked[key])||JSON.stringify(old.aliases)!==JSON.stringify(asked.aliases)||previous.judgeInstructions!==event.config.judgeInstructions;
         }
-        const decision=turn.audit?.intent||await this.intent.classify(asked,turn.input,bounded,{recent:original.recent,offeredChoices:conversation.offered_choices,publicTopics:guestKnowledge.map(({question,teaser})=>({question,teaser}))});audit={...turn.audit,intent:decision};scene=decision.intent;
+        let decision=turn.audit?.intent||await this.intent.classify(gamePhase(event,new Date(turn.created_at).getTime())==='open'?asked:null,turn.input,bounded,{recent:original.recent,offeredChoices:conversation.offered_choices,publicTopics:guestKnowledge.map(({question,teaser})=>({question,teaser}))});
+        if(turn.audit?.clientInputOrigin==='suggestion'&&['answer','skip'].includes(decision.intent))decision={...decision,intent:'clarify',choiceIndex:null,summary:'来宾想要一点帮助，还没有提交这题的答案。'};
+        audit={...turn.audit,intent:decision};scene=decision.intent;
         log('conversation.routed',{verdict:decision.intent,version:event.version});
         audit.safeMessage=['chat','pause','score','standing','hint','options','repeat','continue','rules','wedding','onsite'].includes(decision.intent)?turn.input:'';
         const already=me.answers.find(answer=>answer.questionId===asked?.id);

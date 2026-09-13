@@ -14,19 +14,19 @@ test('开场先说明活动资格，不把达标说成人人获奖，不公开�
   const reply=host.render({...context,scene:'welcome',shouldAsk:true,invitation},{messages:['咱们不紧不慢地聊，我会用轻松的方式陪你。','{{question}}'],help:'none',quickReplies:['我负责活跃气氛','慢慢聊聊吧']},'ai');
   assert.match(reply.messages.join(''),/答对 3 题.*另有 15 份.*纪念熊/s);
   assert.ok(reply.messages.indexOf(invitation)<reply.messages.indexOf(reply.questionText));
-  assert.doesNotMatch(reply.messages.join(''),/不紧不慢|我会用|轻松的方式|我负责/);assert.deepEqual(reply.quickReplies,[]);
+  assert.doesNotMatch(reply.messages.join(''),/不紧不慢|我会用|轻松的方式|我负责/);assert.equal(reply.quickReplies.length,2);assert.ok(reply.quickReplies.every(value=>!/我负责|慢慢聊/.test(value)));
 });
 test('主持人公开资料包含完整规则和婚礼日程，不包含答案、评分依据或私人联系方式',()=>{
   const config=initialGameConfig();config.questions[0].answer='私有答案';config.judgeInstructions='私有评分说明';
   const rules=publicGameRules(config),wedding=publicWeddingFacts(WEDDING_CONFIG),text=JSON.stringify({rules,wedding});
   assert.doesNotMatch(text,/私有答案|私有评分说明|13800000000|13900000000|assets|captcha|key/);
-  for(const value of ['20','钥匙扣小玩偶','一次','2026/10/17 00:00:00','嘉臣','11:30','11:58','12:28','三楼'])assert.ok(text.includes(value),value);
+  for(const value of ['20','钥匙扣小玩偶','一次','2026年10月16日 24:00','嘉臣','11:30','11:58','12:28','三楼'])assert.ok(text.includes(value),value);
 });
 test('主持人保留自然接话，成绩与线索标记不会泄漏或重复拼接',()=>{
   const host=new ShowHost(null);
   const reply=host.render(context,{messages:['我替你看一眼～','目前你答对了 {{score}} 题。','{{score}}'],variant:0,help:'none',quickReplies:['我选杭州','给点提示']},'ai');
   assert.deepEqual(reply.messages,['我替你看一眼～','你目前答对 1 题，已经聊过 2 个问题。']);
-  assert.deepEqual(reply.quickReplies,['给点提示']);
+  assert.deepEqual(reply.quickReplies,['给点提示','给几个选项']);
   const invalid=host.render(context,{messages:['你答对六题了','{{internal_value}}'],help:'none'},'ai');
   assert.doesNotMatch(invalid.messages.join(''),/六题|internal_value|[{}]/);
   assert.match(invalid.messages.join(''),/答对 1 题/);
@@ -83,4 +83,12 @@ test('错位的答题评语未通过核对时仍明确反馈本题判定',async(
   let calls=0;const host=new ShowHost({model:'host',reviewModel:'review'},{async complete(){return {text:JSON.stringify(++calls===1?{messages:['新郎的名字答对了，是周明朗！'],variant:0,help:'none',quickReplies:[]}:{keepMessages:[],keepQuickReplies:[],questionMessage:null,resultConsistent:false,unansweredRequests:[]})};}});
   const reply=await host.speak({...context,scene:'answer_correct',shouldAsk:true,completedTurn:{questionId:'place',title:'婚礼在哪举行？',outcome:'correct'}},new AbortController().signal);
   assert.match(reply.messages[0],/答对/);assert.doesNotMatch(reply.messages.join(''),/周明朗|新郎/);assert.equal(reply.source,'template');
+});
+
+test('要选项时不宣称已经答对，也不在正文重复列出四个候选',()=>{
+  const host=new ShowHost(null),reply=host.render({...context,scene:'options'},{messages:['杭州，答对啦！','杭州、上海、南京、苏州'],help:'choices',quickReplies:['能给我一点线索吗？']},'ai');
+  assert.equal(reply.choices.length,4);assert.doesNotMatch(reply.messages.join(''),/答对啦|杭州、上海/);
+  assert.equal(reply.quickReplies.length,2);assert.ok(reply.quickReplies.includes('能给我一点线索吗？'),'保留经过核对的自然接话建议');
+  const invitation=host.render(context,{messages:['想看看自己的得分吗？'],quickReplies:['我想看看成绩']},'ai');
+  assert.ok(invitation.messages.includes('想看看自己的得分吗？'),'询问是否查分不等于宣布本题判分');
 });

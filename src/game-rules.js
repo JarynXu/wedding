@@ -1,12 +1,20 @@
 /** 页面和喜宴司仪共享公开规则；返回值不含题目、答案或评分说明。 */
 export function publicGameRules(config) {
-  const deadline = new Date(config.closesAt).toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+  const deadline = gameDeadline(config.closesAt),prizes=config.prizes;
   return [
-    { title: '来聊一场默契', paragraphs: [`喜宴司仪准备了 ${config.questions.length} 个关于新人的小问题。你可以回答，也可以问成绩、要提示，或请喜宴司仪换个问法。`, '聊天和要提示不占答题机会。每个问题只记一次答案，明确跳过也记一次。想好了再告诉喜宴司仪。'] },
-    { title: '把小礼物带回家', paragraphs: [`北京时间 ${deadline} 前，答对 ${config.requiredCorrect} 题即可达标。前 ${config.participationLimit} 位达标且未获前三名的来宾领取参与奖。`, `前三名向全体来宾开放，必须答对全部六题，按六题全对的完成时间排序。前三名分别获得${config.prizes.first}（大号毛绒玩偶）、${config.prizes.second}（中号毛绒玩偶）、${config.prizes.third}（小号毛绒玩偶）；另有 ${config.participationLimit} 份${config.prizes.participation}（钥匙扣小玩偶）作为参与奖，每人只领取一个奖项。`, '奖品图片为玩偶图示，现场以实物为准。'] },
-    { title: '婚礼当天见', paragraphs: ['活动结束后会公布最终名单。获奖来宾可在聊天中查看领礼凭证，婚礼当天向工作人员出示手机核对领取，每人限领一次。'] },
-    { title: '记住你的心意', paragraphs: ['手机号用于记住你的进度和现场领奖，不会展示给其他来宾。', '榜单和祝福簿会显示你的称呼。如需更正或删除参与记录，请联系新人。'] },
+    { title: '怎么玩', paragraphs: [`一共 ${config.questions.length} 道关于新人的题，和喜宴司仪聊着答就行。想不起来，可以要提示，也可以请它给几个选项。`, '每题答一次，选好再提交。聊天、查成绩和要提示都不算作答；不想答的题可以说“跳过”。'] },
+    { title: '奖品怎么送', paragraphs: [`全部 ${config.questions.length} 题答对的前三位，按全对的先后顺序，分别获得${prizes.first}（大号毛绒玩偶）、${prizes.second}（中号毛绒玩偶）、${prizes.third}（小号毛绒玩偶）。`, `除前三名外，最早答对 ${config.requiredCorrect} 题的 ${config.participationLimit} 位亲友，每人一份${prizes.participation}（钥匙扣小玩偶）。前三名不占这 ${config.participationLimit} 份名额，每人只领一份。`] },
+    { title: '时间与领奖', paragraphs: [`答题在 ${deadline} 截止，之后公布获奖名单。答题期间的名次会随大家的成绩变化。`, '婚礼当天的领奖环节，出示聊天里的领礼凭证就可以啦。我们现场见！'] },
+    { title: '关于手机号', paragraphs: ['参加游戏需要验证手机号，用来保存答题进度和核对领奖。手机号不会公开，榜单和祝福簿显示你的称呼。'] },
   ];
+}
+
+export function gameDeadline(value) {
+  const date=new Date(value),formatter=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+  const parts=Object.fromEntries(formatter.formatToParts(date).map(part=>[part.type,part.value]));
+  const midnight=parts.hour==='00'&&parts.minute==='00'&&parts.second==='00';
+  const day=midnight?Object.fromEntries(formatter.formatToParts(new Date(date.getTime()-1000)).map(part=>[part.type,part.value])):parts;
+  return `${day.year}年${day.month}月${day.day}日 ${midnight?'24:00':parts.hour+':'+parts.minute+(parts.second==='00'?'':':'+parts.second)}`;
 }
 
 /** 开场只介绍达标、名额和现场领奖，数字与奖品名称来自活动配置。 */

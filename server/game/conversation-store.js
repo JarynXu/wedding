@@ -4,6 +4,7 @@ import { fallbackDeck } from './question-deck.js';
 import { numericId } from './store.js';
 import { traceContext, log } from '../observability.js';
 import { guestReply } from './reply.js';
+import { suggestedReplies,suggestionIntent } from './suggestions.js';
 
 /** 一位宾客的对话顺序、当前问题和重复消息由数据库拥有。 */
 export class ConversationStore {
@@ -18,6 +19,7 @@ export class ConversationStore {
       const prior=(await client.query('SELECT * FROM wedding_game_chat_turns WHERE participant_id=$1 AND request_id=$2',[participantId,requestId])).rows[0];
       if(prior){
         if(prior.input!==input||prior.kind!==kind)throw new GameError('REQUEST_CONFLICT','这句话已经改变，请重新发送。',409);
+        if(body.choice&&(body.choice.offerId!==prior.audit?.selection?.offerId||body.choice.index!==prior.audit?.selection?.index))throw new GameError('REQUEST_CONFLICT','这次选择已经改变，请重新选择。',409);
         if(prior.reply?.retryable){
           if(prior.attempts>=3&&event.now.getTime()-new Date(prior.last_attempt_at).getTime()<60000)throw new GameError('CHAT_BUSY','让我歇一小会儿，再来接这句话。',429,60);
           await client.query("UPDATE wedding_game_chat_turns SET state='pending',reply=NULL WHERE id=$1 AND state='complete'",[prior.id]);
@@ -39,10 +41,38 @@ export class ConversationStore {
       if(rate.pending>=3)throw new GameError('CHAT_BUSY','让我先接住前面那句，马上回来～',429,2);
       if(rate.count>=80)throw new GameError('CHAT_RATE_LIMITED','让我们歇一小会儿，稍后继续聊。',429,60);
       const trace=traceContext();
-      const row=(await client.query(`INSERT INTO wedding_game_chat_turns(room_id,participant_id,request_id,kind,input,question_id,config_version,trace_id,parent_span_id)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,[this.room,participantId,requestId,kind,input,conversation.active_question,conversation.active_config_version||event.version,trace.trace_id||null,trace.span_id||null])).rows[0];
+      let audit={};
+      if(kind==='message'&&body.suggestion!==undefined){
+        const suggestion=typeof body.suggestion==='string'?body.suggestion.normalize('NFC').trim():null;
+        const intent=suggestionIntent(suggestion);
+        if(body.choice!==undefined||!suggestion||suggestion.length>24||input!==suggestion)throw new GameError('INVALID_ACTION','请重新选择想问的内容。');
+        // 固定帮助按钮的含义明确；AI 写的自由接话建议仍经过入口审查。
+        audit=intent?{intent:{intent,summary:'',reason:'选择接话建议',source:'suggestion'}}:{clientInputOrigin:'suggestion'};
+      }else if(kind==='message')audit=await this.selectedAnswer(client,participantId,conversation,event,input,body.choice);
+      const row=(await client.query(`INSERT INTO wedding_game_chat_turns(room_id,participant_id,request_id,kind,input,question_id,config_version,trace_id,parent_span_id,audit)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,[this.room,participantId,requestId,kind,input,conversation.active_question,conversation.active_config_version||event.version,trace.trace_id||null,trace.span_id||null,audit])).rows[0];
       return {id:String(row.id)};
     }).then(result=>{log('conversation.accepted',{room:this.room,participant_id:participantId,business_id:requestId,job_id:result.id,job_kind:kind});return result;});
+  }
+  async selectedAnswer(client,participantId,conversation,event,input,choice){
+    if(gamePhase(event,event.now.getTime())!=='open'){
+      if(choice!==undefined)throw new GameError('CHOICE_EXPIRED','答题已经结束，来看看成绩吧。',409);
+      return {};
+    }
+    const values=conversation.offered_choices||[];
+    const letter=input.match(/^(?:我选|选|答案是)?\s*([A-D])(?:[.。！!])?$/i)?.[1];
+    const exact=values.indexOf(input),inferred=exact>=0&&values.lastIndexOf(input)===exact?exact:letter?letter.toUpperCase().charCodeAt(0)-65:-1;
+    if(choice===undefined&&(!conversation.active_question||values.length!==4||inferred<0))return {};
+    if(choice!==undefined&&(!choice||typeof choice!=='object'||!Number.isInteger(choice.index)||choice.index<0||choice.index>3))throw new GameError('INVALID_CHOICE','请点选当前题目的一个答案。');
+    if(choice!==undefined)numericId(choice.offerId);
+    const offer=(await client.query(`SELECT id,reply,config_version FROM wedding_game_chat_turns WHERE room_id=$1 AND participant_id=$2
+      AND ($3::bigint IS NULL OR id=$3) AND reply->>'questionId'=$4 AND jsonb_array_length(coalesce(reply->'choices','[]'::jsonb))=4 ORDER BY id DESC LIMIT 1`,[this.room,participantId,choice?.offerId||null,conversation.active_question])).rows[0];
+    if(!offer||(offer.reply.questionVersion||offer.config_version)!==event.version)throw new GameError('CHOICE_EXPIRED','这组答案已更新，请看看司仪刚发来的题目。',409);
+    const index=choice?.index??inferred,selected=offer.reply.choices[index];
+    if(typeof selected!=='string'||(selected!==input&&!(letter&&index===inferred)))throw new GameError('INVALID_CHOICE','请点选当前题目的一个答案。');
+    if((await client.query('SELECT 1 FROM wedding_game_answers WHERE room_id=$1 AND participant_id=$2 AND question_id=$3',[this.room,participantId,conversation.active_question])).rowCount)throw new GameError('ALREADY_ANSWERED','这道题的答案已经记下啦。',409);
+    // 选项及归属来自服务端记录；明确选择不再交给语言模型猜测意图。
+    return {selection:{offerId:String(offer.id),index},normalizedInput:selected,intent:{intent:'answer',choiceIndex:index,summary:'',reason:'选择已展示的答案',source:'selection'}};
   }
   async claim(){
     return this.game.transaction(async client=>{
@@ -86,6 +116,7 @@ export class ConversationStore {
     return {id:question.id,...(record?.deck||fallbackDeck(question))};
   }
   async finish(turn,reply,audit,activeQuestion,offeredChoices,configVersion){
+    if(reply.questionId)reply.questionVersion=configVersion;
     return this.game.transaction(async client=>{
       const row=await client.query("UPDATE wedding_game_chat_turns SET state='complete',progress=NULL,reply=$3,audit=$4,completed_at=clock_timestamp(),lease_token=NULL,lease_until=NULL WHERE id=$1 AND lease_token=$2 AND state='processing' RETURNING id",[turn.id,turn.lease_token,reply,audit]);
       if(!row.rowCount)return false;
@@ -95,12 +126,16 @@ export class ConversationStore {
   }
   async snapshot(participantId){
     const conversation=(await this.pool.query('SELECT * FROM wedding_game_conversations WHERE room_id=$1 AND participant_id=$2',[this.room,participantId])).rows[0];
-    const rows=(await this.pool.query('SELECT id,request_id,kind,input,question_id,state,progress,reply,created_at FROM wedding_game_chat_turns WHERE room_id=$1 AND participant_id=$2 ORDER BY id DESC LIMIT 160',[this.room,participantId])).rows.reverse();
+    const rows=(await this.pool.query('SELECT id,request_id,kind,input,question_id,config_version,state,progress,reply,audit,created_at FROM wedding_game_chat_turns WHERE room_id=$1 AND participant_id=$2 ORDER BY id DESC LIMIT 160',[this.room,participantId])).rows.reverse();
     const answers=(await this.game.participant(participantId)).answers;
     const event=await this.game.event();
-    return {revision:conversation?.revision||0,activeQuestion:conversation?.active_question||null,turns:rows.map(row=>{
+    const active=gamePhase(event,event.now.getTime())==='open'?event.config.questions.find(question=>question.id===conversation?.active_question&&!answers.some(answer=>answer.questionId===question.id)):null;
+    const last=rows.at(-1),deck=active?await this.deck(event,active):null;
+    const suggestions=rows.some(row=>row.state!=='complete')||last?.reply?.retryable?[]:suggestedReplies({deck,scene:last?.audit?.intent?.intent},last?.reply?.quickReplies||[]);
+    return {revision:conversation?.revision||0,activeQuestion:active?.id||null,suggestions,turns:rows.map(row=>{
       const reply=guestReply(row,answers,event.config.questions);
-      return {id:String(row.id),requestId:row.request_id,kind:row.kind,input:row.input,state:row.state,progress:row.progress,reply,createdAt:row.created_at};
+      if(reply?.choices?.length&&(reply.questionVersion||row.config_version)!==event.version)reply.choices=[];
+      return {id:String(row.id),requestId:row.request_id,questionId:row.question_id,kind:row.kind,input:row.input,state:row.state,progress:row.progress,reply,createdAt:row.created_at};
     })};
   }
   async resolveFailure(id,body,actor){

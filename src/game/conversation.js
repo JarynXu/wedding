@@ -32,18 +32,22 @@ export class ConversationView {
   get waiting(){return this.snapshot.turns.some(turn=>turn.state!=='complete');}
   atBottom(){return this.log.scrollHeight-this.log.scrollTop-this.log.clientHeight<70;}
   savePending(){try{sessionStorage.setItem('wedding.game.chat.pending',JSON.stringify(this.pending||null));}catch{}}
-  async send(raw,fromComposer=false){
+  async send(raw,fromComposer=false,selection={}){
     if(this.sending||this.destroyed)return;
     const text=raw.trim();if(!text||[...text].length>320){this.notice('写一句想说的话吧，控制在320字以内。');return;}
     if(this.pending&&this.pending.text!==text){this.notice('刚才那句话还没确认收到，先点“再发一次”试试。');return;}
     const original=this.input.value;
-    this.pending||={requestId:this.uuid(),text,owner:this.owner};this.savePending();this.sending=true;this.sendButton.disabled=true;this.lastInteraction=Date.now();this.render();
+    this.pending||={requestId:this.uuid(),text,owner:this.owner,...selection};this.savePending();this.sending=true;this.sendButton.disabled=true;this.lastInteraction=Date.now();this.render();
     try{
       await this.request('/conversation/messages',this.pending);
       if(this.destroyed)return;
       this.pending=null;this.savePending();if(fromComposer&&this.input.value===original){this.input.value='';this.input.style.height='auto';}
       await this.refresh();
-    }catch(error){if(!this.destroyed&&this.pending){this.pending.failed=true;this.savePending();this.notice(error.message);}}
+    }catch(error){if(!this.destroyed&&this.pending){
+      if(['CHOICE_EXPIRED','INVALID_CHOICE','INVALID_ACTION','ALREADY_ANSWERED'].includes(error.code)){this.pending=null;this.savePending();await this.refresh();}
+      else{this.pending.failed=true;this.savePending();}
+      this.notice(error.message);
+    }}
     finally{this.sending=false;this.sendButton.disabled=false;this.render();}
   }
   async refresh(){
@@ -61,13 +65,17 @@ export class ConversationView {
   render(){
     if(this.destroyed)return;
     const bottom=this.atBottom(),items=[];
+    const offer=[...this.snapshot.turns].reverse().find(turn=>turn.reply?.questionId===this.snapshot.activeQuestion&&turn.reply?.choices?.length===4);
+    const awaiting=this.waiting||this.sending||Boolean(this.pending);
     for(const turn of this.snapshot.turns){
       if(turn.input)items.push({key:'guest:'+turn.requestId,role:'guest',text:turn.input,retry:turn.reply?.retryable,requestId:turn.requestId});
       turn.reply?.messages.forEach((text,index)=>items.push({key:`host:${turn.id}:${index}`,role:'host',text}));
-      if(turn.reply?.choices?.length)items.push({key:'choices:'+turn.id,role:'choices',values:turn.reply.choices,questionId:turn.reply.questionId});
-      if(turn.reply?.quickReplies?.length&&turn===this.snapshot.turns.at(-1))items.push({key:'quick:'+turn.id,role:'quick',values:turn.reply.quickReplies});
+      if(turn===offer&&this.snapshot.activeQuestion&&!awaiting)items.push({key:'choices:'+turn.id,role:'choices',values:turn.reply.choices,questionId:turn.reply.questionId,offerId:turn.id});
+
     }
     if(this.pending&&!this.snapshot.turns.some(turn=>turn.requestId===this.pending.requestId))items.push({key:'guest:'+this.pending.requestId,role:'guest',text:this.pending.text,retry:this.pending.failed});
+    const suggestions=this.snapshot.suggestions??this.snapshot.turns.at(-1)?.reply?.quickReplies??[];
+    if(!awaiting&&suggestions.length)items.push({key:'quick:current',role:'quick',values:suggestions});
     const retained=new Set();
     items.forEach((item,index)=>{
       retained.add(item.key);let element=this.elements.get(item.key);
@@ -76,7 +84,7 @@ export class ConversationView {
       if(element.dataset.signature!==signature){
         element.replaceChildren();element.dataset.signature=signature;
         if(item.text){element.append(node('p','',item.text));if(item.retry){const retry=node('button','conversation-retry','再发一次');retry.type='button';retry.onclick=()=>{if(!this.pending&&item.requestId)this.pending={requestId:item.requestId,text:item.text,owner:this.owner};this.send(item.text);};element.append(retry);}}
-        else item.values.forEach((value,i)=>{const choice=node('button','',item.role==='choices'?`${String.fromCharCode(65+i)} · ${value}`:value);choice.type='button';choice.disabled=item.role==='choices'&&item.questionId!==this.snapshot.activeQuestion;choice.onclick=()=>this.send(value);element.append(choice);});
+        else item.values.forEach((value,i)=>{const choice=node('button','',item.role==='choices'?`${String.fromCharCode(65+i)} · ${value}`:value);choice.type='button';choice.disabled=item.role==='choices'&&item.questionId!==this.snapshot.activeQuestion;choice.onclick=()=>this.send(value,false,item.role==='choices'?{choice:{offerId:item.offerId,index:i}}:{suggestion:value});element.append(choice);});
       }
       if(this.log.children[index]!==element)this.log.insertBefore(element,this.log.children[index]||null);
     });

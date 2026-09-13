@@ -1,0 +1,164 @@
+{
+  "evaluatedAt": "2026-09-13T13:50:05.378Z",
+  "model": "deepseek-flash",
+  "scope": "虚构婚礼、六道相邻话题、真实模型、本机隔离数据库；下一题采用预先核对的题目提法，不发送短信。",
+  "passed": 6,
+  "total": 6,
+  "cases": [
+    {
+      "title": "婚礼仪式在什么时候举行？",
+      "input": "10月17日",
+      "score": 0,
+      "expectedScore": 0,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3282",
+        "messages": [
+          "这题没猜中，不过喜气一点没少，热闹继续！",
+          "婚礼在哪举行？"
+        ],
+        "questionId": "q2",
+        "answerStatus": "incorrect",
+        "questionText": "婚礼在哪举行？",
+        "quickReplies": [
+          "换个问法",
+          "看看我的成绩"
+        ],
+        "answerVersion": 1,
+        "questionVersion": 3,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "婚礼在哪举行？",
+      "input": "松风礼堂",
+      "score": 1,
+      "expectedScore": 1,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3283",
+        "messages": [
+          "这题答对啦，喜气加分！",
+          "新郎的名字是什么？"
+        ],
+        "questionId": "q3",
+        "answerStatus": "correct",
+        "questionText": "新郎的名字是什么？",
+        "quickReplies": [
+          "换个问法",
+          "看看我的成绩"
+        ],
+        "answerVersion": 1,
+        "questionVersion": 3,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "新郎的名字是什么？",
+      "input": "周明朗",
+      "score": 2,
+      "expectedScore": 2,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3284",
+        "messages": [
+          "这题答对啦，您俩这默契真让人羡慕！",
+          "新娘的名字是什么？"
+        ],
+        "questionId": "q4",
+        "answerStatus": "correct",
+        "questionText": "新娘的名字是什么？",
+        "quickReplies": [
+          "换个问法",
+          "看看我的成绩"
+        ],
+        "answerVersion": 1,
+        "questionVersion": 3,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "新娘的名字是什么？",
+      "input": "林一宁",
+      "score": 3,
+      "expectedScore": 3,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3285",
+        "messages": [
+          "新娘的名字都答对啦，这默契真是甜到心里！",
+          "你目前答对 3 题，已经聊过 4 个问题，暂列第 1 名。",
+          "宾客几点入场？"
+        ],
+        "questionId": "q5",
+        "answerStatus": "correct",
+        "questionText": "宾客几点入场？",
+        "quickReplies": [
+          "换个问法",
+          "给几个选项"
+        ],
+        "answerVersion": 1,
+        "questionVersion": 3,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "宾客几点入场？",
+      "input": "11:30",
+      "score": 4,
+      "expectedScore": 4,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3286",
+        "messages": [
+          "这题答对啦，宾客几点入场都让您猜中了，喜气加分！",
+          "喜宴几点开席？"
+        ],
+        "questionId": "q6",
+        "answerStatus": "correct",
+        "questionText": "喜宴几点开席？",
+        "quickReplies": [
+          "看看游戏规则",
+          "换个问法"
+        ],
+        "answerVersion": 1,
+        "questionVersion": 3,
+        "presentationVersion": 2
+      },
+      "pass": true
+    },
+    {
+      "title": "喜宴几点开席？",
+      "input": "12:58",
+      "score": 4,
+      "expectedScore": 4,
+      "reply": {
+        "source": "ai",
+        "choices": [],
+        "answerId": "3287",
+        "messages": [
+          "哎呀，这题没猜中，不过喜气可一点没少！"
+        ],
+        "questionId": null,
+        "answerStatus": "incorrect",
+        "questionText": null,
+        "quickReplies": [
+          "看看我的成绩",
+          "婚礼几点开始？"
+        ],
+        "answerVersion": 1,
+        "presentationVersion": 2
+      },
+      "pass": true
+    }
+  ]
+}
