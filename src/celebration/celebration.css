@@ -52,7 +52,7 @@
 .modal-card.blessings-card { height: min(540px, calc(var(--blessing-viewport-height, 100dvh) - 40px)); max-height: calc(var(--blessing-viewport-height, 100dvh) - 40px); display: flex; flex-direction: column; overflow: hidden; }
 .blessings-card > .blessings-tabs { flex-shrink: 0; }
 #blessingCompose, #blessingHistory { flex: 1; min-height: 0; }
-#blessingCompose { overflow-y: auto; padding: 0 4px 5px; }
+#blessingCompose { overflow-y:auto; margin-right:-16px; padding:0 20px 5px 4px; }
 #blessingHistory { display: flex; flex-direction: column; }
 #blessingHistory > :is(.blessing-new,.blessing-history-nav) { flex-shrink: 0; }
 .blessings-card :is(#blessingCompose,.blessing-history-list) { scrollbar-width: thin; scrollbar-color: #b9935f80 #b9935f0a; scrollbar-gutter: stable; }
@@ -61,7 +61,7 @@
 .blessings-card :is(#blessingCompose,.blessing-history-list)::-webkit-scrollbar-thumb { background: #b9935f80; border-radius: 4px; }
 .blessings-card { --blessing-accent: #7a1f2b; --blessing-line: #b9935f; padding: 24px 23px 18px; border-radius: 16px; }
 .blessings-card .modal-close { width: 44px; height: 44px; top: 4px; right: 5px; font-size: 26px; z-index: 1; }
-.blessings-tabs { position: relative; display: flex; margin: 0 30px 15px 0; }
+.blessings-tabs { position: relative; display: flex; margin: 0 26px 15px; }
 .blessings-tabs button { min-height: 44px; flex: 1; border: 0; background: transparent; color: #806958; font: 13px "Noto Serif SC", serif; cursor: pointer; position: relative; }
 .blessings-tabs [aria-selected='true'] { color: var(--blessing-accent); }
 .blessings-tabs::after { content: ''; position: absolute; bottom: -1px; height: 2px; background: linear-gradient(var(--blessing-accent),var(--blessing-accent)) center / 38px 2px no-repeat; width: 50%; left: 0; transition: transform 160ms cubic-bezier(.2,.7,.2,1); }
@@ -93,7 +93,7 @@
 .blessing-send:disabled { opacity: .7; cursor: wait; }
 .blessing-result { font-size: 11px; color: #712b27; line-height: 1.7; text-align: center; margin: 9px 0 0; overflow-wrap: anywhere; }
 .blessing-result:empty { display: none; }
-.blessing-history-list { flex: 1; min-height: 0; padding:0 14px 12px 2px; overflow-y: auto; overflow-anchor:none; overscroll-behavior: contain; touch-action: pan-y; }
+.blessing-history-list { margin-right:-16px; flex: 1; min-height: 0; padding:0 30px 12px 2px; overflow-y: auto; overflow-anchor:none; overscroll-behavior: contain; touch-action: pan-y; }
 .blessing-history-item { padding: 15px 0; border-bottom: 1px solid #b9935f33; }
 .blessing-history-item header { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; }
 .blessing-history-item strong { color: var(--blessing-accent); font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }

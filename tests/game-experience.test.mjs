@@ -19,13 +19,13 @@ test('手机授权弹窗、分段规则、称呼同步与AI写祝福草稿',{ski
     const page=await context.newPage();
     await page.goto(origin+'/');
     await page.evaluate(()=>localStorage.setItem('wedding.blessings.name',JSON.stringify('先前的称呼')));
-    await page.goto(origin+'/game.html');await page.locator('.game-rules-page').waitFor();await page.getByRole('button',{name:'开始挑战',exact:true}).click();await page.locator('#gameLogin').waitFor();
+    await page.goto(origin+'/game.html');await page.locator('dialog[data-kind=game-intro][open]').waitFor();assert.equal(await page.locator('#gameLogin').count(),0);await page.getByRole('button',{name:'我来试试',exact:true}).click();await page.locator('#gameLogin').waitFor();
     assert.equal(await page.locator('[name=name]').inputValue(),'先前的称呼');
     assert.equal(await page.locator('[name=name]').isVisible(),false);
     assert.equal(await page.locator('.game-page-header,h1,.game-facts,#gameFeedback').count(),0);
     await page.locator('#gameMenuToggle').click();await page.locator('#showGameRules').click();await page.locator('.game-rules-page').waitFor();
     assert.ok(await page.locator('.game-rules-page h3').count()>=4);
-    assert.match(await page.locator('.game-rules-page').innerText(),/6 个.*2 题/s);
+    assert.match(await page.locator('.game-rules-page').innerText(),/6 道.*2 题/s);
     assert.doesNotMatch(await page.locator('.game-rules-page').innerText(),/阿里云|SDK|Cookie|服务端|后端|接口|数据库|模型|重试不重复计分/);
     await page.getByRole('link',{name:'返回上一页',exact:true}).click();
     await page.locator('[name=phone]').fill('13900000777');await page.locator('#getGameCode').click();

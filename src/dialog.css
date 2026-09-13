@@ -18,3 +18,10 @@
 :root[data-theme=chinese] .dialog-primary { background:#8b171b; }
 :root[data-theme=chinese] .dialog-actions button { border-radius:5px 16px; }
 @media(prefers-reduced-motion:no-preference) { .invitation-dialog[open] { animation:small-dialog-enter 150ms ease-out; } @keyframes small-dialog-enter { from { opacity:0; transform:translateY(5px) scale(.98); } } }
+
+.invitation-dialog .dialog-content { margin-right:-12px; padding-right:12px; }
+.invitation-dialog[data-kind=game-intro] { width:min(390px,calc(100vw - 28px)); max-height:calc(100dvh - 32px); overflow:hidden; }
+.invitation-dialog[data-kind=game-intro] .dialog-content { max-height:calc(100dvh - 200px); }
+.invitation-dialog[data-kind=game-intro] h2 { font-size:22px; margin-bottom:10px; }
+.invitation-dialog[data-kind=game-intro] .dialog-actions { margin-top:16px; }
+.invitation-dialog[data-kind=game-intro] .dialog-actions button { min-height:48px; }

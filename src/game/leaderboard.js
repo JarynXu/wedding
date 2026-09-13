@@ -24,7 +24,7 @@ export class LeaderboardView {
     const prize=me?.potentialPrize;
     this.personal.hidden=!me;this.personal.replaceChildren();
     if(me){
-      if(prize){this.personal.append(prizeArt(prize.kind));const text=node('div','');text.append(node('small','',(prize.awarded?'你的奖品':'暂定奖品')+(prize.name?' · '+prize.name:'')),node('strong','',prizeName(prize.kind)),node('span','',prize.awarded?(me.claim?.redeemedAt?'已领取':'婚礼现场领取'):'名单仍在变动'));this.personal.append(text);}
+      if(prize){this.personal.append(prizeArt(prize.kind));const text=node('div','');text.append(node('small','',(prize.awarded?'你的奖品':'当前奖品')+(prize.name?' · '+prize.name:'')),node('strong','',prizeName(prize.kind)),node('span','',prize.awarded?(me.claim?.redeemedAt?'已领取':'婚礼现场领取'):''));this.personal.append(text);}
       else this.personal.append(node('span','',`已答对 ${me.participant.score} 题`),node('small','','还没有进入奖品名单'));
     }
     const top=this.list.scrollTop,box=this.list.getBoundingClientRect();

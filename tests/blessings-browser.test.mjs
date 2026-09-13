@@ -37,6 +37,7 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
           await page.setViewportSize({ width, height });
           const layout = await page.locator('.blessings-card').evaluate(card => ({ width: card.clientWidth, scroll: card.scrollWidth, blur: getComputedStyle(card).backdropFilter, body: document.body.scrollWidth, viewport: innerWidth, inputSize: getComputedStyle(card.querySelector('input')).fontSize }));
           assert.ok(layout.scroll <= layout.width + 1); assert.ok(layout.body <= layout.viewport); assert.match(layout.blur, /blur/); assert.equal(layout.inputSize, '16px');
+          const alignment=await page.locator('.blessings-card').evaluate(card=>{const box=card.getBoundingClientRect(),tabs=card.querySelector('.blessings-tabs').getBoundingClientRect();return Math.abs((box.left+box.right)/2-(tabs.left+tabs.right)/2);});assert.ok(alignment<1,'两个页签相对面板居中');
           const send = page.locator('.blessing-send'); await send.scrollIntoViewIfNeeded(); assert.equal(await send.isVisible(), true);
           const before = await page.locator('.blessings-card').boundingBox();
           await page.locator('[data-tab="history"]').click();
@@ -44,6 +45,7 @@ test('手机双主题：送出、实时收取、祝福簿、重试与动态效�
           const after = await page.locator('.blessings-card').boundingBox();
           assert.ok(Math.abs(before.height - after.height) < 1 && Math.abs(before.y - after.y) < 1, '空祝福簿与表单的外框保持同一位置和高度');
           const scrollbar = await page.locator('.blessing-history-list').evaluate(node => ({ width: getComputedStyle(node).scrollbarWidth, color: getComputedStyle(node).scrollbarColor }));
+          const edge=await page.locator('.blessing-history-list').evaluate(node=>{const panel=node.closest('.blessings-card').getBoundingClientRect();return {gap:panel.right-node.getBoundingClientRect().right,padding:parseFloat(getComputedStyle(node).paddingRight)};});assert.ok(edge.gap>=2&&edge.gap<=14);assert.ok(edge.padding>=20);
           assert.equal(scrollbar.width, 'thin'); assert.notEqual(scrollbar.color, 'auto');
           await page.locator('[data-tab="compose"]').click();
         }

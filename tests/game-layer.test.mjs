@@ -22,7 +22,7 @@ test('请柬内聊天保留音乐、页面与草稿，手机只滚动聊天区',
       const before = await page.evaluate(() => { window.invitationDocumentProof = crypto.randomUUID(); return { proof: window.invitationDocumentProof, time: document.querySelector('#bgm').currentTime }; });
       await page.locator('#gameEntry').click();
       const frame = page.frameLocator('.invitation-game-layer iframe');
-      if(theme==='classic'){await frame.locator('.game-rules-page').waitFor();await frame.getByRole('button',{name:'开始挑战',exact:true}).click();}await frame.locator('.conversation-host').first().waitFor();
+      if(theme==='classic'){await frame.locator('dialog[data-kind=game-intro][open]').waitFor();await frame.getByRole('button',{name:'我来试试',exact:true}).click();}await frame.locator('.conversation-host').first().waitFor();
       await frame.locator('#gameAnswer').fill('还没发送的心意');
       for (const [width, height] of [[320, 568], [390, 844], [390, 420]]) {
         await page.setViewportSize({ width, height });
