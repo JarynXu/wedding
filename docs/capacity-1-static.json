@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-09-14T07:36:17.112Z",
+  "image": "wedding-capacity:current",
+  "scope": "每容器限制 1 CPU/2 GiB，无 swap；100 个真实 HTTP 会话、100 条 SSE、800ms 聊天轮询及4秒状态轮询；真实本机 PostgreSQL，AI每次750ms替身，未调用短信或真实模型。",
+  "replicas": 1,
+  "workersPerInstance": 8,
+  "offload": true,
+  "visitors": 100,
+  "modelDelayMs": 750,
+  "modelCalls": 600,
+  "modelPeak": 8,
+  "failures": 0,
+  "dynamicRequests": 9894,
+  "servedPageAndAssetBytes": 15256400,
+  "downloadedAssetBytes": 1522206000,
+  "elapsedMs": 80856,
+  "apiMs": {
+    "p50": 81.84419999999955,
+    "p95": 390.4821000000011,
+    "max": 2301.0534
+  },
+  "answerMs": {
+    "p50": 38536.7089,
+    "p95": 49397.736099999995,
+    "max": 52019.0061
+  },
+  "instances": [
+    {
+      "instance": "wedding-capacity-1789371277848-0",
+      "idleRssMiB": 88.1,
+      "peakRssMiB": 132.8,
+      "peakHeapMiB": 42,
+      "peakExternalMiB": 9.5,
+      "peakCgroupMiB": 78,
+      "recoveryRssMiB": 96.3,
+      "eventLoopP99Ms": 32.669695,
+      "processCpuPercent": 29.765723849724733,
+      "memoryEvents": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+      "cpuStat": "usage_usec 28739463\nuser_usec 21977213\nsystem_usec 6762250\nnice_usec 0\nnr_periods 936\nnr_throttled 30\nthrottled_usec 1795032\nnr_bursts 0\nburst_usec 0"
+    }
+  ],
+  "passed": true
+}

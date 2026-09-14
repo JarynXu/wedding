@@ -1,10 +1,10 @@
 # 上线与运行维护
 
-## 5–10 实例的连接预算
+## 1C2G、1–2 实例的连接预算
 
-生产 PostgreSQL 的 max_connections 为 100。每实例有祝福池、游戏池和一个 LISTEN 连接。默认 WEDDING_MAX_INSTANCES=10、WEDDING_DB_CONNECTION_BUDGET=80、BLESSINGS_DB_POOL_SIZE=3。单池实际上限取申请值与总预算推导值中的较小值；遗留的单池 5 配置也会收敛到 3。
+生产 PostgreSQL 的 max_connections 为 100。每实例有祝福池、游戏池和一个 LISTEN 连接。默认 WEDDING_MAX_INSTANCES=2、WEDDING_DB_CONNECTION_BUDGET=80、BLESSINGS_DB_POOL_SIZE=3。单池实际上限取申请值与总预算推导值中的较小值。
 
-10 × (3 + 3 + 1) = 70 个常态连接上限。剩余连接用于管理、其他客户端及重连。启动日志 service.started 的 counts 显示实际预算。滚动发布允许额外实例时，须把额外数量计入 WEDDING_MAX_INSTANCES，或限制平台的额外实例数；应用无法控制平台实例上限。
+2 × (3 + 3 + 1) = 14 个常态连接上限。剩余连接用于管理、其他客户端及重连。启动日志 service.started 的 counts 显示实际预算。滚动发布允许额外实例时，须把额外数量计入 WEDDING_MAX_INSTANCES，或限制平台的额外实例数；应用无法控制平台实例上限。
 
 所有实例使用同一数据库、房间、身份加密密钥和会话密钥。写入、答卷领取、结算、核销和运营清理使用 PostgreSQL 事务与约束；聊天及判题使用持久租约。外部 AI 和短信调用不占用数据库事务。SSE 通知只是唤醒信号，补读以持久数据为准，不要求粘性会话或 Redis。
 
@@ -14,7 +14,7 @@
 
 按该配额，100 位宾客无需增加现有 Key；前提是账户其他业务没有占满额度。此结论不保证供应商延迟、余额或网络可用性。正式题库和真实网络仍需试运行验收。
 
-GAME_AI_CONCURRENCY 默认每实例 8 个任务，10 实例为 80 个任务。一个任务的审查、仲裁、主持生成与回应核对按依赖顺序执行，调用次数不等于同时占用数。祝福润色也计入同一共享模型预算。
+GAME_AI_CONCURRENCY 默认每实例 32 个任务，2 实例为 64 个任务。现有环境变量显式设置为 8 时仍按 8 执行，需修改配置后重启。一个任务的审查、仲裁、主持生成与回应核对按依赖顺序执行，调用次数不等于同时占用数。祝福润色也计入同一共享模型预算。
 
 GAME_AI_MAX_INFLIGHT 默认 120；GAME_AI_ACCOUNT_SCOPE 默认 deepseek-main。同账户各实例须使用相同 scope 与预算。共享数据库租约限制在途模型请求，429/503 的冷却时间跨实例生效。请求边界最多重试三次，35 秒总预算内遵守 Retry-After；聊天遇到可重试失败会保留原提交时间并延后处理，连续失败保留重试入口，不把限流判为答错。
 
@@ -33,7 +33,9 @@ GAME_AI_MAX_INFLIGHT 默认 120；GAME_AI_ACCOUNT_SCOPE 默认 deepseek-main。�
 
 ## 容器日志与链路
 
-LOG_LEVEL 默认 info，可设 debug/info/warn/error/silent。正式环境不要使用 silent。warn/error 输出至 stderr，其余输出至 stdout；每行一个 JSON 对象，交给云托管的容器日志采集。没有额外文件日志或本地磁盘依赖。
+LOG_LEVEL 默认 info，可设 debug/info/warn/error/silent。正式环境不要使用 silent。warn/error 输出至 stderr，其余输出至 stdout；默认输出可读文本，交给云托管的容器日志采集。没有额外文件日志或本地磁盘依赖。
+
+LOG_FORMAT=text 使用 `[时间] [级别] [服务] [实例] [trace_id] [span_id] - 事件 key=value`。LOG_FORMAT=json 保留单行 JSON，供结构化采集使用。LOG_SERVICE 默认 wedding；LOG_COLOR=auto 按终端能力着色，always 强制着色，never 禁用颜色。容器采集平台不支持 ANSI 时使用 never。NO_COLOR 在 auto 模式下关闭颜色。错误堆栈缩进到后续行；日志平台需按 `[` 开头的时间行聚合多行。字段中的控制字符转义，不能插入假日志。
 
 字段包括时间、级别、事件、实例标识、构建版本、trace_id、span_id、parent_span_id、request_id、任务编号、活动与参与者编号、阶段、耗时、模型、调用次数、Token 数和错误码。HTTP 接收并校验 W3C traceparent，生成当前请求 span，响应返回 traceparent 和 X-Request-ID。异步聊天/答卷保存原 trace_id；领取任务的实例沿用链路并生成子 span，模型调用再生成子 span。
 
@@ -65,3 +67,5 @@ LOG_LEVEL 默认 info，可设 debug/info/warn/error/silent。正式环境不要
 压测冷启动资源清单约 15.37 MB/人，100 人约 1.54 GB，其中完整背景音乐约 9.75 MB；清单不包含全部字体分片。这部分吞吐与 API Key 无关。生产验收需检查静态资源缓存/CDN命中和出站带宽，动态 HTML、登录、聊天与 SSE 不应被页面缓存。
 
 [真实模型回归](game-cluster-ai-evaluation.json)记录 17 轮虚构对话，17 轮行为检查通过且使用已核对的生成回复。样本覆盖规则、公开日程、手机号用途、已完成后的现场助手与注入指令，不构成正式题库准确率承诺。
+
+静态资源导出与运行时地址配置见 [静态资源托管](static-hosting.md)。1C2G 容器的实测与限制见 [容量评估](runtime-capacity.md)。

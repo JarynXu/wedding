@@ -3,7 +3,15 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { initialGameConfig,validateGameConfig,phoneNumber,parseVerdict,needsInjectionReview } from '../server/game/model.js';
 import { GameJudge } from '../server/game/judge.js';
+import { readGameRuntime } from '../server/game/config.js';
 import { gameFixture,gameTestDatabase,gameRequest,adminLogin } from './game-fixture.mjs';
+
+test('运行配置提供32个异步处理名额，部署配置可覆盖并拒绝越界',()=>{
+  const env={GAME_ENABLED:'true',GAME_DATA_KEY:'a'.repeat(64),GAME_SESSION_SECRET:'b'.repeat(32)};
+  assert.equal(readGameRuntime(env).workers,32);
+  assert.equal(readGameRuntime({...env,GAME_AI_CONCURRENCY:'8'}).workers,8);
+  for(const value of ['0','33','-1','1.5','invalid'])assert.throws(()=>readGameRuntime({...env,GAME_AI_CONCURRENCY:value}));
+});
 
 test('游戏配置与结构化判题边界不接受客户端发奖字段',()=>{
   const config=initialGameConfig();assert.equal(config.questions.length,6);assert.equal(config.participationLimit,20);assert.equal(config.requiredCorrect,2);assert.equal(config.closesAt,'2026-10-16T16:00:00.000Z');

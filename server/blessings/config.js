@@ -17,7 +17,7 @@ export function readBlessingsConfig(env = process.env) {
   if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.password) throw new Error('BLESSINGS_PUBLIC_ORIGIN 须为本站 HTTP(S) 地址');
   const clientIpHeader = env.BLESSINGS_CLIENT_IP_HEADER || '';
   if (clientIpHeader && !['x-original-forwarded-for', 'x-forwarded-for', 'x-real-ip'].includes(clientIpHeader)) throw new Error('BLESSINGS_CLIENT_IP_HEADER 不在支持范围内');
-  const maxInstances = integer(env.WEDDING_MAX_INSTANCES, 10, 1, 100);
+  const maxInstances = integer(env.WEDDING_MAX_INSTANCES, 2, 1, 100);
   const connectionBudget = integer(env.WEDDING_DB_CONNECTION_BUDGET, 80, 3, 1000);
   // 每实例两个连接池及一个 LISTEN 连接；预算限制优先于单池申请值。
   const poolCap = Math.floor((connectionBudget / maxInstances - 1) / 2);
