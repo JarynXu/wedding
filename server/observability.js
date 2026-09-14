@@ -1,6 +1,7 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomBytes, randomUUID, createHash } from 'node:crypto';
 import { hostname } from 'node:os';
+import { formatLog, logOptions } from './log-format.js';
 
 const context = new AsyncLocalStorage();
 const instance = process.env.INSTANCE_ID || `${hostname()}-${process.pid}-${randomBytes(3).toString('hex')}`;
@@ -15,9 +16,10 @@ export function providerUserId() { const value=traceContext();return value.parti
 /** 日志只接收允许的诊断字段；请求正文、凭据和宾客原文留在受权查询的数据记录中。 */
 export function log(event, fields={}, level='info') {
   if((levels[level]||20)<(levels[process.env.LOG_LEVEL]||20))return;
-  const values={...traceContext(),...fields},data={time:new Date().toISOString(),level,event,instance};
+  const values={...traceContext(),...fields},data={time:new Date().toISOString(),level,event,service:process.env.LOG_SERVICE||'wedding',instance};
   for(const [key,value]of Object.entries(values))if(permitted.has(key)&&value!==undefined)data[key]=key==='counts'?Object.fromEntries(Object.entries(value||{}).filter(([name,count])=>/^[a-z_]+$/.test(name)&&Number.isSafeInteger(count)&&count>=0)):value;
-  (level==='error'||level==='warn'?process.stderr:process.stdout).write(JSON.stringify(data)+'\n');
+  const stream=level==='error'||level==='warn'?process.stderr:process.stdout;
+  stream.write(formatLog(data,logOptions(process.env,stream)));
 }
 export function logError(event,error,fields={}) {
   log(event,{...fields,error_type:error?.name||'Error',error_code:error?.code||error?.status||'UNKNOWN',stack:typeof error?.stack==='string'?error.stack.split('\n').filter(line=>/^\s+at /.test(line)).slice(0,8):undefined},'error');

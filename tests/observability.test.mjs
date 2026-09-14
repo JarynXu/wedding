@@ -21,7 +21,7 @@ test('模型调用透传链路、隔离用户并遵守429退避',async()=>{
 
 test('容器日志为JSON行，敏感正文和错误消息不会写出',async()=>{
   const source=`import {log,logError,withTrace} from './server/observability.js';withTrace({trace_id:'a'.repeat(32),span_id:'b'.repeat(16)},()=>{log('test',{password:'secret-password',phone:'13999999999',body:'guest-private',counts:{password:'secret-count',records:2}});logError('failed',new Error('private-code-and-key'));});`;
-  const result=await promisify(execFile)(process.execPath,['--input-type=module','-e',source],{cwd:process.cwd(),env:{...process.env,LOG_LEVEL:'info'}});
+  const result=await promisify(execFile)(process.execPath,['--input-type=module','-e',source],{cwd:process.cwd(),env:{...process.env,LOG_LEVEL:'info',LOG_FORMAT:'json'}});
   const output=result.stdout+result.stderr,rows=output.trim().split('\n').map(JSON.parse);
   assert.equal(rows.length,2);assert.ok(rows.every(row=>row.trace_id==='a'.repeat(32)&&row.instance));
   assert.doesNotMatch(output,/secret-password|13999999999|guest-private|private-code-and-key|secret-count/);assert.deepEqual(rows[0].counts,{records:2});
