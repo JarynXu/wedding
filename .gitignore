@@ -3,6 +3,8 @@ node_modules/
 .env.local
 .env.*.local
 dist/
+static-upload/
+static-upload.zip
 .vite/
 
 # OS generated files

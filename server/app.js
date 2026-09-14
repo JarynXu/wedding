@@ -1,6 +1,6 @@
 import express from 'express';
 import compression from 'compression';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, extname } from 'node:path';
 import { WEDDING_CONFIG } from '../src/config.js';
 import { getShareMetadata } from '../src/share-metadata.js';
@@ -11,10 +11,11 @@ import { adminRouter } from './admin/http.js';
 import { readBuildInfo } from './admin/status.js';
 import { gamePublicRouter } from './game/http.js';
 import { requestTracing, logError } from './observability.js';
+import { readStaticAssetBase, renderStaticAssets } from './static-assets.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */
-export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, game = null, gameOrigin, startedAt = new Date(), buildInfo } = {}) {
-  const html = readFileSync(resolve(distDir, 'index.html'), 'utf8');
+export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, game = null, gameOrigin, startedAt = new Date(), buildInfo, staticAssetBase = readStaticAssetBase() } = {}) {
+  const html = renderStaticAssets(readFileSync(resolve(distDir, 'index.html'), 'utf8'), staticAssetBase);
   renderShareMetadata(html, getShareMetadata(config));
   const app = express();
   const applicationBuildInfo = buildInfo ?? readBuildInfo({ distDir });
@@ -28,13 +29,19 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
   app.get(['/', '/index.html'], (request, response, next) => {
     try {
       const search = new URL(request.originalUrl, 'http://invitation.local/').search;
-      const share = getShareMetadata(config, search);
+      const share = getShareMetadata(config, search, staticAssetBase);
       response.set('Cache-Control', 'no-store').type('html').send(renderShareMetadata(html, share));
     } catch (error) {
       if (!(error instanceof InvalidInvitationLinkError)) return next(error);
       response.status(400).set('Cache-Control', 'no-store').type('text/plain').send(error.message);
     }
   });
+  for (const page of ['game.html', 'calendar.html']) {
+    const file = resolve(distDir, page);
+    if (!existsSync(file)) continue;
+    const content = renderStaticAssets(readFileSync(file, 'utf8'), staticAssetBase);
+    app.get('/' + page, (_request, response) => response.set('Cache-Control', 'no-store').type('html').send(content));
+  }
   app.use(express.static(distDir, {
     index: false,
     etag: true,

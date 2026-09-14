@@ -2,6 +2,8 @@
 .gitignore
 node_modules
 dist
+static-upload
+static-upload.zip
 design
 *.log
 .DS_Store

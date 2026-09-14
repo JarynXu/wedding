@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "static:export": "node build/export-static.mjs",
     "start": "node server/index.js",
     "preview": "vite preview",
     "blessings:migrate": "node server/blessings/migrate.js",

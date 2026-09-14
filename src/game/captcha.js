@@ -1,8 +1,9 @@
+import { publicAssetUrl } from '../static-assets.js';
 let sdkLoading;
 function loadSdk() {
   if(typeof window.initAlicom4==='function')return Promise.resolve();
   sdkLoading ??= new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src='./vendor/aliyun-graph/ct4.js';script.async=true;
+    const script=document.createElement('script');script.src=publicAssetUrl('./vendor/aliyun-graph/ct4.js');script.async=true;
     const fail=()=>{clearTimeout(timeout);script.remove();reject(new Error('图形验证加载失败，请稍后重试'));};
     const timeout=setTimeout(fail,15000);
     script.onerror=fail;script.onload=()=>{clearTimeout(timeout);if(typeof window.initAlicom4==='function')resolve();else fail();};document.head.append(script);
