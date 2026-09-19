@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readdir, readFile, mkdir, cp, writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 const themes = ['classic', 'chinese'];
@@ -26,40 +26,39 @@ export async function readMusicLibrary(root) {
   return library;
 }
 
-/** 开发环境与构建使用同一目录清单；源目录不写入构建派生文件。 */
+/** 歌单是公开资源的一部分，public 的副本无需依赖构建产物。 */
+export async function syncMusicLibrary(root) {
+  const library = await readMusicLibrary(root);
+  for (const [theme, playlist] of Object.entries(library)) {
+    const file = resolve(root, 'public/music', theme, 'playlist.json');
+    const content = JSON.stringify(playlist, null, 2) + '\n';
+    const previous = await readFile(file, 'utf8').catch(error => {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    });
+    if (previous !== content) await writeFile(file, content);
+  }
+  return library;
+}
+
+/** 开发与构建先更新 public 歌单；Vite 负责原样复制公开文件。 */
 export function musicLibrary() {
   let root;
   return {
     name: 'theme-music-library',
-    configResolved(config) { root = config.root; },
+    async configResolved(config) { root = config.root; await syncMusicLibrary(root); },
     configureServer(server) {
       server.middlewares.use(async (request, response, next) => {
         const path = new URL(request.url, 'http://vite.local').pathname;
         const match = /\/music\/(classic|chinese)\/playlist\.json$/.exec(path);
         if (!match || !['GET', 'HEAD'].includes(request.method)) return next();
         try {
-          const library = await readMusicLibrary(root);
+          const library = await syncMusicLibrary(root);
           response.setHeader('Content-Type', 'application/json; charset=utf-8');
           response.setHeader('Cache-Control', 'no-cache');
           response.end(request.method === 'HEAD' ? undefined : JSON.stringify(library[match[1]]));
         } catch (error) { next(error); }
       });
     },
-    async generateBundle() {
-      for (const [theme, playlist] of Object.entries(await readMusicLibrary(root))) this.emitFile({ type: 'asset', fileName: `music/${theme}/playlist.json`, source: JSON.stringify(playlist, null, 2) + '\n' });
-    },
   };
-}
-
-export async function exportMusic(root, output) {
-  const library = await readMusicLibrary(root);
-  // 每次独立导出，旧文件不会混入新清单，也不会删除已有上传包。
-  await mkdir(output, { recursive: false });
-  for (const [theme, playlist] of Object.entries(library)) {
-    const destination = resolve(output, 'music', theme);
-    await mkdir(destination, { recursive: true });
-    for (const track of playlist.tracks) await cp(resolve(root, 'public/music', theme, track.file), resolve(destination, track.file));
-    await writeFile(resolve(destination, 'playlist.json'), JSON.stringify(playlist, null, 2) + '\n');
-  }
-  return library;
 }

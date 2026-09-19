@@ -36,8 +36,8 @@ export function requestTracing(build={}) {
       const started=performance.now();response.set('X-Request-ID',fields.request_id);response.set('traceparent',traceparent());
       let completed=false;
       const finish=()=>{if(completed)return;completed=true;
-        const path=request.route?.path?request.baseUrl+String(request.route.path):request.path.startsWith('/assets/')?'/assets/:file':'unmatched';
-        if(response.statusCode<400&&request.path.startsWith('/assets/')&&process.env.LOG_HTTP_ASSETS!=='true')return;
+        const path=request.route?.path?request.baseUrl+String(request.route.path):request.path.startsWith('/app/')?'/app/:file':request.path.startsWith('/assets/')?'/assets/:file':'unmatched';
+        if(response.statusCode<400&&/^\/(app|assets)\//.test(request.path)&&process.env.LOG_HTTP_ASSETS!=='true')return;
         log('http.complete',{...fields,method:request.method,path,status:response.destroyed&&!response.writableFinished?499:response.statusCode,duration_ms:Math.round(performance.now()-started)},response.statusCode>=500?'error':'info');
       };
       response.on('finish',finish);response.on('close',finish);next();

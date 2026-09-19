@@ -10,9 +10,15 @@ import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   base: './',
+  cacheDir: '.temp/vite',
   plugins: [blessingsApi(), shareMetadata(), criticalWelcome(), calendarResponse(), calendarEntry(), musicLibrary(), buildInfo()],
   build: {
     rollupOptions: {
+      output: {
+        entryFileNames: 'app/[name]-[hash].js',
+        chunkFileNames: 'app/[name]-[hash].js',
+        assetFileNames: 'app/[name]-[hash][extname]',
+      },
       input: {
         invitation: fileURLToPath(new URL('./index.html', import.meta.url)),
         calendar: fileURLToPath(new URL('./calendar.html', import.meta.url)),

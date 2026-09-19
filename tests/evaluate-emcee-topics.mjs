@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { gameFixture, gameTestDatabase } from './game-fixture.mjs';
 import { readGameRuntime } from '../server/game/config.js';
 import { ConversationIntent } from '../server/game/conversation-intent.js';
@@ -9,6 +9,7 @@ import { ShowHost } from '../server/game/show-host.js';
 
 if(!process.argv.includes('--live')||!['127.0.0.1','localhost'].includes(new URL(gameTestDatabase).hostname))throw Error('仅供显式启用的本机隔离评测');
 const config=readGameRuntime().ai;if(!config)throw Error('缺少模型配置');
+await mkdir('.temp/reports', { recursive: true });
 const f=await gameFixture(),cases=[];
 try{
   const event=await f.store.event();
@@ -35,5 +36,5 @@ try{
     cases.push({title,input,score:me.participant.score,expectedScore:score,reply,pass});console.log(JSON.stringify(cases.at(-1)));
   }
   const report={evaluatedAt:new Date().toISOString(),model:config.model,scope:'虚构婚礼、六道相邻话题、真实模型、本机隔离数据库；下一题采用预先核对的题目提法，不发送短信。',passed:cases.filter(item=>item.pass).length,total:cases.length,cases};
-  await writeFile('docs/choice-dialogue-evaluation.json',JSON.stringify(report,null,2)+'\n');if(report.passed!==report.total)process.exitCode=1;
+  await writeFile('.temp/reports/choice-dialogue-evaluation.json',JSON.stringify(report,null,2)+'\n');if(report.passed!==report.total)process.exitCode=1;
 }finally{await f.close();}

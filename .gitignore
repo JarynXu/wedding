@@ -1,5 +1,6 @@
 # Dependencies and Vite output
 node_modules/
+.temp/
 .env.local
 .env.*.local
 dist/

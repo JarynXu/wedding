@@ -1,4 +1,5 @@
-const atlas=new URL('../assets/prize-plush.webp',import.meta.url).href;
+import { publicAssetUrl } from '../static-assets.js';
+const atlas=publicAssetUrl('./assets/shared/prize-plush.webp');
 const gifts={large:{name:'大号毛绒玩偶',box:'40 20 620 700'},medium:{name:'中号毛绒玩偶',box:'690 155 490 540'},small:{name:'小号毛绒玩偶',box:'1230 270 370 430'},keychain:{name:'钥匙扣小玩偶',box:'1690 260 300 440'}};
 export function prizeArt(kind){
   const gift=gifts[kind]||gifts.keychain,svg=document.createElementNS('http://www.w3.org/2000/svg','svg');

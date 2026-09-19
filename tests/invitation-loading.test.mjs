@@ -138,7 +138,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       } finally { await page.context().setOffline(false); }
     });
 
-    for (const [label, pattern] of [['图片', 'card_03_hd'], ['字体', 'RWmMoK'], ['音乐', '.mp3']]) {
+    for (const [label, pattern] of [['图片', '/classic/location.jpg'], ['字体', 'RWmMoK'], ['音乐', '.mp3']]) {
       await suite.test(`${label}失败时禁止进入，重试恢复`, async () => {
         failure = pattern;
         await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -161,11 +161,11 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
     });
 
     await suite.test('图片解码失败时禁止进入', async () => {
-      await page.route('**/cover-welcome-art*.webp', route => route.fulfill({ contentType: 'image/webp', body: 'invalid image' }));
+      await page.route('**/assets/classic/portrait.webp', route => route.fulfill({ contentType: 'image/webp', body: 'invalid image' }));
       await page.goto(url, { waitUntil: 'domcontentloaded' });
       await page.locator('#preloaderOverlay[data-state="error"]').waitFor();
       await blocked();
-      await page.unroute('**/cover-welcome-art*.webp');
+      await page.unroute('**/assets/classic/portrait.webp');
     });
 
     await suite.test('减少动态效果仍须等待素材，字体全部来自本站', async () => {

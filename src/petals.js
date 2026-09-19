@@ -1,4 +1,5 @@
-const atlasUrl = new URL('./assets/rose-petals.webp', import.meta.url).href;
+import { publicAssetUrl } from './static-assets.js';
+const atlasUrl = publicAssetUrl('./assets/shared/rose-petals.webp');
 
 /** 花瓣图集为三列两行；每列对应白、粉、红，每行对应一种卷曲姿态。 */
 export class RosePetals {

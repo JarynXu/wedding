@@ -1,7 +1,7 @@
 import express from 'express';
 import compression from 'compression';
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, extname } from 'node:path';
+import { resolve, extname, relative } from 'node:path';
 import { WEDDING_CONFIG } from '../src/config.js';
 import { getShareMetadata } from '../src/share-metadata.js';
 import { InvalidInvitationLinkError } from '../src/family-invitation.js';
@@ -11,7 +11,7 @@ import { adminRouter } from './admin/http.js';
 import { readBuildInfo } from './admin/status.js';
 import { gamePublicRouter } from './game/http.js';
 import { requestTracing, logError } from './observability.js';
-import { readStaticAssetBase, renderStaticAssets } from './static-assets.js';
+import { readStaticAssetBase, renderStaticAssets, readStaticStyles } from './static-assets.js';
 
 /** HTML 按请求生成分享信息；媒体、条件请求与范围下载交给静态文件中间件。 */
 export function createInvitationApp({ distDir = resolve('dist'), config = WEDDING_CONFIG, blessings = null, admin = null, game = null, gameOrigin, startedAt = new Date(), buildInfo, staticAssetBase = readStaticAssetBase() } = {}) {
@@ -42,6 +42,9 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
     const content = renderStaticAssets(readFileSync(file, 'utf8'), staticAssetBase);
     app.get('/' + page, (_request, response) => response.set('Cache-Control', 'no-store').type('html').send(content));
   }
+  for (const [path, content] of readStaticStyles(distDir, staticAssetBase)) {
+    app.get(path, (_request, response) => response.set('Cache-Control', 'no-cache').type('css').send(content));
+  }
   app.use(express.static(distDir, {
     index: false,
     etag: true,
@@ -50,8 +53,8 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
         response.setHeader('Content-Type', 'text/calendar; charset=utf-8');
         response.setHeader('Content-Disposition', 'inline; filename="wedding.ics"');
       }
-      const asset = file.replaceAll('\\', '/').includes('/assets/');
-      response.setHeader('Cache-Control', asset ? 'public, max-age=31536000, immutable' : 'no-cache');
+      const compiled = relative(distDir, file).replaceAll('\\', '/').startsWith('app/');
+      response.setHeader('Cache-Control', compiled ? 'public, max-age=31536000, immutable' : 'no-cache');
     },
   }));
   app.use((_request, response) => response.status(404).type('text/plain').send('页面或文件不存在。'));

@@ -2,7 +2,7 @@
   "source": "imagegen",
   "createdAt": "2026-09-13T02:38:43.298Z",
   "purpose": "婚礼奖品分类图示，非现场实物照片",
-  "asset": "src/assets/prize-plush.webp",
+  "asset": "public/assets/shared/prize-plush.webp",
   "description": "米白绒毛玩偶、酒红缎带与金色边饰，大中小与钥匙扣四种图示。",
   "revision": {
     "source": "exec-84b45ead-a2ed-4962-bb91-b2be9ef7cbc2.png",

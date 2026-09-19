@@ -1,9 +1,9 @@
 @import './chinese-welcome.css';
 
-:root[data-theme='chinese'] .welcome-background::after { background-image: url('../assets/chinese/loading.webp'); }
-:root[data-theme='chinese'] .page-2 { background-image: url('../assets/chinese/time.webp'); }
-:root[data-theme='chinese'] .page-3 { background-image: url('../assets/chinese/location.webp'); }
-:root[data-theme='chinese'] .page-4 { background-image: url('../assets/chinese/closing.webp'); }
+:root[data-theme='chinese'] .welcome-background::after { background-image: url('/assets/chinese/loading.webp'); }
+:root[data-theme='chinese'] .page-2 { background-image: url('/assets/chinese/time.webp'); }
+:root[data-theme='chinese'] .page-3 { background-image: url('/assets/chinese/location.webp'); }
+:root[data-theme='chinese'] .page-4 { background-image: url('/assets/chinese/closing.webp'); }
 :root[data-theme='chinese'] .page { --page-copy-delay: 140ms; container-type: size; }
 :root[data-theme='chinese'] .music-disc { background: #fff8eaf2; }
 :root[data-theme='chinese'] .scroll-arrow { width: 36px; height: 36px; }

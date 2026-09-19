@@ -15,7 +15,7 @@ public/music/
 
 文件名前的数字决定播放顺序。同一编号按文件名排序，未编号的曲目排在后面。支持 mp3、m4a、aac、ogg、wav；手机与微信场景建议使用 MP3 或 AAC 编码的 M4A，具体文件须经过手机播放验证。
 
-当前只提供了原有的 Close to You，已移至默认主题目录。中式目录没有曲目时沿用默认歌单；放入中式音乐后使用独立歌单。默认目录至少保留一首。删除或移动文件后，应重新构建或导出清单。
+当前提供的 Close to You 位于默认主题目录。中式目录没有曲目时沿用默认歌单；放入中式音乐后使用独立歌单。默认目录至少保留一首。增删曲目或替换音频内容后，执行 `npm run music:sync`。
 
 ## 播放方式
 
@@ -27,15 +27,15 @@ public/music/
 
 ## 部署到自带服务器
 
-添加曲目后执行 `npm run build`。构建会按目录生成 `dist/music/classic/playlist.json` 与 `dist/music/chinese/playlist.json`。提交代码和音乐后部署，服务器即可提供歌单。
+添加曲目后执行 `npm run build`。构建先更新 `public/music/classic/playlist.json` 与 `public/music/chinese/playlist.json`，将公开资源原样复制到 `dist`。网站服务提供 `dist/music` 下的音频与歌单。
 
 ## 上传静态服务
 
-完整资源包：执行 `npm run build`、`npm run static:export`，导出目录包含 `music/`。压缩并上传目录内的 `assets/`、`share/`、`vendor/`、`music/`。
+全量上传使用 `public/` 内的全部内容，保留内部结构。歌单与音频均在该目录中，不依赖应用构建产物。
 
-只更新音乐：执行 `npm run music:export`，会生成独立的 `music-upload/时间戳/music/`。将导出目录中的 `music/` 上传到 `STATIC_ASSET_BASE_URL` 对应目录。先上传音频，再更新两个 `playlist.json`；网页读取清单，不依赖服务器列目录。
+只更新音乐：执行 `npm run music:sync`，将 `public/music/` 上传到 `STATIC_ASSET_BASE_URL` 对应目录。先上传音频，再更新两个 `playlist.json`；网页读取清单，不依赖服务器列目录。
 
-例：配置 `STATIC_ASSET_BASE_URL=https://static.example.com/wedding/v1/` 后，歌单地址应为 `https://static.example.com/wedding/v1/music/classic/playlist.json`。仅将曲目文件上传到存储而未更新清单，网页不会知道新增了歌曲。
+例：配置 `STATIC_ASSET_BASE_URL=https://static.jaryn.com.cn/` 后，歌单地址为 `https://static.jaryn.com.cn/music/classic/playlist.json`。仅上传曲目文件会遗漏歌单中的新增记录，网页无法识别新增曲目。
 
 `playlist.json` 使用 JSON 类型和 `Cache-Control: no-cache`；音频使用对应 MIME。自动生成的曲目 URL 带内容版本参数 `v`，静态服务/CDN 应将该参数纳入缓存键，或更换文件名更新音乐。CORS 须允许请柬域名读取清单和音频，配置参考 [静态资源托管](static-hosting.md)。
 

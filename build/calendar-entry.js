@@ -21,7 +21,7 @@ export function calendarEntry() {
           address: config.venue.address,
         };
         for (const [name, value] of Object.entries(fields)) html = html.replaceAll(`{{${name}}}`, escape(value));
-        const emblem = read('src/assets/invitation-mark.svg');
+        const emblem = read('public/assets/shared/invitation-mark.svg');
         return html
           .replace('<!-- calendar-icon -->', `<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,${Buffer.from(emblem).toString('base64')}">`)
           .replace('<!-- invitation-mark -->', emblem)

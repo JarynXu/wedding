@@ -3,8 +3,8 @@
     "prompt": "Precise color edit. IMAGE 1 is the edit target: the clean Chinese wedding loading background, 887x1774. IMAGE 2 is ONLY a reference for the dark cinnabar/crimson RED COLOR and red textured brushwork of the large central 囍 character. Change ONLY the large GOLD double-happiness calligraphy 囍 in the central ivory paper area of IMAGE 1 to that deep Chinese red seen in IMAGE 2 (roughly #9c140f with darker pigment grain). Preserve the exact shape, position, dimensions, brush stroke edges and textural depth of that character. Retain its painterly/foil grain, now as red lacquer/pigment rather than gold. Everything ELSE in Image 1 must remain untouched: ivory blank paper, gold borders, gold cloud ornaments, lanterns, flowers, red background, roof and wood lattice. Keep gold on all frame/cloud/lantern elements. Do not copy any other content from IMAGE 2. Do NOT add or restore any names, invitation text, dates, English, buttons, arrows, music circle or floating petals. Same full-bleed portrait size and composition. Output the edited clean background only.",
     "output": "Generated images are saved to C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce as C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce\\exec-e09cf4d0-07f5-47a6-a561-338245223018.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link.",
     "files": [
-      "src/assets/chinese/loading.webp",
-      "src/assets/chinese/loading-preview.webp"
+      "public/assets/chinese/loading.webp",
+      "public/assets/chinese/loading-preview.webp"
     ],
     "processing": "将图像工具输出中的双喜纸面区域（208,497,510,452）合回原背景，边缘过渡9px，保留原背景其他装饰；重新生成400px宽首帧预览。"
   },

@@ -6,7 +6,7 @@ import { restoreClassicPortrait } from './restore-classic-portrait.mjs';
 const require = createRequire(import.meta.url);
 const sharp = require(process.env.SHARP_MODULE_PATH || 'sharp');
 const source = fileURLToPath(new URL('./welcome-reference.png', import.meta.url));
-const asset = name => fileURLToPath(new URL(`../src/assets/${name}`, import.meta.url));
+const asset = name => fileURLToPath(new URL(`../public/assets/classic/${name}`, import.meta.url));
 const { data: original, info: { width, height } } = await sharp(source).removeAlpha().raw().toBuffer({ resolveWithObject: true });
 if (width !== 941 || height !== 1672) throw new Error('蒙版坐标对应 941 × 1672 的选定方案');
 
@@ -27,7 +27,7 @@ for (let y = 0; y < corner.height; y++) {
     cornerPixels[j + 3] = isGold(r, g, b) ? Math.min(255, Math.round((242 - (r + g + b) / 3) * 2.6)) : 0;
   }
 }
-await sharp(cornerPixels, { raw: { width: corner.width, height: corner.height, channels: 4 } }).webp({ lossless: true }).toFile(asset('cover-frame-corner.webp'));
+await sharp(cornerPixels, { raw: { width: corner.width, height: corner.height, channels: 4 } }).webp({ lossless: true }).toFile(asset('frame-corner.webp'));
 
 const seedMask = new Uint8Array(width * height);
 function mark([left, top, right, bottom], predicate) {
@@ -144,7 +144,7 @@ const portraitRegions = [[270, 474, 456, 706], [445, 375, 645, 665], [200, 600, 
 const cleanupPreservesReferencePortrait = marked.every(i => !portraitRegions.some(([left, top, right, bottom]) => i % width >= left && i % width <= right && Math.floor(i / width) >= top && Math.floor(i / width) <= bottom));
 if (!cleanupPreservesReferencePortrait) throw new Error('清理蒙版侵入人物保护区');
 const cleanedBackground = await sharp(output, { raw: { width, height, channels: 3 } }).png().toBuffer();
-await writeFile(asset('cover-welcome-art.webp'), await restoreClassicPortrait(sharp, cleanedBackground));
+await writeFile(asset('portrait.webp'), await restoreClassicPortrait(sharp, cleanedBackground));
 await sharp(Buffer.from(mask.map(value => value * 255)), { raw: { width, height, channels: 1 } }).png().toFile(fileURLToPath(new URL('./welcome-cleanup-mask.png', import.meta.url)));
-await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'src/assets/cover-welcome-art.webp', modifiedPixels: marked.length, textIsLiveHtml: true, plaqueFrameIsLiveHtml: true, removedStaticPetals: staticPetals, cleanupPreservesReferencePortrait, portraitSource: 'design/迎宾照.jpg', portraitRestoredFromOriginal: true }, null, 2) + '\n');
+await writeFile(fileURLToPath(new URL('./welcome-reference-layout.json', import.meta.url)), JSON.stringify({ width, height, source: 'welcome-reference.png', background: 'public/assets/classic/portrait.webp', modifiedPixels: marked.length, textIsLiveHtml: true, plaqueFrameIsLiveHtml: true, removedStaticPetals: staticPetals, cleanupPreservesReferencePortrait, portraitSource: 'design/迎宾照.jpg', portraitRestoredFromOriginal: true }, null, 2) + '\n');
 console.log(JSON.stringify({ width, height, modifiedPixels: marked.length, removedStaticPetals: staticPetals.length, cleanupPreservesReferencePortrait, portraitRestoredFromOriginal: true }));

@@ -1,64 +1,69 @@
 # 静态资源托管
 
-服务默认使用容器自带资源。`STATIC_ASSET_BASE_URL` 留空，无需额外服务。
+将 `public/` 内的内容原样上传到静态服务，网站配置 `STATIC_ASSET_BASE_URL`。图片、音乐、字体、分享图和第三方浏览器组件使用静态服务地址。
 
-## 导出与上传
+## 上传与配置
 
-在与部署版本一致的代码上执行：
+1. 将 `public/` 内的全部内容上传到静态服务根目录，保留内部目录结构、文件名和字节内容。
+2. 为该服务配置 HTTPS 域名，例如 `static.jaryn.com.cn`。
+3. 在网站运行环境设置 `STATIC_ASSET_BASE_URL=https://static.jaryn.com.cn/`，重启网站服务。
 
-```powershell
-npm ci
-npm run build
-npm run static:export
-```
-
-导出结果位于 `static-upload/sha256-构建指纹/`。目录包含：
+上传根目录示例：
 
 ```text
-assets/   构建后的脚本、样式、图片和字体
-share/    两个主题的分享缩略图
-vendor/   图形验证码浏览器 SDK
-music/    默认与中式主题的歌单和音频
+assets/
+music/
+share/
+vendor/
+privacy.html
+wedding.ics
+域名验证文件.txt
 ```
 
-压缩上述四个目录，ZIP 内第一层应为 `assets/`、`share/`、`vendor/`、`music/`。不要把 `static-upload` 或构建指纹目录包在 ZIP 第一层。对应的 `.manifest.json` 位于资源目录外，记录版本、文件路径、字节数和 SHA-256；它用于核对上传结果。
+ZIP 的第一层应是这些目录和文件。额外包一层 `public/` 会改变请求路径。上传无需执行应用构建或资源导出。
 
-导出不包含网页 HTML、服务端代码、数据库、环境文件、源照片或 source map。无需移动 `src/assets` 中的设计素材。前端源码继续使用 Vite 的相对引用，上传包由构建结果产生。
+| 本地文件 | 静态服务请求地址 |
+| --- | --- |
+| `public/assets/chinese/portrait.webp` | `https://static.jaryn.com.cn/assets/chinese/portrait.webp` |
+| `public/assets/fonts/cinzel/8vIJ7ww63mVu7gt7-GT7LEc.woff2` | `https://static.jaryn.com.cn/assets/fonts/cinzel/8vIJ7ww63mVu7gt7-GT7LEc.woff2` |
+| `public/music/classic/playlist.json` | `https://static.jaryn.com.cn/music/classic/playlist.json` |
 
-需与已部署镜像逐文件对应时，从该镜像的 `/app/dist` 取出产物，再执行 `node build/export-static.mjs 产物目录`。不同操作系统或构建版本可能产生不同文件名，禁止把另一个版本的包用于当前容器。
+域名前缀支持目录。例如 `STATIC_ASSET_BASE_URL=https://static.jaryn.com.cn/wedding/` 对应将 `public` 的内容上传到远端 `wedding/`。中文与空格使用 URL 编码，文件名保持原值。
 
-## 配置访问地址
+## 网站与静态服务的职责
 
-假设上传后的图片可以访问：
+网站提供 HTML、编译后的 `app/` JS/CSS、接口、登录、实时连接和后台。`public/` 根目录的隐私页、日历和域名验证文件保留本站访问地址；它们出现在静态服务上不影响本站地址。
 
-```text
-https://static.example.com/wedding/v1/share/wedding-portrait.jpg
+服务启动时将 CSS 中的图片与字体 URL 指向静态服务。CSS 请求地址包含静态配置的指纹，配置变化会触发浏览器获取新样式。磁盘中的构建文件保持原值，切换域名无需重新构建应用。
+
+开场预览图、开场字形与标志保留现有 HTML 内嵌方式，首帧可在脚本与样式下载前显示。页面使用的完整素材从静态服务读取。
+
+`STATIC_ASSET_BASE_URL` 留空时，网站使用自身构建产物携带的资源。清空配置并重启服务可以恢复此方式。外部资源加载失败会显示重试状态，不会触发素材回源下载。
+
+## 更新资源
+
+图片与字体更新后，上传对应的 `public` 文件。文件名固定的资源需要缓存验证或 CDN 刷新。
+
+音乐清单属于 `public`。增删曲目或替换音频内容后执行：
+
+```shell
+npm run music:sync
 ```
 
-云托管服务配置：
+该命令更新 `public/music/classic/playlist.json` 和 `public/music/chinese/playlist.json`。开发启动与应用构建会执行相同同步。上传顺序为音频文件、歌单文件。只更新音乐时可上传 `public/music/`，无需发布应用。
 
-```dotenv
-STATIC_ASSET_BASE_URL=https://static.example.com/wedding/v1/
-```
+## 静态服务设置
 
-重启实例后生效，不需重新构建代码。地址必须对应四个资源目录的父目录，支持子路径。正式地址使用 HTTPS，不接受临时签名参数、账号密码或片段。
+- 使用允许公开读取的 HTTPS 地址。
+- CORS 允许来源 `https://wedding.jaryn.com.cn`，方法 `GET`、`HEAD`；请求头允许 `Range`，暴露 `Content-Length`、`Content-Range`、`Accept-Ranges`。试运行域名需加入允许来源。
+- 保持文件 MIME：JSON 为 `application/json`，WOFF2 为 `font/woff2`，MP3 为 `audio/mpeg`，WebP 为 `image/webp`，第三方 JS 为 `text/javascript`。
+- 音频支持字节范围请求。
+- 固定文件名的素材与歌单使用 `Cache-Control: no-cache` 验证更新。音乐 URL 的 `v` 参数应纳入 CDN 缓存键。
 
-页面仍从 `https://wedding.jaryn.com.cn` 打开。登录、后台、聊天、实时祝福、日历下载及微信签名接口使用本站。分享缩略图使用静态地址，标题、父母署名和 canonical 地址保持原有规则。首屏内联背景与字体保留在 HTML 内，打开时无需等待外部资源就有加载页。
+## 验证范围
 
-## 存储服务设置
+`tests/resource-layout.test.mjs` 核对 `public` 歌单与音频一致，核对 `public` 与 `dist` 的公开文件路径及字节内容。
 
-- 允许公开读取这四个目录。它们都是浏览器所需的公开资源。
-- 允许来源 `https://wedding.jaryn.com.cn` 的 CORS 请求，方法 `GET`、`HEAD`，请求头允许 `Range`，暴露 `Content-Length`、`Content-Range`、`Accept-Ranges`。资源请求不携带登录凭据。试运行域名需加入允许来源。
-- 保持 MIME：JS 为 `text/javascript` 或 `application/javascript`，CSS 为 `text/css`，字体为 `font/woff2`，MP3 为 `audio/mpeg`，WebP 为 `image/webp`。不要强制 `Content-Disposition: attachment`。
-- 音乐服务需支持字节范围请求，返回 `206` 和正确的 `Content-Range`。上线前检查模块脚本、字体、音频和图片均可读取。
-- `assets/` 的文件名带内容指纹，可设置 `Cache-Control: public, max-age=31536000, immutable`。`share/` 和 `vendor/` 无指纹，使用短缓存并保留验证请求，或每次上传使用独立版本前缀。
+`tests/static-assets.test.mjs` 使用只提供 `public` 的独立服务验证两个主题、CSS 背景、字体、音乐、分享图、游戏页和日历页，并检查应用与 API 的本站边界、配置切换和 CSS 缓存校验。
 
-推荐按版本目录上传，再修改 `STATIC_ASSET_BASE_URL`。旧版本目录需保留，已打开网页可能仍会请求旧脚本依赖。上传完成后再切换服务配置。回退时清空该配置并重启，容器内资源仍可用；未配置自动故障回源，避免资源故障被隐藏或产生重复下载。
-
-Vite 的相对 base 使构建资源相对所在文件解析，参见 [Vite 构建文档](https://vite.dev/guide/build#relative-base)。跨域设置可参照 [腾讯云 COS 文档](https://cloud.tencent.com/document/product/436/13318)。无论选择何种存储服务，都应以实际响应头和手机加载结果验收。
-
-## 本地检查
-
-`tests/static-assets.test.mjs` 启动独立资源域名，检查两个主题加载完成、字体与音乐跨域读取、游戏和日历脚本、分享图前缀及 API 同源边界。它不替代对实际存储服务 CORS、缓存规则、HTTPS 证书和微信内访问的验收。
-
-两套歌单的文件编号、仅音乐导出和缓存规则见 [两套主题歌单](music.md)。
+本地测试不代表真实服务已部署。实际服务需要核对域名、HTTPS、CORS、缓存与微信内访问。

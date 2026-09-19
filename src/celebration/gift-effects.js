@@ -1,8 +1,9 @@
+import { publicAssetUrl } from '../static-assets.js';
 import { haptic } from '../haptics.js';
 import { ThemeFireworks } from './fireworks.js';
 import { findGift } from './catalog.js';
 import { rosePetalsUrl } from '../petals.js';
-const atlasUrl = new URL('../assets/celebration-gifts.webp', import.meta.url).href;
+const atlasUrl = publicAssetUrl('./assets/shared/celebration-gifts.webp');
 
 /** 每次播放加入一个礼物实例；共用画布逐帧绘制，实例上限限制绘制成本。 */
 export class GiftEffects {
@@ -16,7 +17,7 @@ export class GiftEffects {
     this.atlas.src = atlasUrl;
     this.atlas.decode().catch(() => { this.canvas.dataset.assets = 'unavailable'; });
     this.petals = new Image(); this.petals.src = rosePetalsUrl;
-    this.rings = new Image(); this.rings.src = new URL('../assets/gift-rings.webp', import.meta.url).href;
+    this.rings = new Image(); this.rings.src = publicAssetUrl('./assets/shared/gift-rings.webp');
     this.frame = null;
     this.active = [];
     this.effectSequence = 0;

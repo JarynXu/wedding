@@ -1,13 +1,10 @@
+import { publicAssetUrl } from './static-assets.js';
 /**
  * 婚礼请柬全局配置。
  * 文案、时间、场地与媒体资源统一在这里维护。
  */
-const monogramImgUrl = new URL('./assets/monogram_xu_zhao.png', import.meta.url).href;
-const coverBgUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
-const coverFrameUrl = new URL('./assets/card01_frame.png', import.meta.url).href;
-const card2Url = new URL('./assets/card_02_hd.jpg', import.meta.url).href;
-const card3Url = new URL('./assets/card_03_hd.jpg', import.meta.url).href;
-const card4Url = new URL('./assets/card_04_hd.jpg', import.meta.url).href;
+const monogramImgUrl = publicAssetUrl('./assets/shared/monogram.png');
+const coverBgUrl = publicAssetUrl('./assets/classic/portrait.webp');
 
 export const WEDDING_CONFIG = {
   groom: {
@@ -68,8 +65,6 @@ export const WEDDING_CONFIG = {
 
   assets: {
     coverBg: coverBgUrl,
-    coverFrame: coverFrameUrl,
-    cards: [coverBgUrl, card2Url, card3Url, card4Url],
   },
 
   coverSettings: {

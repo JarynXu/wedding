@@ -2,7 +2,7 @@
   "width": 941,
   "height": 1672,
   "source": "welcome-reference.png",
-  "background": "src/assets/cover-welcome-art.webp",
+  "background": "public/assets/classic/portrait.webp",
   "modifiedPixels": 175818,
   "textIsLiveHtml": true,
   "plaqueFrameIsLiveHtml": true,

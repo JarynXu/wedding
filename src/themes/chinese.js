@@ -1,5 +1,6 @@
-const portrait = new URL('../assets/chinese/portrait.webp', import.meta.url).href;
-const hotel = new URL('../assets/chinese/hotel.svg', import.meta.url).href;
+import { publicAssetUrl } from '../static-assets.js';
+const portrait = publicAssetUrl('./assets/chinese/portrait.webp');
+const hotel = publicAssetUrl('./assets/chinese/hotel.svg');
 
 /** 中式版负责图层与版式，日程、家长身份和交互仍由请柬应用提供。 */
 export function applyChineseTheme() {

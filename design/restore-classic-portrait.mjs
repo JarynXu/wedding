@@ -14,7 +14,7 @@ export async function restoreClassicPortrait(sharp, background) {
   await writeFile(new URL('portrait-provenance.json', directory), JSON.stringify({
     source: 'design/迎宾照.jpg',
     originalSha256: createHash('sha256').update(source).digest('hex'),
-    output: 'src/assets/cover-welcome-art.webp',
+    output: 'public/assets/classic/portrait.webp',
     method: '从高分辨率婚纱原照取出面部及相邻颈部，按眼距等比缩放和平移，仅轮廓边缘羽化；保留迎宾图发型、头纱和服装，未重绘、调色或改变五官比例；最终图片为无损 WebP。',
     faces: result.records,
   }, null, 2) + '\n');

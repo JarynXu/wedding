@@ -1,3 +1,4 @@
+import { publicAssetUrl } from './static-assets.js';
 import './fonts.css';
 import './shell.css';
 import './glass.css';
@@ -37,10 +38,10 @@ stylesReady.then(initializeInvitation).catch(error => {
   console.error('请柬初始化失败', error);
 });
 
-const coverOption1Url = new URL('./assets/cover_option_1_french_clean.jpg', import.meta.url).href;
-const coverOption2Url = new URL('./assets/cover_option_2_burgundy_velvet.jpg', import.meta.url).href;
-const defaultCoverUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
-const defaultHotelIconUrl = new URL('./assets/manor_castle.svg', import.meta.url).href;
+const coverOption1Url = publicAssetUrl('./assets/classic/alternatives/french-clean.jpg');
+const coverOption2Url = publicAssetUrl('./assets/classic/alternatives/burgundy-velvet.jpg');
+const defaultCoverUrl = publicAssetUrl('./assets/classic/portrait.webp');
+const defaultHotelIconUrl = publicAssetUrl('./assets/classic/hotel.svg');
 const invitationTheme = resolveInvitationTheme(location.search);
 const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
 

@@ -2,12 +2,13 @@
 import { fork } from 'node:child_process';
 import { createServer,request as proxyRequest } from 'node:http';
 import { randomBytes,randomUUID } from 'node:crypto';
-import { readFile,readdir,writeFile } from 'node:fs/promises';
+import { mkdir,readFile,readdir,writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import assert from 'node:assert/strict';
 import { gameFixture,gameTestDatabase } from './game-fixture.mjs';
 
 if(!process.argv.includes('--run')||new URL(gameTestDatabase).hostname!=='127.0.0.1')throw Error('需要 --run 和本机隔离数据库');
+await mkdir('.temp/reports', { recursive: true });
 const f=await gameFixture(),children=[],logs=[],ports=[];let active=0,peak=0,modelCalls=0,failures=0,bytes=0,requests=0;
 const provider=createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw),system=body.messages[0].content;
@@ -44,8 +45,8 @@ try{
     children.push(child);const capture=()=>{let buffer='';return data=>{buffer+=data;const lines=buffer.split('\n');buffer=lines.pop();for(const line of lines){try{logs.push(JSON.parse(line));}catch{if(line.trim())logs.push({unstructured:line});}}};};child.stdout.on('data',capture());child.stderr.on('data',capture());
     ports.push(await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('服务未启动')),15000);child.once('message',message=>{clearTimeout(timer);resolve(message.port);});child.once('exit',code=>{if(code)reject(Error('子进程退出 '+code));});}));
   }
-  const assets=await readdir('dist/assets'),patterns=['invitation-.*\\.js$','game-.*\\.js$','invitation-.*\\.css$','game-.*\\.css$','cover-welcome-art','card_02_hd','card_03_hd','card_04_hd','rose-petals','prize-plush'];
-  const staticPaths=['/','/game.html','/music/classic/01-Close%20to%20You-Olivia%20Ong.mp3',...patterns.map(pattern=>'/assets/'+encodeURIComponent(assets.find(file=>new RegExp(pattern).test(file))))];
+  const assets=await readdir('dist/app'),patterns=['invitation-.*\\.js$','game-.*\\.js$','invitation-.*\\.css$','game-.*\\.css$'];
+  const staticPaths=['/','/game.html','/music/classic/01-Close%20to%20You-Olivia%20Ong.mp3', '/assets/classic/portrait.webp', '/assets/classic/time.jpg', '/assets/classic/location.jpg', '/assets/classic/closing.jpg', '/assets/shared/rose-petals.webp', '/assets/shared/prize-plush.webp',...patterns.map(pattern=>'/app/'+encodeURIComponent(assets.find(file=>new RegExp(pattern).test(file))))];
   const started=performance.now(),startIds=people.map(()=>randomUUID());
   const staticRun=Promise.allSettled(people.map(async()=>{for(const path of staticPaths)await consume(path);}));
   await Promise.all(people.map((person,i)=>consume('/api/game/conversation/start','wedding_game='+person.token,{requestId:startIds[i]},randomBytes(16).toString('hex'))));
@@ -61,9 +62,9 @@ try{
   const latencies=rows.map(row=>Number(row.elapsed)),workers=[...new Set(logs.filter(row=>row.event==='job.started').map(row=>row.instance))];
   const report={generatedAt:new Date().toISOString(),scope:'本机五个Node进程、100个验证会话、轮询负载均衡、真实PostgreSQL；模型为250ms本机模拟器，不发送短信。',replicas:5,visitors:100,modelDelayMs:250,sharedModelLimit:12,peakModelConcurrency:peak,modelCalls,httpRequests:requests,httpFailures:failures,staticBytes:bytes,staticPaths,answerLatencyMs:{p50:quantile(latencies,.5),p95:quantile(latencies,.95),max:Math.max(...latencies)},answerPhaseMs:Math.round(performance.now()-submitted),totalMs:Math.round(performance.now()-started),workers,traceIdsPersisted:rows.length,passed:true};
   assert.ok(traces.every(trace=>logs.some(row=>row.trace_id===trace&&row.event==='job.started')),'排队请求的链路延续到工作进程');
-  await writeFile('docs/cluster-load-report.json',JSON.stringify(report,null,2)+'\n');await writeFile(process.env.TEMP+'/wedding-cluster-load.ndjson',logs.map(row=>JSON.stringify(row)).join('\n')+'\n');console.log(JSON.stringify(report));
-}catch(error){await writeFile('docs/cluster-load-report.json',JSON.stringify({generatedAt:new Date().toISOString(),passed:false,error:error.message},null,2)+'\n');throw error;}finally{
-  await writeFile(process.env.TEMP+'/wedding-cluster-load.ndjson',logs.map(row=>JSON.stringify(row)).join('\n')+'\n');
+  await writeFile('.temp/reports/cluster-load-report.json',JSON.stringify(report,null,2)+'\n');await writeFile('.temp/reports/wedding-cluster-load.ndjson',logs.map(row=>JSON.stringify(row)).join('\n')+'\n');console.log(JSON.stringify(report));
+}catch(error){await writeFile('.temp/reports/cluster-load-report.json',JSON.stringify({generatedAt:new Date().toISOString(),passed:false,error:error.message},null,2)+'\n');throw error;}finally{
+  await writeFile('.temp/reports/wedding-cluster-load.ndjson',logs.map(row=>JSON.stringify(row)).join('\n')+'\n');
   for(const child of children){child.send?.('stop');}
   await Promise.allSettled(children.map(child=>new Promise(resolve=>{if(child.exitCode!==null)return resolve();const timer=setTimeout(()=>{child.kill();resolve();},15000);child.once('exit',()=>{clearTimeout(timer);resolve();});})));
   relay.closeAllConnections();provider.closeAllConnections();await Promise.all([new Promise(resolve=>relay.close(resolve)),new Promise(resolve=>provider.close(resolve))]);

@@ -1,6 +1,6 @@
 {
   "tool": "内置 image_gen",
-  "output": "src/assets/gift-rings.webp",
+  "output": "public/assets/shared/gift-rings.webp",
   "source": "exec-a7dbc345-9615-4e34-9887-34eb7899f83f.png",
   "processing": "保留透明通道，缩放到320×320并转为WebP",
   "sha256": "5a12a4fca470ed155877bdc2e2383ae50497005635c301443245556dac77ffe5",

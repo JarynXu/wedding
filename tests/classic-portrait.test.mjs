@@ -14,7 +14,7 @@ test('默认迎宾页五官来自婚纱原照，设计稿中的改绘不能通�
   const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
   const original = await readFile(new URL(layout.source, directory));
   assert.equal(createHash('sha256').update(original).digest('hex'), record.originalSha256);
-  const { data: portrait, info } = await sharp(fileURLToPath(new URL('../src/assets/cover-welcome-art.webp', import.meta.url))).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data: portrait, info } = await sharp(fileURLToPath(new URL('../public/assets/classic/portrait.webp', import.meta.url))).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const reference = await sharp(fileURLToPath(new URL('../design/welcome-reference.png', import.meta.url))).removeAlpha().raw().toBuffer();
   for (const [index, face] of layout.faces.entries()) {
     const stored = record.faces[index];

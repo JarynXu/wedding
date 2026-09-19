@@ -2,7 +2,7 @@
 
 ## 首屏启动
 
-`build/critical-welcome.js` 将 `src/shell.css`、`src/glass.css`、`src/welcome.css`、加载页字形、通用信封符号和丝绸预览图内嵌到 HTML。输入素材位于 `src/assets/welcome/`，信封符号为 `src/assets/invitation-mark.svg`。该首屏无需请求外部样式、脚本、图片或字体即可显示。主样式使用非阻塞加载，主脚本等待样式可读后收集资源。高清背景就绪后覆盖预览图。
+`build/critical-welcome.js` 将 `src/shell.css`、`src/glass.css`、`src/welcome.css`、加载页字形、通用信封符号和丝绸预览图内嵌到 HTML。输入素材位于 `public/assets/fonts/welcome/` 与 `public/assets/classic/loading-preview.webp`，信封符号为 `public/assets/shared/invitation-mark.svg`。该首屏无需请求外部样式、脚本、图片或字体即可显示。主样式使用非阻塞加载，主脚本等待样式可读后收集资源。高清背景就绪后覆盖预览图。
 
 `src/bootstrap.js` 提供主脚本与主样式失败时的重试入口。字形子集包含加载页现有文字；修改加载页文案时需更新对应字形子集。请柬正文的本地完整字库不受该子集约束。
 
@@ -22,15 +22,15 @@
 
 音乐完整文件保存为 Blob，入口点击后播放该 Blob。`OfflineAudioContext` 校验文件，不连接扬声器，解码结果不留作播放缓冲。校验使用 22050Hz 采样率限制临时缓冲区内存，播放保留原始文件。缺少该接口的宿主读取文件元数据，要求有效时长；该兼容路径不验证全部采样帧，两条路径都等待完整文件下载。[MDN：OfflineAudioContext](https://developer.mozilla.org/en-US/docs/Web/API/OfflineAudioContext)。字体加载使用 [FontFaceSet.load](https://developer.mozilla.org/en-US/docs/Web/API/FontFaceSet/load)，并等待当前字体请求完成。
 
-`src/fonts.css` 保留字体的 Unicode 分段范围。字库来自 Google Fonts，已保存到 `src/assets/fonts/`，页面请求本站文件。字体授权文件位于该目录及 `public/fonts-LICENSE.txt`。中文仍保留完整分段覆盖，修改姓名或文案不需要重新裁剪字库。
+`src/fonts.css` 保留字体的 Unicode 分段范围。字库来自 Google Fonts，已保存到 `public/assets/fonts/`，页面请求本站文件。字体授权文件位于该目录及 `public/assets/fonts/LICENSE.txt`。中文仍保留完整分段覆盖，修改姓名或文案不需要重新裁剪字库。
 
 ## 迎宾参考图
 
 选定方案保存为 `design/welcome-reference.png`，分辨率为 941 × 1672。`design/prepare-welcome-reference.mjs` 清理原图文字及八片独立花瓣的笔画、投影，并修补受影响的金框。清理阶段避开设计稿中的人像，花束与左下散焦枝叶保留。清理蒙版保存在 `design/welcome-cleanup-mask.png`，区域坐标位于 `design/welcome-reference-layout.json`。
 
-清理完成后，脚本调用 `design/restore-classic-portrait.mjs`，从 `design/迎宾照.jpg` 的 5787 × 8185 婚纱原照恢复面部。两人各自按眼距等比缩放、眼睛中点平移；轮廓羽化，五官内部保持不透明，保留原照像素。发型、头纱与服装沿用迎宾设计，最终导出无损 `src/assets/cover-welcome-art.webp`。此步骤区别于清理阶段的“保护设计稿人像”，重新生成素材也会执行。原照哈希、定位坐标和面部掩膜位于 `design/classic/`。
+清理完成后，脚本调用 `design/restore-classic-portrait.mjs`，从 `design/迎宾照.jpg` 的 5787 × 8185 婚纱原照恢复面部。两人各自按眼距等比缩放、眼睛中点平移；轮廓羽化，五官内部保持不透明，保留原照像素。发型、头纱与服装沿用迎宾设计，最终导出无损 `public/assets/classic/portrait.webp`。此步骤区别于清理阶段的“保护设计稿人像”，重新生成素材也会执行。原照哈希、定位坐标和面部掩膜位于 `design/classic/`。
 
-姓名和迎宾牌文字使用 HTML 排版。姓名读取 `src/config.js`；迎宾页展示姓名、合影、“TOGETHER FOREVER”及“Welcome”。文字坐标跟随参考图等比裁切。窄长屏补齐边框，角花从参考图提取至 `src/assets/cover-frame-corner.webp`。
+姓名和迎宾牌文字使用 HTML 排版。姓名读取 `src/config.js`；迎宾页展示姓名、合影、“TOGETHER FOREVER”及“Welcome”。文字坐标跟随参考图等比裁切。窄长屏补齐边框，角花从参考图提取至 `public/assets/classic/frame-corner.webp`。
 
 素材处理脚本使用 Sharp，运行入口为 `node design/prepare-welcome-reference.mjs`，随后运行 `node design/prepare-share-image.mjs` 更新分享缩略图。分享地址携带图片版本参数，减少旧卡片图像缓存的影响。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。两个主题的原照合成共用 `design/portrait-composite.mjs`，各自维护定位与轮廓；中式版保留原有红底和旧发丝的连通清理。旧版纸面合成保留在 `design/compose-cover.mjs`，不再作为当前迎宾页资源。
 

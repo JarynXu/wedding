@@ -161,9 +161,9 @@
     .page.is-leaving { opacity: 1; visibility: visible; z-index: 1; }
 
     /* 页面背景配置（超清 2K 法式宫廷微距花艺重构） */
-    :root:not([data-theme='chinese']) .page-2 { background-image: url('./assets/card_02_hd.jpg'); }
-    :root:not([data-theme='chinese']) .page-3 { background-image: url('./assets/card_03_hd.jpg'); }
-    :root:not([data-theme='chinese']) .page-4 { background-image: url('./assets/card_04_hd.jpg'); }
+    :root:not([data-theme='chinese']) .page-2 { background-image: url('/assets/classic/time.jpg'); }
+    :root:not([data-theme='chinese']) .page-3 { background-image: url('/assets/classic/location.jpg'); }
+    :root:not([data-theme='chinese']) .page-4 { background-image: url('/assets/classic/closing.jpg'); }
 
     /* 页面底部向下滑动提示 */
     .scroll-hint {
@@ -377,7 +377,7 @@
       position: absolute;
       width: 6.52cqh;
       height: 6.58cqh;
-      background: url('./assets/cover-frame-corner.webp') center / contain no-repeat;
+      background: url('/assets/classic/frame-corner.webp') center / contain no-repeat;
     }
     .cgf-tr { top: -2.05cqh; right: -2cqw; }
     .cgf-tl { top: -2.05cqh; left: -2cqw; transform: scaleX(-1); }

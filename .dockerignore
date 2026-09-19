@@ -1,6 +1,7 @@
 .git
 .gitignore
 node_modules
+.temp
 dist
 static-upload
 static-upload.zip

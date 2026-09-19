@@ -1,11 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import express from 'express';
 import { createRequire } from 'node:module';
-import { readMusicLibrary, exportMusic } from '../build/music-library.js';
+import { readMusicLibrary, syncMusicLibrary } from '../build/music-library.js';
 import { createInvitationApp } from '../server/app.js';
 import { WeddingMusic } from '../src/music.js';
 
@@ -30,23 +29,34 @@ test('取消解码会结束预载并释放已创建的音频 Blob', { timeout: 5
   }
 });
 
-test('文件编号排序、主题独立、空中式歌单与仅音乐导出', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'wedding-music-test-'));
+test('public 歌单按编号排序，文件变更更新清单，空中式目录使用默认主题', async () => {
+  await mkdir('.temp/tests', { recursive: true });
+  const root = await mkdtemp(resolve('.temp/tests/music-'));
   try {
     for (const theme of ['classic', 'chinese']) await mkdir(join(root, 'public/music', theme), { recursive: true });
     for (const file of ['10-尾曲.mp3', '2-第二首.MP3', '01-开场.mp3']) await writeFile(join(root, 'public/music/classic', file), 'test-audio');
     await writeFile(join(root, 'public/music/classic', '说明.md'), 'not a track');
-    const library = await readMusicLibrary(root);
+    const library = await syncMusicLibrary(root);
     assert.deepEqual(library.classic.tracks.map(track => track.title), ['开场', '第二首', '尾曲']);
     assert.equal(library.chinese.fallback, 'classic');
     await writeFile(join(root, 'public/music/chinese', '01-喜乐.mp3'), 'chinese-audio');
-    const output = join(root, 'upload'); await exportMusic(root, output);
-    const chinese = JSON.parse(await readFile(join(output, 'music/chinese/playlist.json'), 'utf8'));
+    await syncMusicLibrary(root);
+    const chineseFile = join(root, 'public/music/chinese/playlist.json');
+    const chinese = JSON.parse(await readFile(chineseFile, 'utf8'));
     assert.equal(chinese.fallback, undefined); assert.equal(chinese.tracks[0].title, '喜乐');
-    assert.equal(await readFile(join(output, 'music/chinese/01-喜乐.mp3'), 'utf8'), 'chinese-audio');
+    assert.equal(await readFile(join(root, 'public/music/chinese/01-喜乐.mp3'), 'utf8'), 'chinese-audio');
+    await writeFile(join(root, 'public/music/chinese/01-喜乐.mp3'), 'updated-audio');
+    await syncMusicLibrary(root);
+    assert.notEqual(JSON.parse(await readFile(chineseFile, 'utf8')).tracks[0].version, chinese.tracks[0].version);
+    await rm(join(root, 'public/music/chinese/01-喜乐.mp3'));
+    await syncMusicLibrary(root);
+    assert.deepEqual(JSON.parse(await readFile(chineseFile, 'utf8')), { tracks: [], fallback: 'classic' });
     await writeFile(join(root, 'public/music/classic', '03-空文件.wav'), '');
     await assert.rejects(readMusicLibrary(root), /音乐文件为空/);
-  } finally { await rm(root, { recursive: true, force: true }); }
+  } finally {
+    assert.ok(root.startsWith(resolve('.temp/tests/music-')));
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test('真实浏览器歌单预载、暂停换曲、顺序循环、主题与播放许可', { timeout: 90000 }, async suite => {

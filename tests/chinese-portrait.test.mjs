@@ -14,7 +14,7 @@ test('中式肖像保留原照面部像素并清除两侧红底和旧发丝', as
   const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
   const original = await readFile(new URL(layout.source, directory));
   assert.equal(createHash('sha256').update(original).digest('hex'), record.originalSha256);
-  const { data: portrait, info } = await sharp(fileURLToPath(new URL('../src/assets/chinese/portrait.webp', import.meta.url))).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data: portrait, info } = await sharp(fileURLToPath(new URL('../public/assets/chinese/portrait.webp', import.meta.url))).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   for (const [index, face] of layout.faces.entries()) {
     const stored = record.faces[index];
     const maskFile = fileURLToPath(new URL(`${face.name}-matte.png`, directory));
