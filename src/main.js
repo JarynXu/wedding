@@ -6,6 +6,7 @@ import './motion.css';
 import './themes/chinese.css';
 import { RosePetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
+import { WeddingMusic } from './music.js';
 import { WEDDING_CONFIG } from './config.js';
 import { getFamilyInvitation } from './family-invitation.js';
 import { resolveInvitationTheme } from './invitation-theme.js';
@@ -360,23 +361,18 @@ function initializeInvitation() {
     const musicBtn = document.getElementById('musicBtn');
     const musicTip = document.getElementById('musicTip');
 
-    function toggleMusic() {
-      if (audio.paused) {
-        audio.play().then(() => {
-          musicBtn.classList.add('playing');
-          musicTip.classList.add('fade-out');
-        }).catch(err => {
-          console.warn('Audio play prevented:', err);
-        });
-      } else {
-        audio.pause();
-        musicBtn.classList.remove('playing');
-      }
-    }
+    const music = new WeddingMusic({ audio, theme: invitationTheme, onChange: ({ playing, title, nextOnPlay }) => {
+      musicBtn.classList.toggle('playing', playing);
+      musicTip.classList.toggle('fade-out', playing);
+      const action = playing ? '暂停音乐' : nextOnPlay ? '播放下一首' : '播放音乐';
+      musicBtn.setAttribute('aria-label', action);
+      musicBtn.title = `${action}${title ? ` · ${title}` : ''}`;
+      musicTip.textContent = nextOnPlay ? '点击播放下一首' : '点击播放音乐';
+    } });
 
     musicBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleMusic();
+      music.toggle();
     });
 
     // ==========================================
@@ -389,8 +385,7 @@ function initializeInvitation() {
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
     const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), app: document.getElementById('app') });
     const weddingPreloader = new WeddingPreloader({
-      audio,
-      audioUrl: config.assets?.bgMusic || new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href,
+      music,
       petals: rosePetals,
       onEnter: () => {
         document.body.classList.remove('invitation-loading');
@@ -404,15 +399,7 @@ function initializeInvitation() {
         celebration.enter();
         prepareGameEntry();
         // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
-        if (audio && audio.paused) {
-          audio.play().then(() => {
-            musicBtn.classList.add('playing');
-            musicTip.classList.add('fade-out');
-          }).catch(error => {
-            musicTip.classList.remove('fade-out');
-            console.warn('背景音乐未开始播放，可点击音乐按钮重试', error);
-          });
-        }
+        music.play();
       }
     });
     weddingPreloader.init();
@@ -440,6 +427,7 @@ function initializeInvitation() {
     }
     if (import.meta.hot) import.meta.hot.dispose(() => {
       weddingPreloader.destroy();
+      music.destroy();
       invitationGame.destroy();
       rosePetals.destroy();
       celebration.destroy();

@@ -5,6 +5,7 @@ node_modules/
 dist/
 static-upload/
 static-upload.zip
+music-upload/
 .vite/
 
 # OS generated files

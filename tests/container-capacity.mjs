@@ -44,7 +44,7 @@ await listen(provider); await listen(relay); await listen(storage);
 const origin = 'http://127.0.0.1:' + relay.address().port, cdnOrigin = 'http://127.0.0.1:' + storage.address().port, scope = 'capacity-' + randomUUID();
 const quantile = (values, p) => [...values].sort((a, b) => a - b)[Math.min(values.length - 1, Math.floor(values.length * p))] || 0;
 async function consume(path, cookie, body) {
-  const start = performance.now(), isAsset = path.startsWith('/assets/');
+  const start = performance.now(), isAsset = /^\/(assets|music)\//.test(path);
   const response = await fetch((isAsset && offload ? cdnOrigin : origin) + path, { method: body ? 'POST' : 'GET', headers: { Origin: origin, ...(cookie ? { Cookie: cookie } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}), 'Accept-Encoding': 'gzip', traceparent: `00-${randomBytes(16).toString('hex')}-${randomBytes(8).toString('hex')}-01` }, ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(60000) }).catch(error => { throw new Error(`HTTP ${path}: ${error.cause?.message || error.message}`, { cause: error }); });
   if (!response.ok) { failures++; throw Error(`${path}: ${response.status} ${await response.text()}`); }
   if (path.startsWith('/api/')) { const data = await response.json(); httpTimes.push(performance.now() - start); return data; }
@@ -86,8 +86,8 @@ try {
   }
   polling = true;
   for (const [index, person] of people.entries()) track((async () => { await delay(index * 40); while (polling) { await consume('/api/game/config'); await consume('/api/game/me', 'wedding_game=' + person.token); await delay(4000); } })());
-  const assets = await readdir('dist/assets'), patterns = ['invitation-.*\\.js$', 'game-.*\\.js$', 'invitation-.*\\.css$', 'game-.*\\.css$', 'cover-welcome-art', 'card_02_hd', 'card_03_hd', 'card_04_hd', 'Close to You', 'rose-petals', 'prize-plush'];
-  const paths = ['/', '/game.html', ...patterns.map(pattern => { const file = assets.find(file => new RegExp(pattern).test(file)); assert.ok(file, pattern); return '/assets/' + encodeURIComponent(file); })];
+  const assets = await readdir('dist/assets'), patterns = ['invitation-.*\\.js$', 'game-.*\\.js$', 'invitation-.*\\.css$', 'game-.*\\.css$', 'cover-welcome-art', 'card_02_hd', 'card_03_hd', 'card_04_hd', 'rose-petals', 'prize-plush'];
+  const paths = ['/', '/game.html', '/music/classic/01-Close%20to%20You-Olivia%20Ong.mp3', ...patterns.map(pattern => { const file = assets.find(file => new RegExp(pattern).test(file)); assert.ok(file, pattern); return '/assets/' + encodeURIComponent(file); })];
   const staticRun = track(Promise.all(people.map(async () => { for (const path of paths) await consume(path); })));
   const answerTimes = [];
   const conversations = await Promise.allSettled(people.map(async person => {

@@ -3,7 +3,6 @@
  * 文案、时间、场地与媒体资源统一在这里维护。
  */
 const monogramImgUrl = new URL('./assets/monogram_xu_zhao.png', import.meta.url).href;
-const bgMusicUrl = new URL('./assets/Close to You-Olivia Ong.mp3', import.meta.url).href;
 const coverBgUrl = new URL('./assets/cover-welcome-art.webp', import.meta.url).href;
 const coverFrameUrl = new URL('./assets/card01_frame.png', import.meta.url).href;
 const card2Url = new URL('./assets/card_02_hd.jpg', import.meta.url).href;
@@ -68,8 +67,6 @@ export const WEDDING_CONFIG = {
   },
 
   assets: {
-    bgMusic: bgMusicUrl,
-    musicTitle: 'Close to You - Olivia Ong',
     coverBg: coverBgUrl,
     coverFrame: coverFrameUrl,
     cards: [coverBgUrl, card2Url, card3Url, card4Url],

@@ -11,7 +11,7 @@ const release = `sha256-${digest.slice(0, 16)}`;
 const output = resolve('static-upload', release);
 await mkdir(output, { recursive: true });
 const files = [];
-for (const directory of ['assets', 'share', 'vendor']) {
+for (const directory of ['assets', 'share', 'vendor', 'music']) {
   const root = resolve(source, directory);
   await cp(root, resolve(output, directory), { recursive: true, force: true, filter: path => !path.endsWith('.map') });
   async function visit(path) {
@@ -27,4 +27,4 @@ for (const directory of ['assets', 'share', 'vendor']) {
   await visit(root);
 }
 await writeFile(resolve('static-upload', `${release}.manifest.json`), JSON.stringify({ build: build.buildId, files, totalBytes: files.reduce((sum, file) => sum + file.bytes, 0) }, null, 2) + '\n');
-console.log(`静态资源目录：${output}\n压缩该目录内的 assets、share、vendor 文件夹。配置地址须对应它们的上一级目录。\n文件数：${files.length}；大小：${(files.reduce((sum, file) => sum + file.bytes, 0) / 1048576).toFixed(2)} MiB`);
+console.log(`静态资源目录：${output}\n压缩该目录内的 assets、share、vendor、music 文件夹。配置地址须对应它们的上一级目录。\n文件数：${files.length}；大小：${(files.reduce((sum, file) => sum + file.bytes, 0) / 1048576).toFixed(2)} MiB`);

@@ -8,6 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "static:export": "node build/export-static.mjs",
+    "music:export": "node build/export-music.mjs",
     "start": "node server/index.js",
     "preview": "vite preview",
     "blessings:migrate": "node server/blessings/migrate.js",

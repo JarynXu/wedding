@@ -44,8 +44,8 @@ try{
     children.push(child);const capture=()=>{let buffer='';return data=>{buffer+=data;const lines=buffer.split('\n');buffer=lines.pop();for(const line of lines){try{logs.push(JSON.parse(line));}catch{if(line.trim())logs.push({unstructured:line});}}};};child.stdout.on('data',capture());child.stderr.on('data',capture());
     ports.push(await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('服务未启动')),15000);child.once('message',message=>{clearTimeout(timer);resolve(message.port);});child.once('exit',code=>{if(code)reject(Error('子进程退出 '+code));});}));
   }
-  const assets=await readdir('dist/assets'),patterns=['invitation-.*\\.js$','game-.*\\.js$','invitation-.*\\.css$','game-.*\\.css$','cover-welcome-art','card_02_hd','card_03_hd','card_04_hd','Close to You','rose-petals','prize-plush'];
-  const staticPaths=['/','/game.html',...patterns.map(pattern=>'/assets/'+encodeURIComponent(assets.find(file=>new RegExp(pattern).test(file))))];
+  const assets=await readdir('dist/assets'),patterns=['invitation-.*\\.js$','game-.*\\.js$','invitation-.*\\.css$','game-.*\\.css$','cover-welcome-art','card_02_hd','card_03_hd','card_04_hd','rose-petals','prize-plush'];
+  const staticPaths=['/','/game.html','/music/classic/01-Close%20to%20You-Olivia%20Ong.mp3',...patterns.map(pattern=>'/assets/'+encodeURIComponent(assets.find(file=>new RegExp(pattern).test(file))))];
   const started=performance.now(),startIds=people.map(()=>randomUUID());
   const staticRun=Promise.allSettled(people.map(async()=>{for(const path of staticPaths)await consume(path);}));
   await Promise.all(people.map((person,i)=>consume('/api/game/conversation/start','wedding_game='+person.token,{requestId:startIds[i]},randomBytes(16).toString('hex'))));

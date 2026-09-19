@@ -52,7 +52,7 @@ test('生产包跨域加载两种主题、游戏和日历，业务接口留在�
       assert.ok((await page.locator('#calendarOpen').getAttribute('href')).includes('wedding.ics'));
       assert.deepEqual(errors, []); await page.close();
     }
-    for (const suffix of ['.js', '.css', '.woff2', '.mp3', '.webp']) assert.ok(received.some(url => url.startsWith(base) && url.endsWith(suffix)), suffix);
+    for (const suffix of ['.js', '.css', '.woff2', '.mp3', '.webp']) assert.ok(received.some(url => url.startsWith(base) && new URL(url).pathname.endsWith(suffix)), suffix);
     assert.equal(received.filter(url => url.startsWith(origin + '/assets/')).length, 0);
     assert.ok(received.some(url => url.startsWith(origin + '/api/')));
     assert.equal(received.filter(url => url.startsWith(base) && url.includes('/api/')).length, 0);

@@ -5,11 +5,12 @@ import { shareMetadata } from './build/share-metadata.js';
 import { calendarEntry } from './build/calendar-entry.js';
 import { blessingsApi } from './build/blessings-api.js';
 import { buildInfo } from './build/build-info.js';
+import { musicLibrary } from './build/music-library.js';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
   base: './',
-  plugins: [blessingsApi(), shareMetadata(), criticalWelcome(), calendarResponse(), calendarEntry(), buildInfo()],
+  plugins: [blessingsApi(), shareMetadata(), criticalWelcome(), calendarResponse(), calendarEntry(), musicLibrary(), buildInfo()],
   build: {
     rollupOptions: {
       input: {

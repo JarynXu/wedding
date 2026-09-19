@@ -1,8 +1,7 @@
 /** 入口的就绪条件由实际图片、字体和完整音乐文件共同决定。 */
 export class WeddingPreloader {
-  constructor({ audio, audioUrl, petals, onEnter }) {
-    this.audio = audio;
-    this.audioUrl = audioUrl;
+  constructor({ music, petals, onEnter }) {
+    this.music = music;
     this.petals = petals;
     this.onEnter = onEnter;
     this.overlay = document.getElementById('preloaderOverlay');
@@ -12,7 +11,6 @@ export class WeddingPreloader {
     this.note = document.getElementById('preloaderLoadNote');
     this.resources = [];
     this.controllers = new Set();
-    this.musicObjectUrl = null;
     this.state = 'loading';
     this.onEnterClick = () => this.enter();
     this.onRetryClick = () => window.location.reload();
@@ -32,7 +30,7 @@ export class WeddingPreloader {
       ...images.map(({ url, element }) => ({ kind: 'image', load: signal => this.loadImage(url, element, signal) })),
       { kind: 'image', load: signal => abortable(this.petals.start(), signal) },
       { kind: 'font', load: signal => this.loadFonts(signal) },
-      { kind: 'music', load: (signal, progress) => this.loadMusic(signal, progress) },
+      { kind: 'music', load: (signal, progress) => this.music.prepare(signal, progress) },
     ].map(resource => ({ ...resource, state: 'loading', progress: 0 }));
     this.updateProgress();
     Promise.all(this.resources.map(resource => this.prepare(resource))).then(() => {
@@ -56,7 +54,6 @@ export class WeddingPreloader {
     for (const controller of this.controllers) controller.abort();
     this.enterButton.removeEventListener('click', this.onEnterClick);
     this.retryButton.removeEventListener('click', this.onRetryClick);
-    if (this.musicObjectUrl) URL.revokeObjectURL(this.musicObjectUrl);
   }
 
   collectImages() {
@@ -122,73 +119,6 @@ export class WeddingPreloader {
       if (!faces.length || faces.some(face => face.status !== 'loaded')) throw new Error(`字体未就绪：${spec}`);
     })), signal);
     await abortable(document.fonts.ready, signal);
-  }
-
-  async loadMusic(signal, reportProgress) {
-    // 音乐完整下载为 Blob；进入后播放该 Blob，避免按网络缓冲估算完成。
-    const response = await fetch(this.audioUrl, { signal });
-    if (!response.ok) throw new Error(`音乐下载失败：HTTP ${response.status}`);
-    const total = Number(response.headers.get('content-length'));
-    const reader = response.body?.getReader();
-    let blob;
-    if (reader) {
-      const chunks = [];
-      let received = 0;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-        if (total > 0) reportProgress(Math.min(1, received / total) * 0.95);
-      }
-      blob = new Blob(chunks, { type: response.headers.get('content-type') || 'audio/mpeg' });
-    } else {
-      blob = await response.blob();
-    }
-    if (!blob.size) throw new Error('音乐文件为空');
-    if (signal.aborted) throw new Error('音乐下载已取消');
-    this.musicObjectUrl = URL.createObjectURL(blob);
-    this.audio.preload = 'auto';
-    this.audio.src = this.musicObjectUrl;
-    // 离线解码验证完整文件，不等待手机上可能受播放手势限制的 canplay。
-    // 校验缓冲区不用于播放，降低采样率限制其内存占用；音频仍播放原始 Blob。
-    const Decoder = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (Decoder) {
-      this.audio.load();
-      const decoder = new Decoder(1, 1, 22050);
-      const encoded = await abortable(blob.arrayBuffer(), signal);
-      const decoded = await abortable(decoder.decodeAudioData(encoded), signal);
-      if (!Number.isFinite(decoded.duration) || decoded.duration <= 0) throw new Error('音乐文件无法解码');
-    } else {
-      // 缺少 Web Audio 的宿主读取文件时长校验元数据，不要求开始缓冲或播放。
-      await this.loadMusicMetadata(signal);
-    }
-    if (signal.aborted) throw new Error('音乐下载已取消');
-    return blob;
-  }
-
-  loadMusicMetadata(signal) {
-    return new Promise((resolve, reject) => {
-      const finish = error => {
-        this.audio.removeEventListener('loadedmetadata', onReady);
-        this.audio.removeEventListener('error', onError);
-        signal.removeEventListener('abort', onAbort);
-        if (error) reject(error);
-        else resolve();
-      };
-      const onReady = () => {
-        if (this.audio.readyState < HTMLMediaElement.HAVE_METADATA) return;
-        finish(Number.isFinite(this.audio.duration) && this.audio.duration > 0 ? null : new Error('音乐文件没有有效时长'));
-      };
-      const onError = () => finish(new Error('浏览器无法读取音乐文件'));
-      const onAbort = () => finish(new Error('音乐准备超时'));
-      this.audio.addEventListener('loadedmetadata', onReady);
-      this.audio.addEventListener('error', onError);
-      signal.addEventListener('abort', onAbort, { once: true });
-      this.audio.load();
-      if (signal.aborted) onAbort();
-      else onReady();
-    });
   }
 
   updateProgress() {

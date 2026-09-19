@@ -79,12 +79,12 @@ for (const mode of ['dev', 'preview', 'production']) {
         assert.equal(calendar.headers.get('content-type'), 'text/calendar; charset=utf-8');
         assert.equal(calendar.headers.get('content-disposition'), 'inline; filename="wedding.ics"');
         assert.deepEqual(Buffer.from(await calendar.arrayBuffer()), await readFile(path.join(distDir, 'wedding.ics')));
-        const audioName = (await readdir(path.join(distDir, 'assets'))).find(name => name.endsWith('.mp3'));
-        const audio = await fetch(origin + '/assets/' + encodeURIComponent(audioName), { headers: { Range: 'bytes=0-511' } });
+        const audioName = (await readdir(path.join(distDir, 'music/classic'))).find(name => name.endsWith('.mp3'));
+        const audio = await fetch(origin + '/music/classic/' + encodeURIComponent(audioName), { headers: { Range: 'bytes=0-511' } });
         assert.equal(audio.status, 206);
         assert.match(audio.headers.get('content-range'), /^bytes 0-511\//);
-        assert.deepEqual(Buffer.from(await audio.arrayBuffer()), (await readFile(path.join(distDir, 'assets', audioName))).subarray(0, 512));
-        assert.match(audio.headers.get('cache-control'), /immutable/);
+        assert.deepEqual(Buffer.from(await audio.arrayBuffer()), (await readFile(path.join(distDir, 'music/classic', audioName))).subarray(0, 512));
+        assert.equal(audio.headers.get('cache-control'), 'no-cache');
         const missing = await fetch(origin + '/missing-photo.jpg');
         assert.equal(missing.status, 404);
         const compressed = await fetch(origin + '/?' + groomQuery, { headers: { 'accept-encoding': 'gzip' } });
