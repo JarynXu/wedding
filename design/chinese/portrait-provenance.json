@@ -1,20 +1,20 @@
 {
   "source": "design/chinese/portrait-source.png",
-  "sourceSha256": "40db6d500bbe36db9c1f76b91440421c3e34fd5ccd41c20b4d89243e6defe1eb",
+  "sourceSha256": "fac6de04eef9e2677e302a1ee63f0ec92e9e1976a301f82c7ad1ce5ded1ce532",
   "output": "public/assets/chinese/portrait.webp",
-  "outputSha256": "2ac8e89e7744e5687d1628f4feab7b534a5b1cba2a3c06ef1e74ad554026ef9c",
-  "width": 887,
-  "height": 1774,
+  "outputSha256": "6c8b68c0818aeafda9caf5cf793067a18a52082e82fe3bcd505c2b96ad1ef7f5",
+  "width": 1024,
+  "height": 1536,
   "method": "用户选定的内置 image_gen 成图导出为无损 WebP，保留全画面像素；分享图从同一源图裁切。导出过程不执行人脸剪贴、重绘、调色或画面拉伸。",
   "share": {
     "output": "public/share/chinese-wedding-portrait.jpg",
-    "sha256": "5e4d6719c0a36412b0035b84e8bfbbae8d6bb924811c03f7245dd9fc1464bb3c",
+    "sha256": "0b267ab05685a487accd31c5b1fdc417e2101c7a0d36d4cc485b04860c443c38",
     "width": 600,
     "height": 600,
     "crop": {
+      "left": 280,
+      "top": 100,
       "width": 500,
-      "left": 200,
-      "top": 165,
       "height": 500
     }
   }

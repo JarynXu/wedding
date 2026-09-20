@@ -34,7 +34,7 @@
 
 素材处理脚本使用 Sharp。默认主题运行 `node design/prepare-welcome-reference.mjs`，再运行 `node design/prepare-share-image.mjs` 更新分享缩略图。默认主题的原照合成使用 `design/portrait-composite.mjs`。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。
 
-中式版选定成图为 `design/chinese/portrait-source.png`，原生尺寸 887 × 1774。图像工具的输入为婚纱原照、原照片段与无五官的比例示意图；参考角色和提示词入口见同目录 `image-prompts.json`。`node design/prepare-chinese-portrait.mjs` 从选定成图导出无损迎宾图、600 × 600 分享缩略图及来源哈希，不执行面部剪贴、重绘、调色或画面拉伸。`portrait-layout.json` 只保存源图路径、画布与分享裁切。脚本打印分享图哈希前 16 位，更新 `src/config.js` 中 `share.chineseImage` 的 `v` 参数后运行验证。
+中式版选定成图为 `design/chinese/portrait-source.png`，使用红毯黑鞋版，原生尺寸 1024 × 1536。图像工具的输入为婚纱原照与原照头部细节；参考角色和提示词入口见同目录 `image-prompts.json`。`node design/prepare-chinese-portrait.mjs` 从选定成图导出无损迎宾图、600 × 600 分享缩略图及来源哈希，不执行面部剪贴、重绘、调色或画面拉伸。`portrait-layout.json` 只保存源图路径、画布与分享裁切。脚本打印分享图哈希前 16 位，更新 `src/config.js` 中 `share.chineseImage` 的 `v` 参数后运行验证。
 
 中式迎宾页更换图片素材，保留原有照片缩放、底部渐变、文字位置和入场动画。试制图和旧合成资料保留在 `.temp/archive/`，不进入 Git 或发布资源。
 

@@ -40,11 +40,6 @@
           "width": 1330,
           "height": 1210
         }
-      },
-      {
-        "file": "design/chinese/portrait-proportion-guide.png",
-        "role": "无五官的全身比例参考",
-        "source": "design/chinese/portrait-proportion-guide.svg"
       }
     ],
     "priorities": [
@@ -55,10 +50,10 @@
     ],
     "promptFile": "design/chinese/portrait-generation-prompt.txt",
     "output": "design/chinese/portrait-source.png",
-    "outputSha256": "40db6d500bbe36db9c1f76b91440421c3e34fd5ccd41c20b4d89243e6defe1eb",
+    "outputSha256": "fac6de04eef9e2677e302a1ee63f0ec92e9e1976a301f82c7ad1ce5ded1ce532",
     "nativeSize": {
-      "width": 887,
-      "height": 1774
+      "width": 1024,
+      "height": 1536
     },
     "processing": "design/prepare-chinese-portrait.mjs 将选定成图导出为无损 WebP，并裁切分享缩略图。导出不执行面部剪贴、重绘、调色或拉伸。"
   }

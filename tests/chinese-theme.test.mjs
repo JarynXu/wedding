@@ -73,7 +73,7 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
             width: image.naturalWidth,
             height: image.naturalHeight,
           }));
-          assert.deepEqual(portrait, { path: '/assets/chinese/portrait.webp', width: 887, height: 1774 });
+          assert.deepEqual(portrait, { path: '/assets/chinese/portrait.webp', width: 1024, height: 1536 });
           for (let index = 0; index < 4; index++) {
             if (index) await page.locator(`.page-${index} [data-action="next-page"]`).click();
             await page.locator(`.page-${index + 1}.active`).waitFor();

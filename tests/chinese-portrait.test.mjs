@@ -8,14 +8,14 @@ import { WEDDING_CONFIG } from '../src/config.js';
 const require = createRequire(import.meta.url);
 const sharp = require(process.env.SHARP_MODULE_PATH || 'sharp');
 const directory = new URL('../design/chinese/', import.meta.url);
-const approvedSourceSha256 = '40db6d500bbe36db9c1f76b91440421c3e34fd5ccd41c20b4d89243e6defe1eb';
+const approvedSourceSha256 = 'fac6de04eef9e2677e302a1ee63f0ec92e9e1976a301f82c7ad1ce5ded1ce532';
 const digest = data => createHash('sha256').update(data).digest('hex');
 
 test('中式迎宾图保留选定生成稿的全画面像素与原生尺寸', async () => {
   const layout = JSON.parse(await readFile(new URL('portrait-layout.json', directory), 'utf8'));
   const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
   assert.equal(layout.source, 'portrait-source.png');
-  assert.deepEqual(layout.canvas, { width: 887, height: 1774 });
+  assert.deepEqual(layout.canvas, { width: 1024, height: 1536 });
   assert.equal(record.source, 'design/chinese/portrait-source.png');
   assert.equal(record.output, 'public/assets/chinese/portrait.webp');
 
@@ -24,13 +24,13 @@ test('中式迎宾图保留选定生成稿的全画面像素与原生尺寸', as
   assert.equal(digest(source), approvedSourceSha256, '源稿须为用户选定的生成图');
   assert.equal(record.sourceSha256, digest(source));
   assert.equal(record.outputSha256, digest(output));
-  assert.equal(record.width, 887);
-  assert.equal(record.height, 1774);
+  assert.equal(record.width, 1024);
+  assert.equal(record.height, 1536);
 
   const { data: expected, info: sourceInfo } = await sharp(source).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const { data: portrait, info } = await sharp(output).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  assert.equal(sourceInfo.width, 887);
-  assert.equal(sourceInfo.height, 1774);
+  assert.equal(sourceInfo.width, 1024);
+  assert.equal(sourceInfo.height, 1536);
   assert.equal(info.width, sourceInfo.width);
   assert.equal(info.height, sourceInfo.height);
   assert.equal(info.channels, sourceInfo.channels);
@@ -42,7 +42,7 @@ test('中式分享缩略图记录来源裁切，分享地址使用实际图片�
   const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
   const share = await readFile(new URL('../public/share/chinese-wedding-portrait.jpg', import.meta.url));
   const shareUrl = new URL(WEDDING_CONFIG.share.chineseImage, WEDDING_CONFIG.share.siteUrl);
-  assert.deepEqual(layout.shareCrop, { left: 200, top: 165, width: 500, height: 500 });
+  assert.deepEqual(layout.shareCrop, { left: 280, top: 100, width: 500, height: 500 });
   assert.equal(record.share.output, 'public/share/chinese-wedding-portrait.jpg');
   assert.deepEqual(record.share.crop, layout.shareCrop);
   assert.equal(record.share.sha256, digest(share));
