@@ -59,9 +59,9 @@ https://wedding.jaryn.com.cn/?theme=chinese&side=bride&parents=陈女士
 
 中式版更换开场、肖像、时间、地点与末页的美术、文字位置和按钮样式，沿用当前婚礼内容与交互。分享链接与日历直达页的返回链接保留主题和父母参数。中式分享图片为 `public/share/chinese-wedding-portrait.jpg`，标题与副标题规则不变。
 
-主题首帧由 `build/critical-welcome.js` 内嵌预览图和必要样式。完整图片只加载当前主题。中式肖像的源照片、面部掩膜和合成坐标见 `design/chinese/`；运行 `node design/prepare-chinese-portrait.mjs` 可重建肖像和分享缩略图，需要通过 `SHARP_MODULE_PATH` 提供 Sharp。
+主题首帧由 `build/critical-welcome.js` 内嵌预览图和必要样式。完整图片只加载当前主题。中式肖像的选定成图、生成参考、提示词和分享裁切见 `design/chinese/`；运行 `node design/prepare-chinese-portrait.mjs` 可从选定成图导出无损肖像和分享缩略图，需要提供 Sharp，可通过 `SHARP_MODULE_PATH` 指定路径。导出不执行人脸合成。运行后将 `src/config.js` 的 `share.chineseImage` 版本参数更新为脚本打印的 `shareVersion`。
 
-中式版验证运行 `node --test tests/chinese-theme.test.mjs tests/chinese-portrait.test.mjs`。图像检查核对原照眼睛与唇部的掩膜、面部主体像素，以及面颊两侧红底和旧发丝的清除结果。界面检查覆盖首帧失败恢复、手机与桌面四页、弹窗、安卓手势和日历返回。
+中式版构建后运行 `node --test tests/chinese-theme.test.mjs tests/chinese-portrait.test.mjs`。图像检查核对选定源稿、正式肖像的全画面像素和分享图哈希版本。界面检查覆盖实际肖像加载、首帧失败恢复、手机与桌面四页、弹窗、安卓手势和日历返回。
 
 ## 部署与运行
 

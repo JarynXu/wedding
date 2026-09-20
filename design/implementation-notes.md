@@ -32,9 +32,13 @@
 
 姓名和迎宾牌文字使用 HTML 排版。姓名读取 `src/config.js`；迎宾页展示姓名、合影、“TOGETHER FOREVER”及“Welcome”。文字坐标跟随参考图等比裁切。窄长屏补齐边框，角花从参考图提取至 `public/assets/classic/frame-corner.webp`。
 
-素材处理脚本使用 Sharp，运行入口为 `node design/prepare-welcome-reference.mjs`，随后运行 `node design/prepare-share-image.mjs` 更新分享缩略图。分享地址携带图片版本参数，减少旧卡片图像缓存的影响。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。两个主题的原照合成共用 `design/portrait-composite.mjs`，各自维护定位与轮廓；中式版保留原有红底和旧发丝的连通清理。旧版纸面合成保留在 `design/compose-cover.mjs`，不再作为当前迎宾页资源。
+素材处理脚本使用 Sharp。默认主题运行 `node design/prepare-welcome-reference.mjs`，再运行 `node design/prepare-share-image.mjs` 更新分享缩略图。默认主题的原照合成使用 `design/portrait-composite.mjs`。独立工具环境可通过 `SHARP_MODULE_PATH` 指定模块路径。
 
-运行 `node --test tests/classic-portrait.test.mjs tests/chinese-portrait.test.mjs` 核对面部像素。默认主题检查同时使用原设计稿作为反例，避免把设计稿五官的原样保留误判为恢复原照。
+中式版选定成图为 `design/chinese/portrait-source.png`，原生尺寸 887 × 1774。图像工具的输入为婚纱原照、原照片段与无五官的比例示意图；参考角色和提示词入口见同目录 `image-prompts.json`。`node design/prepare-chinese-portrait.mjs` 从选定成图导出无损迎宾图、600 × 600 分享缩略图及来源哈希，不执行面部剪贴、重绘、调色或画面拉伸。`portrait-layout.json` 只保存源图路径、画布与分享裁切。脚本打印分享图哈希前 16 位，更新 `src/config.js` 中 `share.chineseImage` 的 `v` 参数后运行验证。
+
+中式迎宾页以等比完整模式展示照片，姓名、祝词和翻页按钮放在独立底栏。页面不再放大照片或用底部渐变遮住衣摆与红毯。短屏省略顶部英文副标题和装饰印章，保留中文标题与姓名。试制图和旧合成资料保留在 `.temp/archive/`，不进入 Git 或发布资源。
+
+运行 `node --test tests/classic-portrait.test.mjs tests/chinese-portrait.test.mjs` 核对图片契约。默认主题检查原照面部像素；中式主题检查正式 WebP 与选定成图的全画面像素一致、源图哈希和分享图内容版本。
 
 ## 毛玻璃面板
 

@@ -25,11 +25,41 @@
     "output": "Generated images are saved to C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce as C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce\\exec-32c7535f-ad76-464a-adaa-12f733d4a2a9.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
   },
   "chinese-portrait": {
-    "prompt": "Use case: identity-preserve compositing. Input 1 is the ACTUAL couple photograph and sole facial identity source. Input 2 is ONLY an art-direction reference for Chinese red/gold wedding garments, wooden moon-gate lattice, peonies, lanterns, framing and warm ivory lower area. Create a very high quality full-length Chinese wedding portrait/background plate for a portrait 1:2 mobile website, 1920x3840 composition. Change the actual couple's clothing into rich red silk traditional Chinese wedding robes with detailed gold embroidery, and compose a bouquet at waist level. The bride remains on LEFT and groom RIGHT, same frontal pose. MOST IMPORTANT: keep input 1 faces EXACTLY, all facial proportions, eyes, nose, lips, teeth, smile, jaw, skin texture and asymmetry unchanged; do not beautify, slim, age or redraw them. Keep their original hair shape wherever possible; a delicate bridal gold/red hair ornament may be added outside her original hairline. Never use the reference couple's faces.\nGeometry intended for pixel-preserving face compositing: imagine the original 1920x1280 photograph placed at x=0,y=850 on a 1920x3840 canvas without rescaling. The groom hair top is near x=1250,y=930, eyes near x=1245,y=1200; bride hair top near x=615,y=1090, eyes near x=610,y=1320. Preserve these face positions and approximate sizes. Extend the garments downward below the original photo crop naturally, match necks and collars to the retained faces. Faces must be clear and fully visible. Body size and framing should look like the reference portrait, not detached passport heads.\nKeep the elaborate rosewood moon-gate and warm cream backdrop with out-of-focus flowering branches; full top wood cornice and dense flowers at upper left, slender Chinese red/gold lanterns at sides. Flowers at bottom corners frame the gown, while bottom center from 83% to 100% fades gently to warm ivory paper for live text. Top center between 10% and 19% is empty warm ivory for live heading. Output background/portrait art ONLY. NO Chinese or English text anywhere, no typography, dates, names, icon buttons, arrows, music icon, UI, isolated loose floating petals. Physical gold 囍 ornament on a lantern is allowed. Preserve refined photographic texture and lighting matching the reference.",
-    "output": "Generated images are saved to C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce as C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce\\exec-d5d80e89-1054-400f-bda1-e136033a9b5b.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
-  },
-  "chinese-portrait-hair": {
-    "prompt": "Edit target Image 1: change ONLY the bride's HAIRSTYLE into the elegant Chinese bridal updo/bun with gold and red phoenix-style ornaments and hanging delicate gold tassels seen in Image 2. Image 2 is the hairstyle reference only; NEVER copy its face. The bride is the woman on the LEFT. Keep the exact face in Image 1 untouched: same face outline, size, position, eyes, nose, mouth, smile, skin, expression and proportions. Keep the groom completely unchanged. Keep all clothing, bouquet, architecture, florals, lanterns, lower blank ivory area, lighting, overall frame and dimensions EXACTLY unchanged. Replace the long hair over the bride shoulders with the updo; reveal the existing red/gold dress naturally where the long hair was. Hair ornaments must not cross eyes, nose, mouth or cheeks. No text, no logos, no UI. Output the same single portrait 1:2 composition.",
-    "output": "Generated images are saved to C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce as C:\\Users\\jaryn\\.codex\\generated_images\\01a08b73-c8a2-7b92-bf16-1085137db2ce\\exec-c2147e6d-9e32-43fe-820a-1cf8330adcd4.png by default.\nIf you need to use a generated image at another path, copy it and leave the original in place unless the user explicitly asks you to delete it.\nThe generated image is already displayed to the user. There is no need to render it in the final response as a Markdown image or file link."
+    "tool": "built-in image_gen",
+    "inputs": [
+      {
+        "file": "design/迎宾照.jpg",
+        "role": "原始婚纱照"
+      },
+      {
+        "file": "design/chinese/portrait-original-detail.png",
+        "role": "原照头部细节参考",
+        "sourceCrop": {
+          "left": 2770,
+          "top": 2150,
+          "width": 1330,
+          "height": 1210
+        }
+      },
+      {
+        "file": "design/chinese/portrait-proportion-guide.png",
+        "role": "无五官的全身比例参考",
+        "source": "design/chinese/portrait-proportion-guide.svg"
+      }
+    ],
+    "priorities": [
+      "人脸",
+      "身材比例",
+      "衣服",
+      "背景与红地毯"
+    ],
+    "promptFile": "design/chinese/portrait-generation-prompt.txt",
+    "output": "design/chinese/portrait-source.png",
+    "outputSha256": "40db6d500bbe36db9c1f76b91440421c3e34fd5ccd41c20b4d89243e6defe1eb",
+    "nativeSize": {
+      "width": 887,
+      "height": 1774
+    },
+    "processing": "design/prepare-chinese-portrait.mjs 将选定成图导出为无损 WebP，并裁切分享缩略图。导出不执行面部剪贴、重绘、调色或拉伸。"
   }
 }

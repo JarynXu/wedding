@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { createInvitationApp } from '../server/app.js';
 import { getShareMetadata } from '../src/share-metadata.js';
@@ -10,6 +12,9 @@ import { WEDDING_CONFIG } from '../src/config.js';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
+const shareImage = await readFile(new URL('../public/share/chinese-wedding-portrait.jpg', import.meta.url));
+const shareVersion = createHash('sha256').update(shareImage).digest('hex').slice(0, 16);
+const expectedShareImage = `https://wedding.jaryn.com.cn/share/chinese-wedding-portrait.jpg?v=${shareVersion}`;
 const capture = async (page, name) => {
   if (process.env.WEDDING_QA_DIR) await page.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, `theme-${name}.png`), animations: 'disabled' });
 };
@@ -22,7 +27,7 @@ test('主题选择与家长分享链接共存，未知值回到法式版', () =>
   assert.equal(url.searchParams.get('theme'), 'chinese');
   assert.equal(url.searchParams.get('parents'), '陈女士');
   assert.equal(url.searchParams.has('revision'), false);
-  assert.equal(share.image, 'https://wedding.jaryn.com.cn/share/chinese-wedding-portrait.jpg');
+  assert.equal(share.image, expectedShareImage);
   assert.match(share.description, /爱女与女婿/);
 });
 
@@ -58,11 +63,17 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
         try {
           const response = await page.goto(origin + '/?theme=chinese&side=groom&parents=张先生、李女士');
           assert.equal(response.status(), 200);
-          assert.equal(await page.locator('[property="og:image"]').getAttribute('content'), 'https://wedding.jaryn.com.cn/share/chinese-wedding-portrait.jpg');
+          assert.equal(await page.locator('[property="og:image"]').getAttribute('content'), expectedShareImage);
           await page.locator('#preloaderOverlay[data-state="ready"]').waitFor();
           await capture(page, `chinese-loading-${viewport.width}`);
           await page.locator('#btnEnterInvitation').click();
           await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
+          const portrait = await page.locator('#coverBgPhoto').evaluate(image => ({
+            path: new URL(image.currentSrc).pathname,
+            width: image.naturalWidth,
+            height: image.naturalHeight,
+          }));
+          assert.deepEqual(portrait, { path: '/assets/chinese/portrait.webp', width: 887, height: 1774 });
           for (let index = 0; index < 4; index++) {
             if (index) await page.locator(`.page-${index} [data-action="next-page"]`).click();
             await page.locator(`.page-${index + 1}.active`).waitFor();

@@ -3,42 +3,54 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
-import { fileURLToPath } from 'node:url';
+import { WEDDING_CONFIG } from '../src/config.js';
 
 const require = createRequire(import.meta.url);
 const sharp = require(process.env.SHARP_MODULE_PATH || 'sharp');
 const directory = new URL('../design/chinese/', import.meta.url);
+const approvedSourceSha256 = '40db6d500bbe36db9c1f76b91440421c3e34fd5ccd41c20b4d89243e6defe1eb';
+const digest = data => createHash('sha256').update(data).digest('hex');
 
-test('中式肖像保留原照面部像素并清除两侧红底和旧发丝', async () => {
+test('中式迎宾图保留选定生成稿的全画面像素与原生尺寸', async () => {
   const layout = JSON.parse(await readFile(new URL('portrait-layout.json', directory), 'utf8'));
   const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
-  const original = await readFile(new URL(layout.source, directory));
-  assert.equal(createHash('sha256').update(original).digest('hex'), record.originalSha256);
-  const { data: portrait, info } = await sharp(fileURLToPath(new URL('../public/assets/chinese/portrait.webp', import.meta.url))).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  for (const [index, face] of layout.faces.entries()) {
-    const stored = record.faces[index];
-    const maskFile = fileURLToPath(new URL(`${face.name}-matte.png`, directory));
-    const matte = await sharp(maskFile).ensureAlpha().raw().toBuffer();
-    for (const [x, y] of face.sourceEyes) assert.equal(matte[((y - face.crop.top) * face.crop.width + x - face.crop.left) * 4 + 3], 255, `${face.name} 的眼睛完整保留`);
-    const originalCrop = await sharp(original).extract(face.crop).png().toBuffer();
-    // 取自原照两侧红底／旧发丝的已核对位置；唇色不能按颜色当成红底。
-    const edgePoints = face.name === 'groom' ? [[1110, 480], [1115, 500], [1390, 475], [1380, 500]] : [[490, 540], [500, 575], [525, 615], [743, 560]];
-    for (const [x, y] of edgePoints) assert.equal(matte[((y - face.crop.top) * face.crop.width + x - face.crop.left) * 4 + 3], 0, `${face.name} 清除面颊两侧残留`);
-    const lip = face.name === 'groom' ? [1300, 474] : [660, 585];
-    assert.equal(matte[((lip[1] - face.crop.top) * face.crop.width + lip[0] - face.crop.left) * 4 + 3], 255, `${face.name} 保留原照唇部`);
-    const { data: expected, info: resized } = await sharp(originalCrop).resize({ width: stored.renderedWidth }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-    const alpha = await sharp(maskFile).resize({ width: stored.renderedWidth }).ensureAlpha().raw().toBuffer();
-    let compared = 0;
-    let maximumError = 0;
-    for (let y = 2; y < resized.height - 2; y++) for (let x = 2; x < resized.width - 2; x++) {
-      const p = y * resized.width + x;
-      // 羽化只用于轮廓；此检查取远离羽化边缘的面部内部。
-      if ([-2, -1, 0, 1, 2].some(d => alpha[(p + d) * 4 + 3] !== 255 || alpha[(p + d * resized.width) * 4 + 3] !== 255)) continue;
-      const q = ((stored.position.top + y) * info.width + stored.position.left + x) * 3;
-      for (let channel = 0; channel < 3; channel++) maximumError = Math.max(maximumError, Math.abs(expected[p * 3 + channel] - portrait[q + channel]));
-      compared++;
-    }
-    assert.ok(compared > 2000, `${face.name} 的核对区域须包含面部主体`);
-    assert.ok(maximumError <= 2, `${face.name} 面部像素偏差 ${maximumError} 超出图像管线取整范围`);
-  }
+  assert.equal(layout.source, 'portrait-source.png');
+  assert.deepEqual(layout.canvas, { width: 887, height: 1774 });
+  assert.equal(record.source, 'design/chinese/portrait-source.png');
+  assert.equal(record.output, 'public/assets/chinese/portrait.webp');
+
+  const source = await readFile(new URL(layout.source, directory));
+  const output = await readFile(new URL('../public/assets/chinese/portrait.webp', import.meta.url));
+  assert.equal(digest(source), approvedSourceSha256, '源稿须为用户选定的生成图');
+  assert.equal(record.sourceSha256, digest(source));
+  assert.equal(record.outputSha256, digest(output));
+  assert.equal(record.width, 887);
+  assert.equal(record.height, 1774);
+
+  const { data: expected, info: sourceInfo } = await sharp(source).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { data: portrait, info } = await sharp(output).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.equal(sourceInfo.width, 887);
+  assert.equal(sourceInfo.height, 1774);
+  assert.equal(info.width, sourceInfo.width);
+  assert.equal(info.height, sourceInfo.height);
+  assert.equal(info.channels, sourceInfo.channels);
+  assert.ok(portrait.equals(expected), '无损导出须保留脸部、身材、衣饰与地毯的全部像素');
+});
+
+test('中式分享缩略图记录来源裁切，分享地址使用实际图片的内容版本', async () => {
+  const layout = JSON.parse(await readFile(new URL('portrait-layout.json', directory), 'utf8'));
+  const record = JSON.parse(await readFile(new URL('portrait-provenance.json', directory), 'utf8'));
+  const share = await readFile(new URL('../public/share/chinese-wedding-portrait.jpg', import.meta.url));
+  const shareUrl = new URL(WEDDING_CONFIG.share.chineseImage, WEDDING_CONFIG.share.siteUrl);
+  assert.deepEqual(layout.shareCrop, { left: 200, top: 165, width: 500, height: 500 });
+  assert.equal(record.share.output, 'public/share/chinese-wedding-portrait.jpg');
+  assert.deepEqual(record.share.crop, layout.shareCrop);
+  assert.equal(record.share.sha256, digest(share));
+  assert.equal(record.share.width, 600);
+  assert.equal(record.share.height, 600);
+  assert.equal(shareUrl.pathname, '/share/chinese-wedding-portrait.jpg');
+  assert.equal(shareUrl.searchParams.get('v'), digest(share).slice(0, 16));
+  const thumbnail = await sharp(share).metadata();
+  assert.equal(thumbnail.width, 600);
+  assert.equal(thumbnail.height, 600);
 });
