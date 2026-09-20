@@ -36,7 +36,7 @@
 
 中式版选定成图为 `design/chinese/portrait-source.png`，原生尺寸 887 × 1774。图像工具的输入为婚纱原照、原照片段与无五官的比例示意图；参考角色和提示词入口见同目录 `image-prompts.json`。`node design/prepare-chinese-portrait.mjs` 从选定成图导出无损迎宾图、600 × 600 分享缩略图及来源哈希，不执行面部剪贴、重绘、调色或画面拉伸。`portrait-layout.json` 只保存源图路径、画布与分享裁切。脚本打印分享图哈希前 16 位，更新 `src/config.js` 中 `share.chineseImage` 的 `v` 参数后运行验证。
 
-中式迎宾页以等比完整模式展示照片，姓名、祝词和翻页按钮放在独立底栏。页面不再放大照片或用底部渐变遮住衣摆与红毯。短屏省略顶部英文副标题和装饰印章，保留中文标题与姓名。试制图和旧合成资料保留在 `.temp/archive/`，不进入 Git 或发布资源。
+中式迎宾页更换图片素材，保留原有照片缩放、底部渐变、文字位置和入场动画。试制图和旧合成资料保留在 `.temp/archive/`，不进入 Git 或发布资源。
 
 运行 `node --test tests/classic-portrait.test.mjs tests/chinese-portrait.test.mjs` 核对图片契约。默认主题检查原照面部像素；中式主题检查正式 WebP 与选定成图的全画面像素一致、源图哈希和分享图内容版本。
 
