@@ -2,6 +2,10 @@
 
 `portrait-source.png` 是用户选定的红毯黑鞋版生成成图，原生尺寸 1024 × 1536。正式页面使用 `public/assets/chinese/portrait.webp`，分享图片使用 `public/share/chinese-wedding-portrait.jpg`。
 
+迎宾页的花簇、三盏灯笼与木雕边框使用独立透明图层 `public/assets/chinese/portrait-frame.png`。提取参考 `portrait-frame-reference.webp` 来自本机换图前归档。内置 image_gen 提取周边装饰，提示词见 `portrait-frame-prompt.txt`，来源和文件哈希见 `portrait-frame-provenance.json`。中央旧人物区域透明，装饰层不接收点击或触摸。
+
+`src/themes/chinese.css` 负责照片的等比尺寸与位置。双人面部中点位于 1024 × 1536 源图的 x=538，页面将该点对齐容器中线。照片上方保留标题和印章空间。原有文字、底部渐变与交互入口沿用现有样式。
+
 `image-prompts.json` 的 `chinese-portrait` 项记录图像工具、输入角色和提示词入口。本版生成使用 `design/迎宾照.jpg` 和 `portrait-original-detail.png`。参考图只参与生成，不在导出时拼贴到照片上。`portrait-proportion-guide.png` 与其 SVG 源文件属于另一试制方案，本版未使用。
 
 运行以下命令从选定成图导出页面与分享资源，不会重新生图：

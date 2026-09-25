@@ -53,7 +53,8 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
       } finally { await page.close(); }
     });
 
-    for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 1440, height: 1000 }]) {
+    for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 752 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 1440, height: 1000 }]) {
+      const viewportName = `${viewport.width}x${viewport.height}`;
       await suite.test(`${viewport.width}×${viewport.height} 的主题内容与点击区域`, async () => {
         const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
         const errors = [];
@@ -65,7 +66,7 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
           assert.equal(response.status(), 200);
           assert.equal(await page.locator('[property="og:image"]').getAttribute('content'), expectedShareImage);
           await page.locator('#preloaderOverlay[data-state="ready"]').waitFor();
-          await capture(page, `chinese-loading-${viewport.width}`);
+          await capture(page, `chinese-loading-${viewportName}`);
           await page.locator('#btnEnterInvitation').click();
           await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
           const portrait = await page.locator('#coverBgPhoto').evaluate(image => ({
@@ -74,6 +75,27 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
             height: image.naturalHeight,
           }));
           assert.deepEqual(portrait, { path: '/assets/chinese/portrait.webp', width: 1024, height: 1536 });
+          const composition = await page.evaluate(() => {
+            const image = document.querySelector('#coverBgPhoto');
+            const photo = image.getBoundingClientRect();
+            const frame = document.querySelector('.chinese-cover-frame');
+            const app = document.querySelector('#app').getBoundingClientRect();
+            const title = document.querySelector('.chinese-cover-title').getBoundingClientRect();
+            const decoration = frame.getBoundingClientRect();
+            // 原图中的双人面部中点与最高发顶；验收对象是画面主体，不是 img 外框。
+            const faceCenter = photo.left + photo.width * ((449 + 627) / 2) / image.naturalWidth;
+            const hairTop = photo.top + photo.height * 130 / image.naturalHeight;
+            return {
+              centered: Math.abs(faceCenter - (app.left + app.width / 2)) <= app.width * 0.02,
+              proportional: Math.abs(photo.width / photo.height - image.naturalWidth / image.naturalHeight) < 0.001,
+              titleClear: title.bottom + 4 < hairTop,
+              frameVisible: getComputedStyle(frame).backgroundImage.includes('/assets/chinese/portrait-frame.png') && getComputedStyle(frame).visibility === 'visible',
+              frameFits: Math.abs(decoration.left - app.left) < 1 && Math.abs(decoration.right - app.right) < 1 && Math.abs(decoration.top - app.top) < 1 && Math.abs(decoration.bottom - app.bottom) < 1,
+              framePassesInput: getComputedStyle(frame).pointerEvents === 'none',
+            };
+          });
+          assert.deepEqual(composition, { centered: true, proportional: true, titleClear: true, frameVisible: true, frameFits: true, framePassesInput: true });
+          assert.ok(requests.some(url => url.endsWith('/assets/chinese/portrait-frame.png')), '原版装饰须作为独立资源加载');
           for (let index = 0; index < 4; index++) {
             if (index) await page.locator(`.page-${index} [data-action="next-page"]`).click();
             await page.locator(`.page-${index + 1}.active`).waitFor();
@@ -89,7 +111,7 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
               };
             }, index);
             assert.deepEqual(layout, { overflow: false, content: true, ordered: true, button: true });
-            await capture(page, `chinese-page-${index + 1}-${viewport.width}`);
+            await capture(page, `chinese-page-${index + 1}-${viewportName}`);
           }
           assert.equal(await page.locator('#p4Inviters').textContent(), '张先生、李女士');
           assert.equal(await page.locator('#p4ChildRole').textContent(), '爱子');
@@ -98,12 +120,12 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
           await page.locator('.nav-dot[data-index="1"]').click();
           await page.locator('.calendar-button').click();
           await page.locator('#calendarModal.open').waitFor();
-          await capture(page, `chinese-calendar-modal-${viewport.width}`);
+          await capture(page, `chinese-calendar-modal-${viewportName}`);
           await page.locator('#calendarModal [data-close-modal]').click();
           await page.locator('.nav-dot[data-index="2"]').click();
           await page.locator('.p3-map-btn').click();
           await page.locator('#mapModal.open').waitFor();
-          await capture(page, `chinese-map-modal-${viewport.width}`);
+          await capture(page, `chinese-map-modal-${viewportName}`);
           assert.deepEqual(errors, []);
           assert.ok(requests.every(url => !/card_0[234]_hd|cover-welcome-art|welcome-silk-roses/.test(url)), '中式版不下载法式背景');
         } finally { await page.close(); }

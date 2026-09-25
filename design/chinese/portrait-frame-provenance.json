@@ -1,0 +1,12 @@
+{
+  "source": "design/chinese/portrait-frame-reference.webp",
+  "sourceArchive": ".temp/archive/chinese-welcome-final-20260920-235515/previous-production/public/assets/chinese/portrait.webp",
+  "sourceSha256": "801fe8a79cd340490215bcdfc8d35e99bfd0d2b57451effdf0ae4414ac87c784",
+  "tool": "built-in image_gen",
+  "promptFile": "design/chinese/portrait-frame-prompt.txt",
+  "output": "public/assets/chinese/portrait-frame.png",
+  "outputSha256": "4851310683b248d3b79302ba673d86889e9ee07f41288f4c7cc8b9c4c34cad3a",
+  "width": 887,
+  "height": 1774,
+  "method": "从换图前归档提取花簇、三盏灯笼和木雕边框，移除中央人物与室内背景，保留透明通道；人物照片单独呈现。"
+}

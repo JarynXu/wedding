@@ -7,6 +7,10 @@ export function applyChineseTheme() {
   const cover = document.getElementById('coverBgPhoto');
   cover.src = portrait;
   cover.alt = '新人身着中式礼服的迎宾合影';
+  const frame = document.createElement('div');
+  frame.className = 'chinese-cover-frame';
+  frame.setAttribute('aria-hidden', 'true');
+  document.querySelector('.page-1').append(frame);
   document.getElementById('coverGildedFrame').style.display = 'none';
   document.querySelector('.page-1').classList.remove('has-gilded-frame');
   document.querySelector('.cover-kicker').textContent = 'WE ARE GETTING MARRIED';

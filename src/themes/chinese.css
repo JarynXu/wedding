@@ -7,18 +7,33 @@
 :root[data-theme='chinese'] .page { --page-copy-delay: 140ms; container-type: size; }
 :root[data-theme='chinese'] .music-disc { background: #fff8eaf2; }
 :root[data-theme='chinese'] .scroll-arrow { width: 36px; height: 36px; }
-:root[data-theme='chinese'] .page-1 { background: #8b1513; }
+:root[data-theme='chinese'] .page-1 {
+  --portrait-top: max(15cqh, 110px);
+  --portrait-height: calc(98cqh - var(--portrait-top));
+  background: linear-gradient(#f4e4cd, #dbc4a3 34%);
+}
+/* 1024×1536 原图的双人面部中点在 x=538；短屏为标题和印章保留空间。 */
 :root[data-theme='chinese'] .page-1 .cover-bg-photo {
-  width: 112%;
-  height: 112%;
-  left: -6%;
-  top: 0;
-  object-position: center top;
+  width: calc(var(--portrait-height) * 2 / 3);
+  height: var(--portrait-height);
+  left: calc(50% - var(--portrait-height) * 538 / 1536);
+  top: var(--portrait-top);
+  object-fit: contain;
+  object-position: center;
+  -webkit-mask-image: linear-gradient(transparent, #000 6%);
+  mask-image: linear-gradient(transparent, #000 6%);
+}
+.chinese-cover-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: url('/assets/chinese/portrait-frame.png') center / 100% 100% no-repeat;
 }
 :root[data-theme='chinese'] .page-1::after {
   content: '';
   position: absolute;
-  z-index: 3;
+  z-index: 2;
   inset: auto 0 0;
   height: 24%;
   background: linear-gradient(0deg, #fff1d8 7%, #fff1d8ed 65%, #fff1d800);

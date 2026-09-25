@@ -54,3 +54,22 @@ test('中式分享缩略图记录来源裁切，分享地址使用实际图片�
   assert.equal(thumbnail.width, 600);
   assert.equal(thumbnail.height, 600);
 });
+
+test('迎宾装饰保留花簇与灯笼，中央人物区域透明', async () => {
+  const frame = await readFile(new URL('../public/assets/chinese/portrait-frame.png', import.meta.url));
+  const record = JSON.parse(await readFile(new URL('portrait-frame-provenance.json', directory), 'utf8'));
+  const reference = await readFile(new URL('portrait-frame-reference.webp', directory));
+  assert.equal(record.sourceSha256, digest(reference));
+  assert.equal(record.outputSha256, digest(frame));
+  const { data, info } = await sharp(frame).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  assert.equal(info.width, 887);
+  assert.equal(info.height, 1774);
+  const alpha = (x, y) => data[(y * info.width + x) * info.channels + 3];
+  for (let y = 370; y < 1420; y++) for (let x = 220; x < 770; x++) {
+    // 8 位透明通道允许一个量化级；旧人物的可见像素不能留在装饰层。
+    assert.ok(alpha(x, y) <= 1, `旧人物区域须透明：${x},${y}`);
+  }
+  for (const [x, y] of [[65, 105], [851, 125], [60, 595], [678, 212], [860, 440], [60, 1650], [774, 1658]]) {
+    assert.ok(alpha(x, y) > 200, `花簇、木框和灯笼须保留：${x},${y}`);
+  }
+});
