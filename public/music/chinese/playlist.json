@@ -1,4 +1,10 @@
 {
-  "tracks": [],
-  "fallback": "classic"
+  "tracks": [
+    {
+      "file": "01-寄春笺 - 大橘为重.mp3",
+      "title": "寄春笺 - 大橘为重",
+      "bytes": 10100091,
+      "version": "44e6a7deb7fc3028"
+    }
+  ]
 }
