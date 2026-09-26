@@ -17,6 +17,7 @@ export function calendarEntry() {
           couple: `${config.groom.name} & ${config.bride.name}`,
           date: `${config.date.formattedFullZh} · ${config.date.dayOfWeekZh}`,
           arrival: config.schedule[0].time,
+          ceremony: config.date.ceremonyTime,
           venue: `${config.venue.name} · ${config.venue.hall}`,
           address: config.venue.address,
         };

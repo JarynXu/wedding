@@ -7,15 +7,15 @@ X-WR-CALNAME:徐旨越 & 赵荣蓉 婚礼午宴
 X-WR-TIMEZONE:Asia/Shanghai
 BEGIN:VEVENT
 UID:wedding-20261017-xuzhiyue-zhaorongrong@wedding.com
-DTSTAMP:20260909T000000Z
+DTSTAMP:20260927T000000Z
 DTSTART:20261017T033000Z
 DTEND:20261017T063000Z
 SUMMARY:徐旨越 & 赵荣蓉 婚礼午宴
-DESCRIPTION:诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\n时间：2026年10月17日 11:30 入场\n地点：东海嘉臣国际大酒店 · 国际厅(三楼)\n地址：江苏省连云港市东海县晶都大道99号\n期待与您一同见证幸福时刻！
+DESCRIPTION:诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\n时间：2026年10月17日 11:30 宾客进场；12:08 婚礼仪式\n地点：东海嘉臣国际大酒店 · 国际厅(三楼)\n地址：江苏省连云港市东海县晶都大道99号\n期待与您一同见证幸福时刻！
 LOCATION:东海嘉臣国际大酒店 · 国际厅(三楼)（江苏省连云港市东海县晶都大道99号）
 STATUS:CONFIRMED
 TRANSP:OPAQUE
-SEQUENCE:0
+SEQUENCE:1
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY

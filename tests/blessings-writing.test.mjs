@@ -38,3 +38,21 @@ test('润色只接收原稿与主题，非法输出不替换宾客草稿',async(
   await assert.rejects(writer.compose('原稿','classic'),{code:'AI_UNAVAILABLE'});
   writer.close();
 });
+
+test('空白祝福轮换创作角度，重复开头会在一次请求内重写',async()=>{
+  const contexts=[],results=['今天的快乐延续到每一个平常的明天。','一起把三餐四季过成喜欢的模样。','以后的风雨有人分担，晴天有人分享。','两个人的远方，都有彼此的位置。','每个小心愿，都能被对方认真听见。','春秋轮转，你们依然是彼此的好朋友。','这杯敬今天，也敬以后的每个好日子。','家里常有笑声，心里总有牵挂。'];
+  const writer=new BlessingWriter({model:'test'}, {async complete(input){contexts.push(JSON.parse(input.messages[1].content));return {text:JSON.stringify({text:results.shift()})};}});
+  try {
+    for(let i=0;i<8;i++)await writer.compose('','chinese');
+    assert.equal(new Set(contexts.map(context=>context.direction.angle)).size,8);
+    assert.ok(contexts.at(-1).recentBlessings.length>=7);
+    const outputs=['良辰吉日，喜结良缘，愿你们幸福。','你们牵着的手，也牵住了往后的小欢喜。'];
+    const rewrites=[];
+    writer.client={async complete(input){rewrites.push(JSON.parse(input.messages[1].content));return {text:JSON.stringify({text:outputs.shift()})};}};
+    assert.equal(await writer.compose('','classic'),'你们牵着的手，也牵住了往后的小欢喜。');
+    assert.equal(rewrites.length,2);
+    assert.match(rewrites[1].rejectedBlessing,/良辰吉日/);
+    writer.client={async complete(){return {text:JSON.stringify({text:'你们牵着的手，也牵住了往后的小欢喜。'})};}};
+    await assert.rejects(writer.compose('','classic'),{code:'AI_UNAVAILABLE'});
+  } finally { writer.close(); }
+});

@@ -41,16 +41,15 @@ export const WEDDING_CONFIG = {
     lunarText: '丙午年九月初八',
     formattedDate: '2026.10.17',
     formattedFullZh: '2026年10月17日',
-    ceremonyTime: '11:58',
+    ceremonyTime: '12:08',
     timeTag: '午宴',
-    calendarIso: '2026-10-17T11:58:00',
+    calendarIso: '2026-10-17T12:08:00+08:00',
   },
-  dateStr: '2026-10-17T11:58:00',
+  dateStr: '2026-10-17T12:08:00+08:00',
 
   schedule: [
     { time: '11:30', title: '宾客进场' },
-    { time: '11:58', title: '婚礼仪式' },
-    { time: '12:28', title: '喜宴开席' },
+    { time: '12:08', title: '婚礼仪式' },
   ],
 
   venue: {

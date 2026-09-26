@@ -18,7 +18,7 @@ export class WritingCooldown {
     const remaining=this.remaining;
     this.button.disabled=Boolean(this.busy||remaining||this.blocked());
     this.button.dataset.state=this.busy?'writing':remaining?'cooling':'ready';
-    this.button.textContent=this.busy?'✧ …':remaining?`✧ ${remaining>=60?Math.ceil(remaining/60)+'m':remaining+'s'}`:'✧ AI';
+    this.button.textContent=this.busy?'✧ 正在写…':remaining?`✧ ${remaining>=60?Math.ceil(remaining/60)+'m':remaining+'s'}`:`✧ ${this.label().replace('一句','').replace('润色祝福','润色')}`;
     this.button.setAttribute('aria-label',this.busy?'正在写祝福':remaining?`${remaining}秒后可再写一份祝福`:this.label());
     this.button.setAttribute('aria-busy',String(Boolean(this.busy)));
     this.button.style.setProperty('--ai-ready',String(1-Math.min(1,remaining/(this.duration||20))));

@@ -8,6 +8,8 @@ import './themes/chinese.css';
 import { RosePetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WeddingMusic } from './music.js';
+import { MusicContinuity } from './music-continuity.js';
+import { InvitationFoil } from './foil.js';
 import { MusicPlayer } from './music-player.js';
 import { WEDDING_CONFIG } from './config.js';
 import { getFamilyInvitation } from './family-invitation.js';
@@ -32,7 +34,10 @@ const stylesReady = Promise.all([...document.querySelectorAll('link[data-invitat
   if (link.dataset.failed === 'true') { reject(new Error('请柬样式加载失败')); return; }
   link.addEventListener('load', resolve, { once: true });
   link.addEventListener('error', () => reject(new Error('请柬样式加载失败')), { once: true });
-})));
+}))).then(() => new Promise(resolve => {
+  // print 样式切换为 all 后，等待媒体查询进入渲染周期再读取背景和字体清单。
+  requestAnimationFrame(() => requestAnimationFrame(resolve));
+}));
 
 stylesReady.then(initializeInvitation).catch(error => {
   window.invitationBootFailed();
@@ -140,7 +145,7 @@ function initializeInvitation() {
       const p4PoemTime = document.getElementById('p4PoemTime');
       if (p4PoemTime && config.date) {
         const dText = config.date.formattedFullZh || '2026年10月17日';
-        const tText = config.date.ceremonyTime || '11:58';
+        const tText = config.date.ceremonyTime || '12:08';
         p4PoemTime.textContent = `${dText} ${tText}`;
       }
       const p4PoemVenue = document.getElementById('p4PoemVenue');
@@ -218,7 +223,7 @@ function initializeInvitation() {
       const calTitle = document.getElementById('calEventTitle');
       if (calTitle && config.coupleNamesZh) calTitle.textContent = `${config.coupleNamesZh} 婚礼午宴`;
       const calTime = document.getElementById('calEventTime');
-      if (calTime && config.date) calTime.textContent = `${config.date.formattedFullZh} 11:30 - 14:30`;
+      if (calTime && config.date) calTime.textContent = `${config.date.formattedFullZh} · ${config.schedule.map(item => `${item.time} ${item.title}`).join(' · ')}`;
       const calLoc = document.getElementById('calEventLoc');
       if (calLoc && config.venue) calLoc.textContent = `${config.venue.name} · ${config.venue.hall || '国际厅(三楼)'}`;
 
@@ -245,6 +250,7 @@ function initializeInvitation() {
       outgoing.classList.add('is-leaving');
       swiper.dataset.transition = 'running';
       currentPage = index;
+      rememberInvitationPage();
 
       pages.forEach((p, idx) => {
         p.classList.toggle('active', idx === currentPage);
@@ -361,7 +367,7 @@ function initializeInvitation() {
 
     function rememberInvitationPage() {
       if (document.body.classList.contains('invitation-open')) {
-        history.replaceState({ ...history.state, invitation: { entered: true, page: currentPage } }, '');
+        history.replaceState({ ...history.state, invitation: { ...history.state?.invitation, entered: true, page: currentPage } }, '');
       }
     }
 
@@ -377,12 +383,14 @@ function initializeInvitation() {
       onToggle: () => music.toggle(), onSelect: index => music.playTrack(index),
     });
     const music = new WeddingMusic({ audio, theme: invitationTheme, preferCache: returning, onChange: state => musicPlayer.update(state) });
+    const musicContinuity = new MusicContinuity(music);
 
     // ==========================================
     // 全局配置渲染与开场仪式感预加载引擎启动
     // ==========================================
     renderConfigData();
     if (invitationTheme === 'chinese') applyChineseTheme();
+    const foil = new InvitationFoil(document.getElementById('app'), { feedback:showToast });
 
     const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
@@ -399,11 +407,14 @@ function initializeInvitation() {
         document.getElementById('pageNav').inert = false;
         document.querySelector('.music-player').inert = false;
         if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
+        rememberInvitationPage();
         syncWelcomeGlass();
+        foil.enter();
         celebration.enter();
         prepareGameEntry();
         // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
-        music.play();
+        if (returning) music.restore(history.state?.invitation?.music);
+        else music.play();
       }
     });
     weddingPreloader.init();
@@ -435,6 +446,8 @@ function initializeInvitation() {
     if (import.meta.hot) import.meta.hot.dispose(() => {
       weddingPreloader.destroy();
       musicPlayer.destroy();
+      musicContinuity.destroy();
+      foil.destroy();
       music.destroy();
       invitationGame.destroy();
       rosePetals.destroy();
@@ -450,7 +463,7 @@ function initializeInvitation() {
     function updateCountdown() {
       const cdDaysEl = document.getElementById('cdDays');
       if (!cdDaysEl) return;
-      const targetDateStr = config.date?.calendarIso || config.dateStr || '2026-10-17T11:58:00';
+      const targetDateStr = config.date?.calendarIso || config.dateStr || '2026-10-17T12:08:00+08:00';
       const target = new Date(targetDateStr).getTime();
       const now = new Date().getTime();
       let diff = target - now;
@@ -567,6 +580,7 @@ function initializeInvitation() {
 
     function handleSystemCalendar() {
       rememberInvitationPage();
+      musicContinuity.remember();
       if (/MicroMessenger/i.test(navigator.userAgent)) {
         const entry = new URL(`${import.meta.env.BASE_URL}calendar.html`, location.href);
         entry.search = new URL(getShareMetadata(config, location.search).url).search;
@@ -595,13 +609,14 @@ X-WR-CALNAME:徐旨越 & 赵荣蓉 婚礼午宴
 X-WR-TIMEZONE:Asia/Shanghai
 BEGIN:VEVENT
 UID:wedding-20261017-xuzhiyue-zhaorongrong@wedding.com
-DTSTAMP:20260909T000000Z
+DTSTAMP:20260927T000000Z
 DTSTART:20261017T033000Z
 DTEND:20261017T063000Z
 SUMMARY:徐旨越 & 赵荣蓉 婚礼午宴
-DESCRIPTION:诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\\n时间：2026年10月17日 11:30 入场\\n地点：东海嘉臣国际大酒店 · 国际厅(三楼)\\n地址：江苏省连云港市东海县晶都大道99号\\n期待与您一同见证幸福时刻！
+DESCRIPTION:诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\\n时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}\\n地点：东海嘉臣国际大酒店 · 国际厅(三楼)\\n地址：江苏省连云港市东海县晶都大道99号\\n期待与您一同见证幸福时刻！
 LOCATION:东海嘉臣国际大酒店 · 国际厅(三楼)（江苏省连云港市东海县晶都大道99号）
 STATUS:CONFIRMED
+SEQUENCE:1
 BEGIN:VALARM
 TRIGGER:-P1D
 ACTION:DISPLAY
@@ -629,7 +644,7 @@ END:VCALENDAR`;
       const text =
 `【婚礼日程】
 新人：徐旨越 & 赵荣蓉
-时间：2026年10月17日 11:30 - 14:30
+时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}
 地点：东海嘉臣国际大酒店 · 国际厅(三楼)
 地址：江苏省连云港市东海县晶都大道99号
 诚挚期待您的莅临与祝福！`;
@@ -660,7 +675,7 @@ END:VCALENDAR`;
     function openGoogleCalendar() {
       const title = encodeURIComponent("徐旨越 & 赵荣蓉 婚礼午宴");
       const dates = "20261017T033000Z/20261017T063000Z";
-      const details = encodeURIComponent("诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\n时间：2026年10月17日 11:30 入场\n地点：东海嘉臣国际大酒店 · 国际厅(三楼) (江苏省连云港市东海县晶都大道99号)");
+      const details = encodeURIComponent(`诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\n时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}\n地点：东海嘉臣国际大酒店 · 国际厅(三楼) (江苏省连云港市东海县晶都大道99号)`);
       const location = encodeURIComponent("东海嘉臣国际大酒店 · 国际厅(三楼) (江苏省连云港市东海县晶都大道99号)");
       const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
       window.open(url, '_blank');

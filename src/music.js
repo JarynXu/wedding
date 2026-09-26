@@ -15,11 +15,12 @@ export class WeddingMusic {
     this.pendingPlay = false;
     this.hasPlayed = false;
     this.nextOnPlay = false;
+    this.wantsPlayback = false;
     this.error = null;
     audio.loop = false;
     this.listeners = {
       playing: () => { if (!audio.paused) { this.hasPlayed = true; this.error = null; } this.notify(); },
-      pause: () => { if (audio.paused && this.hasPlayed && !audio.ended) this.nextOnPlay = true; this.notify(); },
+      pause: () => this.notify(),
       ended: () => { if (this.prepared && !this.destroyed) { this.nextOnPlay = true; this.play(); } },
       error: () => { if (this.prepared) { this.operation++; this.pendingPlay = false; this.error = new Error('音乐播放失败'); this.notify(); } },
     };
@@ -66,6 +67,7 @@ export class WeddingMusic {
   }
 
   pause() {
+    this.wantsPlayback = false;
     this.nextOnPlay = this.hasPlayed || !this.audio.paused;
     this.operation++;
     this.pendingPlay = false;
@@ -76,6 +78,7 @@ export class WeddingMusic {
   /** play 在点击调用栈内执行；播放被拒后重试当前曲目，不再跳过一首。 */
   play() {
     if (!this.prepared || this.destroyed) return Promise.resolve(false);
+    this.wantsPlayback = true;
     if (this.nextOnPlay) this.select((this.index + 1) % this.tracks.length);
     this.nextOnPlay = false;
     this.error = null;
@@ -109,6 +112,28 @@ export class WeddingMusic {
     this.audio.dataset.trackIndex = String(index);
     this.audio.dataset.trackTitle = this.tracks[index].title;
     this.audio.load();
+  }
+
+  resume() {
+    if (!this.wantsPlayback || this.pendingPlay || !this.audio.paused) return Promise.resolve(false);
+    this.nextOnPlay = false;
+    return this.play();
+  }
+
+  snapshot() {
+    return { playing: this.wantsPlayback, index: this.index, time: this.audio.currentTime || 0, nextOnPlay: this.nextOnPlay };
+  }
+
+  restore(state) {
+    if (!state || !this.prepared) return this.play();
+    if (Number.isInteger(state.index) && this.tracks[state.index]) this.select(state.index);
+    if (Number.isFinite(state.time) && state.time >= 0) {
+      try { this.audio.currentTime = state.time; } catch { /* 音频尚未可定位时，从本曲开头恢复。 */ }
+    }
+    this.wantsPlayback = state.playing === true;
+    this.nextOnPlay = state.nextOnPlay === true;
+    this.notify();
+    return this.resume();
   }
 
   destroy() {

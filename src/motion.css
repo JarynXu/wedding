@@ -53,6 +53,11 @@
   from { opacity: 0; translate: 0 9px; }
   to { opacity: 1; translate: 0 0; }
 }
+/* 玻璃容器不能淡入：opacity 会截断背景采样，在动画结束时切换材质。 */
+@keyframes glass-action-arrive {
+  from { visibility: hidden; translate: 0 9px; }
+  to { visibility: visible; translate: 0 0; }
+}
 @keyframes inscription-reveal {
   from { opacity: 0; clip-path: inset(0 100% 0 0); }
   to { opacity: 1; clip-path: inset(0); }
@@ -90,7 +95,7 @@
 .invitation-open .page-3:is(.active, .is-leaving) .p3-hotel-name { animation: entry-arrive 850ms calc(var(--page-copy-delay) + 580ms) var(--ease-reveal) both; }
 .invitation-open .page-3:is(.active, .is-leaving) .p3-hotel-en { animation: inscription-reveal 1000ms calc(var(--page-copy-delay) + 730ms) var(--ease-reveal) both; }
 .invitation-open .page-3:is(.active, .is-leaving) .p3-address { animation: entry-arrive 750ms calc(var(--page-copy-delay) + 820ms) var(--ease-reveal) both; }
-.invitation-open .page-3:is(.active, .is-leaving) .p3-map-btn-wrap { animation: entry-arrive 650ms calc(var(--page-copy-delay) + 1000ms) var(--ease-reveal) both; }
+.invitation-open .page-3:is(.active, .is-leaving) .p3-map-btn-wrap { animation: glass-action-arrive 650ms calc(var(--page-copy-delay) + 1000ms) var(--ease-reveal) both; }
 .invitation-open .page-4:is(.active, .is-leaving) .p4-inviters { animation: date-unfold 1000ms calc(var(--page-copy-delay) + 180ms) var(--ease-reveal) both; }
 .invitation-open .page-4:is(.active, .is-leaving) .p4-header-badge { animation: inscription-reveal 850ms calc(var(--page-copy-delay) + 350ms) var(--ease-reveal) both; }
 .invitation-open .page-4:is(.active, .is-leaving) .p4-ornament-line { animation: rule-extend 1000ms calc(var(--page-copy-delay) + 500ms) var(--ease-reveal) both; }
@@ -101,7 +106,7 @@
 .p4-poem p:nth-child(4) { --line-index: 3; }
 .p4-poem p:nth-child(5) { --line-index: 4; }
 .p4-poem p:nth-child(6) { --line-index: 5; }
-.invitation-open .page-2:is(.active, .is-leaving) .p2-calendar-wrap { animation: entry-arrive 750ms calc(var(--page-copy-delay) + 1050ms) var(--ease-reveal) both; }
+.invitation-open .page-2:is(.active, .is-leaving) .p2-calendar-wrap { animation: glass-action-arrive 750ms calc(var(--page-copy-delay) + 1050ms) var(--ease-reveal) both; }
 .invitation-open .page-4:is(.active, .is-leaving) .p4-footnote { animation: entry-arrive 900ms calc(var(--page-copy-delay) + 1350ms) var(--ease-reveal) both; }
 
 button:focus-visible, a:focus-visible, [role='button']:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 5px; }

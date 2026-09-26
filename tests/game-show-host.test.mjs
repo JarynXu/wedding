@@ -20,7 +20,8 @@ test('主持人公开资料包含完整规则和婚礼日程，不包含答案�
   const config=initialGameConfig();config.questions[0].answer='私有答案';config.judgeInstructions='私有评分说明';
   const rules=publicGameRules(config),wedding=publicWeddingFacts(WEDDING_CONFIG),text=JSON.stringify({rules,wedding});
   assert.doesNotMatch(text,/私有答案|私有评分说明|13800000000|13900000000|assets|captcha|key/);
-  for(const value of ['20','钥匙扣小玩偶','一次','2026年10月16日 24:00','嘉臣','11:30','11:58','12:28','三楼'])assert.ok(text.includes(value),value);
+  for(const value of ['20','钥匙扣小玩偶','一次','2026年10月16日 24:00','嘉臣','11:30','12:08','三楼'])assert.ok(text.includes(value),value);
+  assert.doesNotMatch(text,/11:58|12:28|喜宴开席/);
 });
 test('主持人保留自然接话，成绩与线索标记不会泄漏或重复拼接',()=>{
   const host=new ShowHost(null);

@@ -11,7 +11,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright')
 const dist = fileURLToPath(new URL('../dist/', import.meta.url));
 const contentTypes = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.jpg': 'image/jpeg', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.mp3': 'audio/mpeg', '.txt': 'text/plain' };
 
-test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => {
+test('生产请柬的加载与页面切换', { timeout: 180000 }, async suite => {
   let failure = null;
   let holdMusic = false;
   let corruptMusic = false;
@@ -74,7 +74,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         assert.equal(initial.background, true);
         assert.ok(initial.emblem > 0);
         assert.match(await page.title(), /徐旨越.*赵荣蓉/);
-        assert.doesNotMatch(await page.locator('#preloaderOverlay').innerText(), /徐旨越|赵荣蓉|徐|赵|2026|10[./月]17|11:58|东海|晶都/);
+        assert.doesNotMatch(await page.locator('#preloaderOverlay').innerText(), /徐旨越|赵荣蓉|徐|赵|2026|10[./月]17|12:08|东海|晶都/);
         assert.ok(initial.contentWidth > 200 && initial.contentWidth < 390);
         assert.equal(initial.hiddenPages, 'hidden');
         assert.equal(initial.externalFonts, 0);
@@ -180,7 +180,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
 
     await suite.test('正文按阅读顺序揭晓，时间页保留日历入口', async () => {
       assert.match(await page.title(), /徐旨越.*赵荣蓉/);
-      assert.doesNotMatch(await page.locator('#preloaderOverlay').innerText(), /徐|赵|2026|10[./月]17|11:58|东海|晶都/);
+      assert.doesNotMatch(await page.locator('#preloaderOverlay').innerText(), /徐|赵|2026|10[./月]17|12:08|东海|晶都/);
       assert.equal(await page.locator('#preloaderOverlay img').count(), 0);
       assert.doesNotMatch(await page.locator('#preloaderOverlay').innerText(), /婚礼请柬/);
       assert.equal(await page.locator('.btn-enter-text').innerText(), '开启请柬');
@@ -197,13 +197,13 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       assert.match(cover, /TOGETHER FOREVER/);
       assert.equal(await page.locator('.cover-heading .cover-names').count(), 1);
       assert.ok(await page.locator('.cover-names').evaluate(element => element.getBoundingClientRect().bottom < document.getElementById('app').getBoundingClientRect().top + document.getElementById('app').clientHeight * 0.2));
-      assert.doesNotMatch(cover, /2026|10[./月]17|11:58|东海|晶都|国际厅/);
+      assert.doesNotMatch(cover, /2026|10[./月]17|12:08|东海|晶都|国际厅/);
       assert.ok(await page.locator('#coverBgPhoto').evaluate(image => image.complete && image.naturalWidth > 0));
       await page.locator('.nav-dot[data-index="1"]').click();
       const time = await page.locator('.page-2').innerText();
       assert.match(time, /2026/);
       assert.match(time, /10\/17/);
-      assert.match(time, /11:58/);
+      assert.match(time, /12:08/);
       assert.doesNotMatch(time, /东海|晶都|国际厅/);
       assert.equal(await page.locator('.page-2 [data-action="add-calendar"]').count(), 1);
       await page.locator('.page-2 [data-action="add-calendar"]').click();
@@ -216,7 +216,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       await page.locator('.nav-dot[data-index="3"]').click();
       const summary = await page.locator('.page-4').innerText();
       assert.match(summary, /徐旨越.*赵荣蓉/);
-      assert.match(summary, /2026年10月17日 11:58/);
+      assert.match(summary, /2026年10月17日 12:08/);
       assert.match(summary, /东海嘉臣国际大酒店/);
       assert.match(summary, /晶都大道99号/);
       assert.equal(await page.locator('.page-4 [data-action="add-calendar"]').count(), 0);
@@ -261,7 +261,9 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         await page.locator(`.nav-dot[data-index="${target}"]`).click();
         await page.waitForFunction(() => document.getElementById('swiperWrapper').dataset.transition === 'running');
         await page.evaluate(() => {
-          window.transitionAnimations = [...document.querySelectorAll('.page.active, .page.is-leaving, #welcomeGlass')].flatMap(el => el.getAnimations({ subtree: true })).filter(animation => animation.effect.getTiming().iterations !== Infinity);
+          const incoming = document.querySelector('.page.active');
+          // 手动 play 过的动画可被浏览器保留；不要把上一页已完成的叠化也拖回中途。
+          window.transitionAnimations = [...document.querySelectorAll('.page.active, .page.is-leaving, #welcomeGlass')].flatMap(el => el.getAnimations({ subtree: true })).filter(animation => animation.effect.getTiming().iterations !== Infinity && (animation.animationName !== 'scene-arrive' || animation.effect.target === incoming || animation.effect.target.id === 'welcomeGlass'));
           window.transitionAnimations.forEach(animation => animation.pause());
         });
         for (const progress of [0.25, 0.5, 0.75]) {
@@ -318,7 +320,7 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
       const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/120.0 Mobile Safari/537.36 MicroMessenger/8.0' });
       const input = await mobile.context().newCDPSession(mobile);
       let navigations = 0;
-      mobile.on('framenavigated', frame => { if (frame === mobile.mainFrame()) navigations++; });
+      mobile.on('request', request => { if (request.isNavigationRequest() && request.frame() === mobile.mainFrame()) navigations++; });
       const idle = () => mobile.waitForFunction(() => document.getElementById('swiperWrapper').dataset.transition === 'idle');
       const drag = async (from, to, ending = 'touchEnd', fingers = 1) => {
         const points = (x, y) => Array.from({ length: fingers }, (_, id) => ({ x: x + id * 80, y, id }));

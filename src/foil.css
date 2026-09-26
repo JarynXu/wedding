@@ -1,0 +1,19 @@
+/* 渐变止点使用页面投影坐标；每行字接住的是同一道窄斜光。 */
+@supports (background-clip:text) and (color:color-mix(in srgb, black, white)) {
+  :root #app.foil-enabled .foil-text {
+    background-image:linear-gradient(115deg,
+      var(--foil-ink) calc(var(--foil-position, -100px) - var(--foil-band)),
+      color-mix(in srgb,var(--foil-ink) 68%,#be934d) calc(var(--foil-position, -100px) - var(--foil-band) * .45),
+      #fff0c5 var(--foil-position, -100px),
+      color-mix(in srgb,var(--foil-ink) 68%,#be934d) calc(var(--foil-position, -100px) + var(--foil-band) * .45),
+      var(--foil-ink) calc(var(--foil-position, -100px) + var(--foil-band)));
+    background-clip:text;
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    text-shadow:none;
+    background-repeat:no-repeat;
+  }
+}
+.foil-permission { position:absolute; top:22px; left:16px; z-index:85; min-height:44px; padding:8px 12px; border-radius:22px; font:11px/1.5 "Noto Serif SC",serif; cursor:pointer; }
+.foil-permission[hidden] { display:none; }
+@media(prefers-reduced-motion:reduce) { .foil-permission { display:none; } }

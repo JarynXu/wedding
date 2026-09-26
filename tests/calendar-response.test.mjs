@@ -33,6 +33,8 @@ for (const mode of ['dev', 'preview']) {
         const html = await entry.text();
         assert.match(html, /<h1>保存婚礼日程<\/h1>/);
         assert.match(html, /2026年10月17日/);
+        assert.match(html, /12:08/);
+        assert.doesNotMatch(html, /11:58|12:28|喜宴开席/);
         assert.match(html, /href="\.\/wedding\.ics"/);
         assert.doesNotMatch(html, /preloaderOverlay|rel="stylesheet"|\.mp3|\.woff2/);
         const scripts = [...html.matchAll(/<script[^>]+src="([^"]+)"/g)].map(match => match[1]);

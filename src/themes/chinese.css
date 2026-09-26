@@ -158,5 +158,5 @@
 }
 
 @media (max-height: 620px) {
-  :root[data-theme='chinese'] .p4-invitation.p4-long-signature:has(.game-entry:not([hidden])) { top: 17%; }
+  :root[data-theme='chinese'] .page-4:has(.game-entry:not([hidden])) .p4-invitation.p4-long-signature { top: 17%; }
 }
