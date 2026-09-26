@@ -1,9 +1,10 @@
 /** 入口的就绪条件由实际图片、字体和完整音乐文件共同决定。 */
 export class WeddingPreloader {
-  constructor({ music, petals, onEnter }) {
+  constructor({ music, petals, onEnter, returning = false }) {
     this.music = music;
     this.petals = petals;
     this.onEnter = onEnter;
+    this.returning = returning;
     this.overlay = document.getElementById('preloaderOverlay');
     this.enterButton = document.getElementById('btnEnterInvitation');
     this.retryButton = document.getElementById('preloaderRetry');
@@ -44,8 +45,8 @@ export class WeddingPreloader {
       this.overlay.classList.add('ready');
       document.getElementById('preloaderActionArea').classList.add('visible');
       this.note.textContent = '';
-      // 开发预览可自动打开；生产入口始终等待全部资源，并由宾客点击。
-      if (import.meta.env.DEV && new URLSearchParams(location.search).get('nopreloader') === '1') this.enter();
+      // 返回记录只恢复开场状态；图片、字体和音乐仍须通过本次就绪检查。
+      if (this.returning || (import.meta.env.DEV && new URLSearchParams(location.search).get('nopreloader') === '1')) this.enter();
     });
   }
 
@@ -131,6 +132,7 @@ export class WeddingPreloader {
     document.getElementById('preloaderProgressSection').setAttribute('aria-valuenow', String(percent));
     if (this.state === 'error') return;
     this.status.textContent = complete ? '照片、音乐与字体已就绪'
+      : this.returning ? '正在恢复请柬…'
       : percent < 35 ? '正在装点浪漫殿堂...'
         : percent < 75 ? '正在调校礼堂音律...' : '即将开启婚礼华章...';
   }

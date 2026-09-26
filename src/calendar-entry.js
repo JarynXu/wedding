@@ -9,7 +9,23 @@
   for (const key of ['theme', 'side', 'parents']) {
     if (invitationParams.has(key)) returnUrl.searchParams.set(key, invitationParams.get(key));
   }
-  document.querySelector('.back-link').href = returnUrl.href;
+  const backLink = document.querySelector('.back-link');
+  backLink.href = returnUrl.href;
+  // 同源请柬转入的日历页使用浏览器返回，保留前一文档的资源和所在页。
+  // 外部浏览器首次打开直达地址时，原生链接仍进入完整请柬。
+  if (document.referrer && history.length > 1) {
+    const previous = new URL(document.referrer);
+    const invitationPath = previous.pathname === returnUrl.pathname || previous.pathname === new URL('./index.html', location.href).pathname;
+    const previousChinese = previous.searchParams.getAll('theme').length === 1 && previous.searchParams.get('theme') === 'chinese';
+    const sameInvitation = previous.origin === returnUrl.origin && invitationPath
+      && previousChinese === (document.documentElement.dataset.theme === 'chinese')
+      && ['side', 'parents'].every(key => previous.searchParams.get(key) === returnUrl.searchParams.get(key));
+    if (sameInvitation) backLink.addEventListener('click', event => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      history.back();
+    });
+  }
 
   async function copy(text) {
     try {

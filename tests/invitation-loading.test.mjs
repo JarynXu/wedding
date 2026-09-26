@@ -563,7 +563,10 @@ test('生产请柬的加载与页面切换', { timeout: 90000 }, async suite => 
         if (process.env.WEDDING_QA_DIR) await mobile.screenshot({ path: path.join(process.env.WEDDING_QA_DIR, 'mobile-calendar.png') });
         if (guide) {
           const handoffRequests = [];
-          mobile.on('request', request => handoffRequests.push(new URL(request.url()).pathname));
+          mobile.on('request', request => {
+            const requested = new URL(request.url());
+            if (['http:', 'https:'].includes(requested.protocol)) handoffRequests.push(requested.pathname);
+          });
           await mobile.locator('[data-action="system-calendar"]').tap();
           await mobile.waitForURL('**/calendar.html?open=1');
           assert.match(await mobile.locator('.browser-guide').innerText(), /在默认浏览器打开/);

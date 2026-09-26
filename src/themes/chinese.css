@@ -4,8 +4,15 @@
 :root[data-theme='chinese'] .page-2 { background-image: url('/assets/chinese/time.webp'); }
 :root[data-theme='chinese'] .page-3 { background-image: url('/assets/chinese/location.webp'); }
 :root[data-theme='chinese'] .page-4 { background-image: url('/assets/chinese/closing.webp'); }
+:root[data-theme='chinese'] .page-4 {
+  --closing-art-width: max(100cqw, calc(100cqh / 2));
+  --closing-art-height: max(100cqh, calc(100cqw * 2));
+  --seal-x: 0.762;
+  --seal-y: 72.1%;
+  --seal-size: calc(var(--closing-art-width) * 0.25);
+}
 :root[data-theme='chinese'] .page { --page-copy-delay: 140ms; container-type: size; }
-:root[data-theme='chinese'] .music-disc { background: #fff8eaf2; }
+:root[data-theme='chinese'] .music-disc { color: #fff0d1; }
 :root[data-theme='chinese'] .scroll-arrow { width: 36px; height: 36px; }
 :root[data-theme='chinese'] .page-1 {
   --portrait-top: max(15cqh, 110px);
@@ -95,15 +102,15 @@
 :root[data-theme='chinese'] .p2-agenda { top: 55%; gap: 13px; }
 :root[data-theme='chinese'] .p2-agenda-time { color: #7a1820; font-size: clamp(15px, 4.4cqw, 20px); }
 :root[data-theme='chinese'] .p2-agenda-event { color: #4e2720; font-size: clamp(14px, 4cqw, 18px); letter-spacing: 0.14em; }
-:root[data-theme='chinese'] .calendar-button { border-radius: 24px; background: linear-gradient(120deg, #701017, #9a2422, #711118); }
+:root[data-theme='chinese'] .calendar-button { border-radius: 24px; }
 
 :root[data-theme='chinese'] .p3-castle-wrap { top: 31%; }
 :root[data-theme='chinese'] .p3-castle-img { width: 92px; }
 :root[data-theme='chinese'] .p3-hotel-name { top: 42%; font-size: clamp(18px, 5cqw, 23px); letter-spacing: 0.08em; color: #731019; }
 :root[data-theme='chinese'] .p3-hotel-en { top: 47%; font-size: clamp(8px, 2.2cqw, 10px); letter-spacing: 0.08em; }
 :root[data-theme='chinese'] .p3-address { top: 53%; width: 76%; left: 12%; font-size: clamp(10px, 2.7cqw, 12px); line-height: 1.8; color: #442d23; }
-:root[data-theme='chinese'] .p3-map-btn-wrap { top: auto; bottom: 12%; }
-:root[data-theme='chinese'] .p3-map-btn { min-width: 64%; min-height: 52px; border-radius: 27px; border: 2px solid #b88846; outline: 1px solid #ceac75; background: #fff4dfe8; }
+:root[data-theme='chinese'] .p3-map-btn-wrap { top: 63%; }
+:root[data-theme='chinese'] .p3-map-btn { min-width: 64%; min-height: 52px; border-radius: 27px; }
 :root[data-theme='chinese'] .p4-invitation { top: 24%; width: 66%; max-width: 300px; }
 :root[data-theme='chinese'] .p4-inviters { font-size: clamp(20px, 5.3cqw, 26px); background: none; -webkit-text-fill-color: #741018; color: #741018; filter: none; }
 :root[data-theme='chinese'] .p4-long-signature .p4-inviters { font-size: 14px; }
@@ -148,4 +155,8 @@
   .chinese-caption { font-size: 10px; }
   :root[data-theme='chinese'] .p4-newlywed { gap: 3px; }
   :root[data-theme='chinese'] .p4-newlywed strong { font-size: 15px; }
+}
+
+@media (max-height: 620px) {
+  :root[data-theme='chinese'] .p4-invitation.p4-long-signature:has(.game-entry:not([hidden])) { top: 17%; }
 }

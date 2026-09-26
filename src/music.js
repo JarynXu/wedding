@@ -2,9 +2,10 @@ import { publicAssetUrl } from './static-assets.js';
 
 /** 当前主题歌单、完整音频 Blob 与播放器由同一对象持有。 */
 export class WeddingMusic {
-  constructor({ audio, theme, onChange = () => {} }) {
+  constructor({ audio, theme, preferCache = false, onChange = () => {} }) {
     this.audio = audio;
     this.theme = theme;
+    this.preferCache = preferCache;
     this.onChange = onChange;
     this.tracks = [];
     this.index = 0;
@@ -30,7 +31,7 @@ export class WeddingMusic {
       const tracks = await loadPlaylist(this.theme, signal);
       for (let index = 0; index < tracks.length; index++) {
         const track = tracks[index];
-        const blob = await download(track.url, signal, value => progress((index + value * 0.95) / tracks.length));
+        const blob = await download(track.url, signal, value => progress((index + value * 0.95) / tracks.length), this.preferCache);
         if (signal.aborted || this.destroyed) throw new Error('音乐准备已取消');
         const objectUrl = URL.createObjectURL(blob);
         // 先登记资源归属；解码失败或取消时仍可释放。
@@ -53,6 +54,15 @@ export class WeddingMusic {
     if (!this.prepared || this.destroyed) return;
     if (this.pendingPlay || !this.audio.paused) this.pause();
     else this.play();
+  }
+
+  /** 点选曲目覆盖暂停后的顺序切歌；当前曲目从原位置继续播放。 */
+  playTrack(index) {
+    if (!this.prepared || this.destroyed) return Promise.resolve(false);
+    if (!Number.isInteger(index) || index < 0 || index >= this.tracks.length) throw new RangeError('曲目序号无效');
+    if (index !== this.index) this.select(index);
+    this.nextOnPlay = false;
+    return this.play();
   }
 
   pause() {
@@ -113,7 +123,11 @@ export class WeddingMusic {
   }
 
   notify() {
-    if (!this.destroyed) this.onChange({ playing: !this.audio.paused, pending: this.pendingPlay, error: this.error, title: this.tracks[this.index]?.title || '', nextOnPlay: this.nextOnPlay });
+    if (!this.destroyed) this.onChange({
+      playing: !this.audio.paused, pending: this.pendingPlay, error: this.error,
+      title: this.tracks[this.index]?.title || '', nextOnPlay: this.nextOnPlay,
+      prepared: this.prepared, index: this.index, tracks: this.tracks.map(({ title }, index) => ({ index, title })),
+    });
   }
 }
 
@@ -133,8 +147,15 @@ async function loadPlaylist(theme, signal) {
   });
 }
 
-async function download(url, signal, progress) {
-  const response = await fetch(url, { signal });
+async function download(url, signal, progress, preferCache) {
+  // 歌单的内容版本随音频字节变化；返回请柬时可复用同版本的完整响应。
+  const cached = preferCache && new URL(url).searchParams.has('v');
+  let response = await fetch(url, { signal, cache: cached ? 'force-cache' : 'default' });
+  // 失败响应不能成为后续重试的缓存依据。
+  if (!response.ok && cached) {
+    await response.body?.cancel();
+    response = await fetch(url, { signal, cache: 'reload' });
+  }
   if (!response.ok) throw new Error(`音乐下载失败：HTTP ${response.status}`);
   const total = Number(response.headers.get('content-length'));
   const reader = response.body?.getReader();

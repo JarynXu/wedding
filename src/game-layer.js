@@ -3,17 +3,18 @@ import './game-layer.css';
 
 /** 请柬拥有活动窗口和浏览器返回记录；子页面保留登录与聊天状态，音乐留在请柬内。 */
 export class InvitationGame {
-  constructor({ entry, app }) {
+  constructor({ entry, sealEntry, app }) {
     this.entry = entry; this.app = app; this.events = new AbortController();
     const options = { signal: this.events.signal };
-    entry.addEventListener('click', event => {
+    const activate = event => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
       if (this.dialog?.open) return;
       const url = new URL(location.href); url.hash = 'challenge';
       history.pushState({ ...history.state, invitationGame: true }, '', url);
       this.open();
-    }, options);
+    };
+    for (const control of [entry, sealEntry].filter(Boolean)) control.addEventListener('click', activate, options);
     window.addEventListener('popstate', () => { this.closing = false; if (history.state?.invitationGame) this.open(); else this.hide(); }, options);
     window.addEventListener('message', event => {
       if (event.origin !== location.origin || event.source !== this.frame?.contentWindow) return;

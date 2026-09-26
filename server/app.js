@@ -30,7 +30,8 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
     try {
       const search = new URL(request.originalUrl, 'http://invitation.local/').search;
       const share = getShareMetadata(config, search, staticAssetBase);
-      response.set('Cache-Control', 'no-store').type('html').send(renderShareMetadata(html, share));
+      // 公开请柬允许浏览器保留返回快照；普通导航仍验证 HTML，访客接口单独禁止缓存。
+      response.set('Cache-Control', 'private, no-cache').type('html').send(renderShareMetadata(html, share));
     } catch (error) {
       if (!(error instanceof InvalidInvitationLinkError)) return next(error);
       response.status(400).set('Cache-Control', 'no-store').type('text/plain').send(error.message);

@@ -6,12 +6,29 @@
 .blessing-hold-hint { position:absolute; bottom:calc(100% + 9px); left:66px; padding:4px 10px; border:1px solid #e3c69b9c; border-radius:10px 10px 10px 3px; background:#fff8e9df; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); color:#805438; font:10px/1.6 "Noto Serif SC",serif; pointer-events:none; }
 .blessing-hold-hint[hidden] { display:none; }
 .blessing-lane:has(.blessing-bubble) + .blessing-dock .blessing-hold-hint { visibility:hidden; }
-.game-entry { position:absolute; right:12px; bottom:var(--page-next-bottom); z-index:86; width:44px; min-height:44px; padding:6px; display:flex; align-items:center; text-align:center; text-decoration:none; color:#7a1f2b; border:1px solid #b9935f; border-radius:50%; background:#fff5e1eb; box-shadow:0 4px 16px #58201825; }
+#app:has(.page-4.active .game-entry:not([hidden])) .blessing-hold-hint { visibility:hidden; }
+.game-entry { position:relative; align-self:flex-start; width:clamp(142px, 38cqw, 158px); min-height:52px; margin-top:18px; padding:8px 29px 8px 11px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:3px; text-align:left; text-decoration:none; border-radius:7px 17px; }
 .game-entry[hidden] { display:none; }
-.game-entry span { display:block; font-size:11px; line-height:1.35; letter-spacing:.08em; }
-.game-entry small { position:absolute; right:-1px; bottom:55px; width:max-content; max-width:160px; padding:8px 11px; border:1px solid #b9935f9c; background:#fff8e9e0; backdrop-filter:blur(8px); border-radius:10px 10px 3px 10px; font-size:10px; line-height:1.7; color:#7b532f; box-shadow:0 3px 14px #58201820; pointer-events:none; }
-.game-entry small::after { content:''; position:absolute; bottom:-5px; right:16px; width:8px; height:8px; background:#fff8e9; border-right:1px solid #b9935f9c; border-bottom:1px solid #b9935f9c; transform:rotate(45deg); }
-:root[data-theme='chinese'] .game-entry { border-radius:6px 17px; }
+.game-entry span { display:block; font-size:13px; font-weight:600; line-height:1.5; letter-spacing:.04em; white-space:nowrap; }
+.game-entry small { font-size:10px; line-height:1.5; color:var(--gold-dark); white-space:nowrap; }
+.game-entry svg { position:absolute; right:8px; top:calc(50% - 8px); width:16px; height:16px; }
+.game-entry:active { transform:translateY(1px); }
+/* 热区与底图使用同一 cover 坐标；火漆表面保持透明，交互提示在边缘。 */
+.page-4 {
+  --closing-art-width: max(100cqw, calc(100cqh * 1536 / 2752));
+  --closing-art-height: max(100cqh, calc(100cqw * 2752 / 1536));
+  --seal-x: 0.784;
+  --seal-y: 69.4%;
+  --seal-size: calc(var(--closing-art-width) * 0.246);
+}
+.closing-art-actions { position:absolute; left:50%; top:50%; width:var(--closing-art-width); height:var(--closing-art-height); transform:translate(-50%, -50%); z-index:21; pointer-events:none; }
+.game-seal { position:absolute; left:calc(var(--closing-art-width) * var(--seal-x)); top:var(--seal-y); width:var(--seal-size); height:var(--seal-size); transform:translate(-50%, -50%); border-radius:50%; pointer-events:auto; }
+.game-seal[hidden] { display:none; }
+.game-seal::before, .game-seal::after { content:''; position:absolute; inset:-5px; border:1px solid #bd873f9c; border-radius:50%; pointer-events:none; }
+.game-seal::before { border-color:transparent; border-top-color:#bd873f9c; border-bottom-color:#bd873f9c; transform:rotate(-24deg); }
+.game-seal::after { opacity:0; }
+.page-4:has(.game-entry:hover) .game-seal::before, .page-4:has(.game-entry:focus-visible) .game-seal::before, .game-seal:hover::before { border-color:var(--gold); }
+.game-seal:active::before { inset:-2px; }
 #app[data-celebration='enabled'] .scroll-hint { left: auto; right: 12px; transform: none; }
 .blessing-entry {
   flex: 0 0 44px; min-height: 44px; width: 44px; padding: 0; display: flex; align-items: center; justify-content: center;
@@ -115,7 +132,11 @@
 :root[data-theme='chinese'] .blessings-card :is(#blessingCompose,.blessing-history-list)::-webkit-scrollbar-thumb { background: #983c2b88; }
 :root[data-theme='chinese'] .blessing-quick-gifts button { color: #8b171b; }
 :root[data-theme='chinese'] .blessing-quick-gifts { border-radius:6px 17px; }
-@media(prefers-reduced-motion:no-preference) { .page-4.active .game-entry small { animation:game-entry-invite 1900ms ease-in-out 2; } @keyframes game-entry-invite { 50% { transform:translateY(-3px); } } }
+@media(prefers-reduced-motion:no-preference) { .page-4.active .game-entry svg { animation:game-entry-invite 1900ms ease-in-out 2; } @keyframes game-entry-invite { 50% { transform:translateX(4px); } } }
+@media(prefers-reduced-motion:no-preference) {
+  .page-4.active .game-seal::after { animation:seal-invite 5.6s 1.8s ease-out infinite; }
+  @keyframes seal-invite { 0%, 78%, 100% { opacity:0; transform:scale(0.98); } 82% { opacity:0.65; transform:scale(1); } 96% { opacity:0; transform:scale(1.14); } }
+}
 @keyframes blessing-rise {
   0% { transform: translate(0, 12px) scale(.94); opacity: 0; }
   9% { transform: translate(0, -4px) scale(1); opacity: 1; }

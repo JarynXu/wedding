@@ -16,7 +16,7 @@ export function shareMetadata() {
       try {
         const share = getShareMetadata(WEDDING_CONFIG, url.search);
         if (!preview) return next();
-        response.setHeader('Cache-Control', 'no-store');
+        response.setHeader('Cache-Control', 'private, no-cache');
         response.setHeader('Content-Type', 'text/html; charset=utf-8');
         response.end(request.method === 'HEAD' ? undefined : renderShareMetadata(readFileSync(htmlPath, 'utf8'), share));
       } catch (error) {

@@ -8,17 +8,37 @@
 }
 
 /* 阅读面板增加底色覆盖；迎宾牌保留原有透光程度。 */
-:is(.preloader-content, .modal-card).glass-surface {
+:is(.preloader-content, .modal-card, .music-playlist, .music-tip).glass-surface {
   --glass-background: rgba(253, 248, 238, 0.78);
 }
+
+/* 画面上的操作使用透光材质，尺寸与位置由对应页面承担。 */
+.glass-action.glass-surface {
+  --glass-background: rgba(255, 248, 231, 0.8);
+  color: var(--burgundy-deep);
+  border: 1px solid rgba(172, 125, 65, 0.64);
+  outline: 0;
+  box-shadow: inset 0 1px 0 #fffdf2c7, inset 0 -1px 0 #a9763526, 0 3px 12px #57331b1f;
+  text-shadow: 0 1px 1px #fff8e880;
+}
+.glass-action.glass-surface:hover { border-color: var(--gold-dark); }
+.glass-action.glass-surface:focus-visible { outline: 2px solid var(--burgundy); outline-offset: 4px; }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass-surface {
     --glass-background: linear-gradient(110deg, rgba(255, 249, 236, 0.32), rgba(255, 253, 247, 0.12) 50%, rgba(251, 241, 221, 0.23));
     --glass-backdrop: blur(5px) saturate(0.9);
   }
-  :is(.preloader-content, .modal-card).glass-surface {
+  :is(.preloader-content, .modal-card, .music-playlist, .music-tip).glass-surface {
     --glass-background: linear-gradient(110deg, rgba(255, 249, 236, 0.62), rgba(255, 253, 247, 0.46) 50%, rgba(251, 241, 221, 0.58));
     --glass-backdrop: blur(8px) saturate(0.85);
+  }
+  .glass-action.glass-surface {
+    --glass-background: linear-gradient(120deg, rgba(255, 251, 239, 0.42), rgba(255, 250, 237, 0.16) 55%, rgba(247, 227, 191, 0.3));
+    --glass-backdrop: blur(7px) saturate(1.06);
+  }
+  /* 导航按钮下方是山水与花木，增加底色覆盖以保证文字对比。 */
+  .p3-map-btn.glass-surface {
+    --glass-background: linear-gradient(120deg, rgba(255, 251, 240, 0.78), rgba(255, 248, 234, 0.7) 55%, rgba(247, 232, 206, 0.76));
   }
 }

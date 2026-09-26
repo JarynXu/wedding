@@ -29,6 +29,31 @@ test('取消解码会结束预载并释放已创建的音频 Blob', { timeout: 5
   }
 });
 
+test('版本音频缓存失败后从网络重试，解码使用重试取得的字节', async () => {
+  const previous = { fetch: globalThis.fetch, window: globalThis.window, location: globalThis.location };
+  const requests = [], decoded = [];
+  const audio = Object.assign(new EventTarget(), { paused: true, dataset: {}, load() {}, pause() {}, removeAttribute() {} });
+  const music = new WeddingMusic({ audio, theme: 'classic', preferCache: true });
+  try {
+    globalThis.location = { href: 'https://invitation.test/' };
+    globalThis.window = { OfflineAudioContext: class { async decodeAudioData(bytes) { decoded.push([...new Uint8Array(bytes)]); return { duration: 1 }; } } };
+    globalThis.fetch = async (url, options) => {
+      if (String(url).endsWith('playlist.json')) return Response.json({ tracks: [{ file: '1.mp3', version: 'current-content' }] });
+      requests.push({ url: String(url), cache: options.cache });
+      return requests.length === 1 ? new Response('cached failure', { status: 503 }) : new Response(new Uint8Array([1, 2, 3]));
+    };
+    await music.prepare(new AbortController().signal, () => {});
+    assert.equal(music.prepared, true);
+    assert.deepEqual(requests.map(request => request.cache), ['force-cache', 'reload']);
+    assert.ok(requests.every(request => request.url.endsWith('/1.mp3?v=current-content')));
+    assert.deepEqual(decoded, [[1, 2, 3]]);
+  } finally {
+    music.destroy(); globalThis.fetch = previous.fetch;
+    if (previous.window === undefined) delete globalThis.window; else globalThis.window = previous.window;
+    if (previous.location === undefined) delete globalThis.location; else globalThis.location = previous.location;
+  }
+});
+
 test('public 歌单按编号排序，文件变更更新清单，空中式目录使用默认主题', async () => {
   await mkdir('.temp/tests', { recursive: true });
   const root = await mkdtemp(resolve('.temp/tests/music-'));

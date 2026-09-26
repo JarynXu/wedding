@@ -41,7 +41,7 @@ for (const mode of ['dev', 'preview', 'production']) {
       ]) {
         const response = await page.goto(`${origin}/?${query}`, { waitUntil: 'domcontentloaded' });
         assert.equal(response.status(), 200);
-        assert.equal(response.headers()['cache-control'], mode === 'dev' ? 'no-cache' : 'no-store');
+        assert.equal(response.headers()['cache-control'], mode === 'dev' ? 'no-cache' : 'private, no-cache');
         assert.equal(await page.locator('[property="og:description"]').getAttribute('content'), expected);
         assert.equal(await page.locator('[name="description"]').getAttribute('content'), expected);
         assert.equal(await page.locator('[name="twitter:description"]').getAttribute('content'), expected);

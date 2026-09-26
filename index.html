@@ -64,13 +64,13 @@
 
     <!-- 顶部音乐播放按钮 -->
     <div class="music-player">
-      <button class="music-disc" id="musicBtn" type="button" aria-label="播放或暂停背景音乐" title="播放 / 暂停背景音乐">
-        <svg viewBox="0 0 24 24" fill="currentColor">
+      <button class="music-disc glass-surface glass-action" id="musicBtn" type="button" aria-label="播放或暂停背景音乐" aria-haspopup="dialog" aria-controls="musicPlaylist" aria-expanded="false" aria-keyshortcuts="ArrowDown" title="播放 / 暂停背景音乐">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
         </svg>
       </button>
       <div class="music-pulse"></div>
-      <div class="music-tip" id="musicTip">点击播放音乐</div>
+      <div class="music-tip glass-surface" id="musicTip">点击播放音乐</div>
     </div>
 
     <!-- 右侧页面导航小点 -->
@@ -153,7 +153,7 @@
               <span class="p2-agenda-event">喜宴开席</span>
             </div>
             <div class="p2-calendar-wrap">
-              <button class="calendar-button" data-action="add-calendar">
+              <button class="calendar-button glass-surface glass-action" data-action="add-calendar">
                 <span class="btn-line-main">✦ 添加到日历 ✦</span>
                 <span class="btn-line-sub">ADD TO CALENDAR</span>
               </button>
@@ -198,7 +198,7 @@
           <div class="p3-address" id="p3Address">连云港市东海县晶都大道99号</div>
 
           <div class="p3-map-btn-wrap">
-            <button class="p3-map-btn" data-open-modal="mapModal">
+            <button class="p3-map-btn glass-surface glass-action" data-open-modal="mapModal">
               <span class="btn-line-main">✦ 开启地图导航 ✦</span>
               <span class="btn-line-sub">LOCATION &amp; NAVIGATION</span>
             </button>
@@ -245,8 +245,11 @@
           </div>
 
           <div class="p4-footnote" id="p4Footnote">✦ 愿与您共赴良辰 · 见证一生所爱 ✦</div>
+          <a id="gameEntry" class="game-entry glass-surface glass-action" href="./game.html" aria-describedby="gameEntryHint" hidden><span>参加默契挑战</span><small id="gameEntryHint">答题赢婚礼小礼物</small><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 12h15m-6-6 6 6-6 6"/></svg></a>
         </div>
-        <a id="gameEntry" class="game-entry" href="./game.html" aria-describedby="gameEntryHint" hidden><span>默契挑战</span><small id="gameEntryHint">答题赢婚礼小礼物</small></a>
+        <div class="closing-art-actions">
+          <a id="gameSeal" class="game-seal" href="./game.html" tabindex="-1" aria-label="通过火漆开启默契挑战" hidden></a>
+        </div>
       </section>
 
     </div>

@@ -69,6 +69,13 @@ export class Celebration {
       if (document.hidden) { this.client.pause(); this.clearVisuals(); }
       else if (this.enabled && this.entered) this.client.connect();
     }, { signal: this.events.signal });
+    window.addEventListener('pagehide', () => this.client.pause(), { signal: this.events.signal });
+    window.addEventListener('pageshow', event => {
+      if (this.enabled && this.entered) {
+        this.client.connect();
+        if (event.persisted) refreshRegisteredGuest();
+      }
+    }, { signal: this.events.signal });
     this.timer = setInterval(() => this.flushBubble(), 650);
   }
   createView() {
@@ -216,7 +223,7 @@ export class Celebration {
     this.flushBubble();
   }
   flushBubble() {
-    if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open,dialog[open],.invitation-game-layer:not([hidden])')) return;
+    if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open,dialog[open]')) return;
     const { message, historical, own } = this.queue.shift();
     this.lastBubble = Date.now();
     const bubble = document.createElement('div'); bubble.className = 'blessing-bubble'; bubble.dataset.messageId = message.id;
