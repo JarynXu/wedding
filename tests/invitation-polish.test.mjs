@@ -75,11 +75,13 @@ test('两套请柬的材质入场、右下挑战、祝福提醒与倾斜流光',
           await page.setViewportSize(viewport);
           const layout=await page.evaluate(()=>{
             const app=document.getElementById('app').getBoundingClientRect(),entry=document.getElementById('gameEntry'),button=entry.getBoundingClientRect(),dock=document.querySelector('.blessing-dock').getBoundingClientRect();
-            return {right:app.right-button.right,bottom:app.bottom-button.bottom,width:button.width,height:button.height,clear:button.bottom<dock.top,hittable:document.elementFromPoint(button.x+button.width/2,button.y+button.height/2)?.closest('#gameEntry')!==null,animated:getComputedStyle(entry,'::before').animationName};
+            const hint=entry.querySelector('small').getBoundingClientRect();
+            return {right:app.right-button.right,bottom:app.bottom-button.bottom,width:button.width,height:button.height,clear:button.left>=dock.right+8&&Math.abs(button.bottom-dock.bottom)<1,hintAbove:hint.bottom<button.top,hittable:document.elementFromPoint(button.x+button.width/2,button.y+button.height/2)?.closest('#gameEntry')!==null,animated:getComputedStyle(entry,'::before').animationName,duration:getComputedStyle(entry,'::before').animationDuration};
           });
-          assert.ok(layout.right>=12&&layout.right<=24&&layout.bottom>=70&&layout.bottom<110,JSON.stringify(layout));
-          assert.ok(layout.width>=160&&layout.height>=56&&layout.clear&&layout.hittable,JSON.stringify(layout));
-          assert.equal(layout.animated,'action-glint');
+          assert.ok(layout.right===12&&layout.bottom<60,JSON.stringify(layout));
+          assert.ok(layout.width===56&&layout.height===56&&layout.clear&&layout.hintAbove&&layout.hittable,JSON.stringify(layout));
+          assert.equal(layout.animated,'badge-glint');
+          assert.equal(layout.duration,'12s');
         }
         await page.setViewportSize(phone.viewport);
         await settle(page,'.page-4');
@@ -88,6 +90,7 @@ test('两套请柬的材质入场、右下挑战、祝福提醒与倾斜流光',
         const ai=page.locator('.blessing-ai-write');
         assert.match(await ai.innerText(),/AI 写祝福/);
         assert.equal(await ai.evaluate(element=>getComputedStyle(element,'::before').animationName),'action-glint');
+        assert.equal(await ai.evaluate(element=>getComputedStyle(element,'::before').animationDuration),'12s');
         await settle(page,'#blessingsModal');
         await page.screenshot({path:`.temp/polish-qa/${theme}-blessings.png`});
         await ai.click();
@@ -100,23 +103,68 @@ test('两套请柬的材质入场、右下挑战、祝福提醒与倾斜流光',
         assert.deepEqual(errors,[]);
       } finally {await page.close();}
     });
-    await suite.test('传感器授权只由专用按钮触发，拒绝后继续显示自动流光',async()=>{
+    for (const permission of ['denied','granted']) await suite.test(`点击开启请求传感器授权：${permission}，不添加技术按钮`,async()=>{
       const page=await browser.newPage(phone);
       try {
-        await page.addInitScript(()=>{
+        await page.addInitScript(permission=>{
           window.permissionCalls=0;
-          DeviceOrientationEvent.requestPermission=async()=>{window.permissionCalls++;return 'denied';};
-        });
-        await enter(page,f.origin);
+          DeviceOrientationEvent.requestPermission=async()=>{window.permissionCalls++;window.permissionWasGesture=navigator.userActivation.isActive;return permission;};
+        },permission);
+        await page.goto(f.origin);
+        await page.locator('#preloaderOverlay[data-state=ready]').waitFor();
         assert.equal(await page.evaluate(()=>window.permissionCalls),0);
-        await page.locator('.foil-permission').click();
+        await page.locator('#btnEnterInvitation').click();
+        await page.locator('#preloaderOverlay').waitFor({state:'hidden'});
         assert.equal(await page.evaluate(()=>window.permissionCalls),1);
-        assert.equal(await page.locator('.foil-permission').isVisible(),false);
-        assert.match(await page.locator('#copyToast').innerText(),/自动流光/);
+        assert.equal(await page.evaluate(()=>window.permissionWasGesture),true);
+        assert.equal(await page.locator('.foil-permission').count(),0);
+        assert.equal(await page.locator('#copyToast.show').count(),0);
         assert.equal(await page.locator('#app').evaluate(element=>element.classList.contains('foil-enabled')),true);
       } finally {await page.close();}
     });
   } finally {await browser.close();await f.close();}
+});
+
+test('微信日历分享和返回沿用同一音频，复制与外部打开保留独立地址',{timeout:45000},async()=>{
+  const f=await appFixture(),browser=await chromium.launch(browserOptions);
+  try {
+    const page=await browser.newPage({...phone,userAgent:wechat,reducedMotion:'reduce'});
+    await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.copied=text;}}}));
+    await enter(page,f.origin+'/?theme=chinese&side=bride&parents=陈女士');
+    await page.waitForFunction(()=>document.getElementById('musicBtn').classList.contains('playing'));
+    await page.evaluate(()=>{window.originalAudio=document.getElementById('bgm');window.originalTime=originalAudio.currentTime;window.hiddenEvents=0;addEventListener('pagehide',()=>window.hiddenEvents++);});
+    await navigate(page,1);
+    await page.locator('.calendar-button').click();
+    await page.locator('[data-action=system-calendar]').click();
+    const frame=page.frameLocator('.invitation-calendar-layer iframe');
+    await frame.locator('.back-link').waitFor();
+    assert.match(page.url(),/calendar\.html/);
+    assert.equal(await page.evaluate(()=>document.getElementById('bgm')===window.originalAudio&&window.hiddenEvents===0),true);
+    await page.waitForFunction(()=>originalAudio.currentTime>originalTime+.1);
+    await frame.locator('#calendarCopyLink').click();
+    const copied=await frame.locator('html').evaluate(()=>window.copied),url=new URL(copied);
+    assert.equal(url.searchParams.has('embedded'),false);
+    assert.equal(url.searchParams.get('open'),'1');
+    assert.equal(url.searchParams.get('parents'),'陈女士');
+    assert.equal(copied,page.url());
+    await frame.locator('.back-link').click();
+    await page.locator('.invitation-calendar-layer[open]').waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>document.getElementById('bgm')===window.originalAudio&&!originalAudio.paused),true);
+    await page.goForward();
+    await page.locator('.invitation-calendar-layer[open]').waitFor();
+    await page.goBack();
+    await page.locator('.invitation-calendar-layer[open]').waitFor({state:'hidden'});
+    await page.locator('#musicBtn').click();
+    await page.locator('.calendar-button').click();await page.locator('[data-action=system-calendar]').click();
+    await frame.locator('.back-link').click();
+    await page.locator('.invitation-calendar-layer[open]').waitFor({state:'hidden'});
+    assert.equal(await page.locator('#bgm').evaluate(audio=>audio.paused),true);
+    const external=await browser.newPage(phone);
+    await external.route('**/wedding.ics',route=>route.fulfill({status:204}));
+    await external.goto(copied,{waitUntil:'commit'});
+    await external.locator('#calendarOpen').waitFor();
+    assert.equal(await external.locator('#preloaderOverlay').count(),0);
+  }finally{await browser.close();await f.close();}
 });
 
 test('日历真实往返恢复音乐，页面快照与完整重建都保留手动暂停',{timeout:90000},async suite=>{
@@ -138,7 +186,9 @@ test('日历真实往返恢复音乐，页面快照与完整重建都保留手�
         const roundtrip=async()=>{
           await navigate(page,1);
           await page.locator('.calendar-button').click();
-          await page.locator('[data-action=system-calendar]').click();
+          // 此处专门覆盖真正离开文档的兼容路径，微信内正常入口由上面的连续播放用例覆盖。
+          await page.locator('[data-close-modal=calendarModal]').click();
+          await page.evaluate(()=>location.assign('/calendar.html?theme=chinese&open=1'));
           await page.waitForURL('**/calendar.html?**');
           await page.locator('.back-link').click();
           await page.locator('.page-2.active').waitFor();

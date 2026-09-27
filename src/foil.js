@@ -8,38 +8,29 @@ const lettering = [
   '.p3-title-en', '.p3-title-cn', '.p3-hotel-name', '.p3-hotel-en', '.p3-address',
   '.p4-inviters', '.p4-header-badge', '.p4-intro', '.p4-relation', '.p4-newlywed strong',
   '.p4-family-and', '#p4FamilyOccasion', '.p4-poem strong', '.p4-poem > p:not(:has(strong))', '.p4-footnote',
-  '.btn-line-main', '.btn-line-sub', '.game-entry span', '.game-entry small',
+  '.btn-line-main', '.btn-line-sub',
 ].join(',');
-const clamp = value => Math.max(-.08, Math.min(1.08, value));
+const clamp = value => Math.max(-.25, Math.min(1.25, value));
 const difference = (value, base) => ((value - base + 540) % 360) - 180;
 
 /** 同一束斜光投到当前页文字上；只改变字面反射，不挪动文字或复制可访问内容。 */
 export class InvitationFoil {
-  constructor(app, { feedback = () => {} } = {}) {
+  constructor(app) {
     this.app = app;
-    this.feedback = feedback;
     this.events = new AbortController();
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
     this.mode = 'ambient';
-    this.position = -.08;
+    this.position = -.25;
     this.target = .5;
     this.elements = [...app.querySelectorAll(lettering)];
     if (!CSS.supports('background-clip', 'text') || !CSS.supports('color', 'color-mix(in srgb, black, white)')) return;
     for (const element of this.elements) {
       const style = getComputedStyle(element);
       element.style.setProperty('--foil-ink', style.color);
-      element.style.setProperty('--foil-band', `${Math.max(7, Math.min(22, parseFloat(style.fontSize) * .5))}px`);
       element.classList.add('foil-text');
     }
     this.supported = true;
     const options = { signal: this.events.signal };
-    this.button = document.createElement('button');
-    this.button.type = 'button';
-    this.button.className = 'foil-permission glass-surface glass-action';
-    this.button.textContent = '✧ 启用倾斜流光';
-    this.button.hidden = true;
-    app.append(this.button);
-    this.button.addEventListener('click', () => this.requestOrientation(), options);
     this.needsPermission = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
     this.motion.addEventListener('change', () => this.refresh(), options);
     document.addEventListener('visibilitychange', () => this.refresh(), options);
@@ -62,18 +53,22 @@ export class InvitationFoil {
     this.resize.observe(app);
   }
 
-  enter() { this.entered = true; this.refresh(); }
+  enter() {
+    this.entered = true;
+    this.refresh();
+    // iOS 授权必须来自宾客点击；自动恢复请柬时不弹出系统窗口。
+    if (navigator.userActivation?.isActive && !this.motion.matches) this.requestOrientation();
+  }
 
   refresh() {
     if (!this.supported || this.destroyed) return;
     this.stop();
     this.running = this.entered && !this.motion.matches && !document.hidden;
     this.app.classList.toggle('foil-enabled', this.running);
-    this.button.hidden = !this.running || !this.needsPermission || this.permissionResolved || !window.isSecureContext;
     if (!this.running) return;
     if (!this.needsPermission || this.permissionGranted) this.listenOrientation();
     this.visible = this.elements.filter(element => !element.closest('[hidden]') && element.closest('.page.active, .cover-footer[data-state="active"]'));
-    if (this.mode === 'ambient') { this.position = -.08; this.sweepStart = performance.now() + 1200; }
+    if (this.mode === 'ambient') { this.position = -.25; this.sweepStart = performance.now() + 1800; }
     this.wake();
   }
 
@@ -94,15 +89,13 @@ export class InvitationFoil {
   }
 
   async requestOrientation() {
-    if (this.button.disabled || this.destroyed) return;
-    this.button.disabled = true;
+    if (!this.supported || !this.needsPermission || this.permissionRequested || this.destroyed || !window.isSecureContext) return;
+    this.permissionRequested = true;
     try {
       const granted = await window.DeviceOrientationEvent.requestPermission();
       if (this.destroyed) return;
-      if (granted === 'granted') { this.permissionGranted = true; this.listenOrientation(); this.feedback('轻轻倾斜手机，看看字上的流光'); }
-      else this.feedback('未开启倾斜感应，文字仍会自动流光');
-    } catch { if (!this.destroyed) this.feedback('当前浏览器使用自动流光'); }
-    finally { this.permissionResolved = true; this.button.hidden = true; }
+      if (granted === 'granted') { this.permissionGranted = true; this.listenOrientation(); }
+    } catch { /* 无传感器权限时保留自动扫光，不中断请柬。 */ }
   }
 
   wake() {
@@ -114,10 +107,11 @@ export class InvitationFoil {
   draw(time) {
     this.frame = 0;
     if (!this.running) return;
-    if (this.mode === 'ambient') this.position = clamp(-.08 + (time - this.sweepStart) / 2800 * 1.16);
+    if (this.mode === 'ambient') this.position = clamp(-.25 + (time - this.sweepStart) / 8500 * 1.5);
     else this.position += (this.target - this.position) * (1 - Math.exp(-Math.min(time - this.lastFrame, 64) / 90));
     this.lastFrame = time;
     const bounds = this.app.getBoundingClientRect();
+    this.app.style.setProperty('--foil-band', `${Math.max(72, Math.min(132, bounds.width * .26))}px`);
     const light = this.position * (bounds.width * .9063 + bounds.height * .4226);
     const geometry = this.visible.map(element => ({ element, rect:element.getBoundingClientRect() }));
     for (const { element, rect } of geometry) {
@@ -125,7 +119,7 @@ export class InvitationFoil {
       element.style.setProperty('--foil-position', `${offset.toFixed(2)}px`);
     }
     if (this.mode === 'ambient' && time < this.sweepStart) this.timer = setTimeout(() => this.wake(), this.sweepStart - time);
-    else if (this.mode === 'ambient' && this.position >= 1.08) {
+    else if (this.mode === 'ambient' && this.position >= 1.25) {
       this.sweepStart = time + 8500;
       this.timer = setTimeout(() => this.wake(), 8500);
     } else if (this.mode === 'ambient' || Math.abs(this.target - this.position) > .0005) this.frame = requestAnimationFrame(next => this.draw(next));
@@ -142,8 +136,8 @@ export class InvitationFoil {
     this.events.abort();
     this.observer?.disconnect();
     this.resize?.disconnect();
-    this.button?.remove();
     this.app.classList.remove('foil-enabled');
+    this.app.style.removeProperty('--foil-band');
     for (const element of this.elements) {
       element.classList.remove('foil-text');
       for (const name of ['--foil-ink','--foil-band','--foil-position']) element.style.removeProperty(name);

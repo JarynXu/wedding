@@ -8,7 +8,7 @@ import { createInvitationApp } from '../server/app.js';
 const require = createRequire(import.meta.url);
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
 
-test('两套主题的播放器、日历、地图和活动按钮透光并模糊背景，文字和焦点保持清晰', { timeout: 60000 }, async () => {
+test('两套主题的播放器、日历、地图按钮透光并模糊背景，文字和焦点保持清晰', { timeout: 60000 }, async () => {
   const app = express();
   // 本用例只检查材质；活动流程由 invitation-journeys 使用真实测试服务验证。
   app.get('/api/game/config', (_request, response) => response.json({ enabled: true, phase: 'open' }));
@@ -23,7 +23,7 @@ test('两套主题的播放器、日历、地图和活动按钮透光并模糊�
         await page.locator('#preloaderOverlay[data-state="ready"]').waitFor();
         await page.locator('#btnEnterInvitation').click();
         await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
-        for (const [index, selector] of [[0, '#musicBtn'], [1, '.calendar-button'], [2, '.p3-map-btn'], [3, '#gameEntry']]) {
+        for (const [index, selector] of [[0, '#musicBtn'], [1, '.calendar-button'], [2, '.p3-map-btn']]) {
           await page.locator(`.nav-dot[data-index="${index}"]`).click();
           await page.locator(selector).waitFor();
           await assertGlass(page, selector);

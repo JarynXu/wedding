@@ -48,12 +48,12 @@ export class MusicPlayer {
     if (this.destroyed) return;
     this.state = state;
     const { playing, pending, title, nextOnPlay, tracks, index, error } = state;
-    const action = playing ? '暂停音乐' : nextOnPlay ? '播放下一首' : '播放音乐';
+    const action = playing || pending ? '暂停音乐' : nextOnPlay ? '播放下一首' : '播放音乐';
     this.button.classList.toggle('playing', playing);
     this.button.setAttribute('aria-label', action);
     this.button.title = `${action}${title ? ` · ${title}` : ''}`;
     this.tip.textContent = nextOnPlay ? '点击播放下一首' : '点击播放音乐';
-    this.tip.classList.toggle('fade-out', this.dialog.open || playing);
+    this.tip.classList.toggle('fade-out', this.dialog.open || playing || pending);
 
     if (tracks.length !== this.trackButtons.length || tracks.some((track, position) => this.trackButtons[position].querySelector('.music-track-title').textContent !== track.title)) {
       this.list.replaceChildren();

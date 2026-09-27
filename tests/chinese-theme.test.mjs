@@ -174,7 +174,7 @@ test('中式主题首帧、四页、弹窗和日历往返', { timeout: 90000 }, 
         assert.equal(url.searchParams.get('theme'), 'chinese');
         assert.equal(url.searchParams.get('side'), 'bride');
         assert.equal(url.searchParams.get('open'), '1');
-        const back = new URL(await page.locator('.back-link').getAttribute('href'));
+        const back = new URL(await page.frameLocator('.invitation-calendar-layer iframe').locator('.back-link').getAttribute('href'));
         assert.equal(back.searchParams.get('theme'), 'chinese');
         assert.equal(back.searchParams.get('parents'), '陈女士');
         assert.equal(back.searchParams.has('open'), false);

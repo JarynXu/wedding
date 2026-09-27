@@ -10,6 +10,7 @@ import { WeddingPreloader } from './preloader.js';
 import { WeddingMusic } from './music.js';
 import { MusicContinuity } from './music-continuity.js';
 import { InvitationFoil } from './foil.js';
+import { InvitationCalendar } from './calendar-layer.js';
 import { MusicPlayer } from './music-player.js';
 import { WEDDING_CONFIG } from './config.js';
 import { getFamilyInvitation } from './family-invitation.js';
@@ -384,13 +385,14 @@ function initializeInvitation() {
     });
     const music = new WeddingMusic({ audio, theme: invitationTheme, preferCache: returning, onChange: state => musicPlayer.update(state) });
     const musicContinuity = new MusicContinuity(music);
+    const invitationCalendar = new InvitationCalendar(document.getElementById('app'));
 
     // ==========================================
     // 全局配置渲染与开场仪式感预加载引擎启动
     // ==========================================
     renderConfigData();
     if (invitationTheme === 'chinese') applyChineseTheme();
-    const foil = new InvitationFoil(document.getElementById('app'), { feedback:showToast });
+    const foil = new InvitationFoil(document.getElementById('app'));
 
     const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
@@ -409,12 +411,12 @@ function initializeInvitation() {
         if (Number.isInteger(initialPageIndex)) goToPage(initialPageIndex);
         rememberInvitationPage();
         syncWelcomeGlass();
-        foil.enter();
         celebration.enter();
         prepareGameEntry();
         // play 保留在开启按钮的点击调用链中，使用同一次手势取得播放许可。
         if (returning) music.restore(history.state?.invitation?.music);
         else music.play();
+        foil.enter();
       }
     });
     weddingPreloader.init();
@@ -428,7 +430,7 @@ function initializeInvitation() {
         const url = new URL('./game.html', location.href);
         for (const key of ['theme', 'side', 'parents']) { const value = new URLSearchParams(location.search).get(key); if (value) url.searchParams.set(key, value); }
         entry.href = url.href; entry.hidden = false;
-        if (game.phase !== 'open') { entry.querySelector('span').textContent = '查看默契榜';entry.querySelector('small').textContent='查看成绩与兑奖码'; }
+        if (game.phase !== 'open') { entry.querySelector('span').textContent = '默契榜单';entry.setAttribute('aria-label','查看默契榜');entry.querySelector('small').textContent='查看成绩与兑奖码'; }
         const sealEntry = document.getElementById('gameSeal');
         sealEntry.href = url.href; sealEntry.hidden = false;
         sealEntry.setAttribute('aria-label', game.phase === 'open' ? '通过火漆开启默契挑战' : '通过火漆查看默契榜');
@@ -447,6 +449,7 @@ function initializeInvitation() {
       weddingPreloader.destroy();
       musicPlayer.destroy();
       musicContinuity.destroy();
+      invitationCalendar.destroy();
       foil.destroy();
       music.destroy();
       invitationGame.destroy();
@@ -586,7 +589,7 @@ function initializeInvitation() {
         entry.search = new URL(getShareMetadata(config, location.search).url).search;
         entry.searchParams.set('open', '1');
         closeModal('calendarModal');
-        location.assign(entry.href);
+        invitationCalendar.open(entry);
         return;
       }
       try {

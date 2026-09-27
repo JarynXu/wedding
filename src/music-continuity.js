@@ -6,11 +6,11 @@ export class MusicContinuity {
     this.events = new AbortController();
     const options = { signal: this.events.signal };
     const resume = () => { if (!this.departed && !host.document.hidden) music.resume(); };
-    host.addEventListener('pagehide', () => { this.departed = true; this.remember(); }, options);
+    host.addEventListener('pagehide', () => { this.departed = true; this.remember(); music.interrupt(); }, options);
     host.addEventListener('pageshow', () => { this.departed = false; resume(); }, options);
     host.addEventListener('focus', resume, options);
     host.document.addEventListener('visibilitychange', () => {
-      if (host.document.hidden) this.remember(); else resume();
+      if (host.document.hidden) { this.remember(); music.interrupt(); } else resume();
     }, options);
     // 自动恢复被宿主限制时，下一次操作重新取得播放许可；音乐控件仍由自己的操作负责。
     for (const name of ['pointerdown', 'keydown']) host.document.addEventListener(name, event => {

@@ -141,8 +141,12 @@ test('生产请柬的加载与页面切换', { timeout: 180000 }, async suite =>
     for (const [label, pattern] of [['图片', '/classic/location.jpg'], ['字体', 'RWmMoK'], ['音乐', '.mp3']]) {
       await suite.test(`${label}失败时禁止进入，重试恢复`, async () => {
         failure = pattern;
+        const requestStart = requests.length;
         await page.goto(url, { waitUntil: 'domcontentloaded' });
-        await page.locator('#preloaderOverlay[data-state="error"]').waitFor();
+        await page.locator('#preloaderOverlay[data-state="error"]').waitFor().catch(async error => {
+          const state = await page.evaluate(() => ({ state:document.getElementById('preloaderOverlay').dataset.state, background:getComputedStyle(document.querySelector('.page-3')).backgroundImage }));
+          throw new Error(`${error.message}\n${JSON.stringify({pattern,state,failedRequests:requests.slice(requestStart).filter(path=>path.includes(pattern))})}`);
+        });
         await blocked();
         assert.equal(await page.locator('#preloaderRetry').isVisible(), true);
         failure = null;
@@ -571,14 +575,15 @@ test('生产请柬的加载与页面切换', { timeout: 180000 }, async suite =>
           });
           await mobile.locator('[data-action="system-calendar"]').tap();
           await mobile.waitForURL('**/calendar.html?open=1');
-          assert.match(await mobile.locator('.browser-guide').innerText(), /在默认浏览器打开/);
-          assert.equal(await mobile.locator('#calendarOpen').isVisible(), false);
-          assert.equal(await mobile.locator('#preloaderOverlay').count(), 0);
+          const calendar = mobile.frameLocator('.invitation-calendar-layer iframe');
+          assert.match(await calendar.locator('.browser-guide').innerText(), /在默认浏览器打开/);
+          assert.equal(await calendar.locator('#calendarOpen').isVisible(), false);
+          assert.equal(await calendar.locator('#preloaderOverlay').count(), 0);
           assert.equal(calendarRequests, 0, '微信内不发起日历文件下载');
-          assert.deepEqual(handoffRequests, ['/calendar.html']);
+          assert.deepEqual(handoffRequests.filter(path=>path!=='/assets/shared/monogram.png'), ['/calendar.html']);
           for (const width of [320, 375, 390, 414]) {
             await mobile.setViewportSize({ width, height: 667 });
-            const geometry = await mobile.evaluate(() => {
+            const geometry = await calendar.locator('html').evaluate(() => {
               const guide = document.querySelector('.browser-guide');
               const card = document.querySelector('.calendar-card');
               const rect = guide.getBoundingClientRect();

@@ -22,7 +22,11 @@ const enter = async (page, url) => {
 const calendar = async page => {
   await page.locator('.nav-dot[data-index="1"]').click();
   await page.locator('.calendar-button').click();
-  await page.locator('[data-action="system-calendar"]').click();
+  // 独立日历页往返专测跨文档恢复；微信内嵌指南由 invitation-polish 覆盖。
+  await page.locator('[data-close-modal="calendarModal"]').click();
+  await page.evaluate(() => {
+    const url=new URL('./calendar.html',location.href);url.search=location.search;url.searchParams.set('open','1');location.assign(url);
+  });
   await page.waitForURL('**/calendar.html?**');
 };
 
@@ -91,23 +95,23 @@ test('活动、日历与祝福之间的往返', { skip: !databaseUrl && '需要�
             const scale = Math.max(app.width / art.width, app.height / art.height);
             const offsetX = app.left + (app.width - art.width * scale) / 2, offsetY = app.top + (app.height - art.height * scale) / 2;
             const center = { x: offsetX + art.sealX * scale, y: offsetY + art.sealY * scale };
-            const hit = [entry.querySelector('span'), entry.querySelector('small')].every(label => {
+            const hit = [entry.querySelector('span')].every(label => {
               const rect = label.getBoundingClientRect();
               return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)?.closest('#gameEntry') === entry;
             });
             return {
-              width: box.width, height: box.height, aboveDock: box.bottom + 10 <= dock.top, belowCopy: box.top >= copy.bottom + 10,
+              width: box.width, height: box.height, besideDock: box.left >= dock.right + 8 && Math.abs(box.bottom-dock.bottom)<1, belowCopy: box.top >= copy.bottom + 10,
               inside: box.left >= app.left && box.right <= app.right && box.top >= app.top && box.bottom <= app.bottom,
-              sealClear: box.right + 4 < offsetX + art.sealLeft * scale,
+              sealClear: box.top > sealBox.bottom + 4 || box.right + 4 < sealBox.left,
               sealAligned: Math.abs(sealBox.x + sealBox.width / 2 - center.x) < 3 && Math.abs(sealBox.y + sealBox.height / 2 - center.y) < 3,
               sealTransparent: sealStyle.backgroundColor === 'rgba(0, 0, 0, 0)' && sealStyle.backgroundImage === 'none' && sealStyle.backdropFilter === 'none',
               sealHit: document.elementFromPoint(center.x, center.y)?.closest('#gameSeal') === seal,
               hit,
             };
           });
-          assert.ok(activity.width >= 135 && activity.width <= 180 && activity.height >= 44, JSON.stringify({ theme, width, activity }));
+          assert.ok(activity.width === 56 && activity.height === 56, JSON.stringify({ theme, width, activity }));
           await capture(page, `journey-activity-${theme}-${width}`);
-          assert.deepEqual({ ...activity, width: undefined, height: undefined }, { width: undefined, height: undefined, aboveDock: true, belowCopy: true, inside: true, sealClear: true, sealAligned: true, sealTransparent: true, sealHit: true, hit: true }, JSON.stringify({ theme, width, height, activity }));
+          assert.deepEqual({ ...activity, width: undefined, height: undefined }, { width: undefined, height: undefined, besideDock: true, belowCopy: true, inside: true, sealClear: true, sealAligned: true, sealTransparent: true, sealHit: true, hit: true }, JSON.stringify({ theme, width, height, activity }));
           if (theme === 'chinese') {
             await page.locator('.nav-dot[data-index="2"]').click();
             const map = await page.locator('.p3-map-btn').evaluate(button => {

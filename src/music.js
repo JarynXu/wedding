@@ -16,13 +16,16 @@ export class WeddingMusic {
     this.hasPlayed = false;
     this.nextOnPlay = false;
     this.wantsPlayback = false;
+    this.playing = false;
     this.error = null;
     audio.loop = false;
     this.listeners = {
-      playing: () => { if (!audio.paused) { this.hasPlayed = true; this.error = null; } this.notify(); },
-      pause: () => this.notify(),
+      playing: () => this.confirmProgress(),
+      timeupdate: () => this.confirmProgress(),
+      loadedmetadata: () => { if (this.seekTime !== undefined) this.seek(this.seekTime); },
+      pause: () => { this.playing = false; this.notify(); },
       ended: () => { if (this.prepared && !this.destroyed) { this.nextOnPlay = true; this.play(); } },
-      error: () => { if (this.prepared) { this.operation++; this.pendingPlay = false; this.error = new Error('音乐播放失败'); this.notify(); } },
+      error: () => { if (this.prepared) { this.cancelAttempt(); this.playing = false; this.needsReload = true; this.error = new Error('音乐播放失败'); this.notify(); } },
     };
     for (const [event, listener] of Object.entries(this.listeners)) audio.addEventListener(event, listener);
   }
@@ -36,7 +39,7 @@ export class WeddingMusic {
         if (signal.aborted || this.destroyed) throw new Error('音乐准备已取消');
         const objectUrl = URL.createObjectURL(blob);
         // 先登记资源归属；解码失败或取消时仍可释放。
-        this.tracks.push({ ...track, objectUrl });
+        this.tracks.push({ ...track, blob, objectUrl });
         await validateAudio(blob, objectUrl, signal);
         if (signal.aborted || this.destroyed) throw new Error('音乐准备已取消');
         progress((index + 1) / tracks.length);
@@ -53,7 +56,7 @@ export class WeddingMusic {
 
   toggle() {
     if (!this.prepared || this.destroyed) return;
-    if (this.pendingPlay || !this.audio.paused) this.pause();
+    if (this.pendingPlay || this.playing) this.pause();
     else this.play();
   }
 
@@ -69,45 +72,116 @@ export class WeddingMusic {
   pause() {
     this.wantsPlayback = false;
     this.nextOnPlay = this.hasPlayed || !this.audio.paused;
-    this.operation++;
-    this.pendingPlay = false;
+    this.cancelAttempt();
+    this.playing = false;
     this.audio.pause();
     this.notify();
   }
 
   /** play 在点击调用栈内执行；播放被拒后重试当前曲目，不再跳过一首。 */
-  play() {
+  play(recovering = false) {
     if (!this.prepared || this.destroyed) return Promise.resolve(false);
+    this.cancelAttempt();
     this.wantsPlayback = true;
     if (this.nextOnPlay) this.select((this.index + 1) % this.tracks.length);
     this.nextOnPlay = false;
+    if (this.needsReload) this.reload();
     this.error = null;
     const operation = ++this.operation;
     this.pendingPlay = true;
-    let started;
-    try { started = this.audio.play(); }
-    catch (error) { started = Promise.reject(error); }
-    this.notify();
-    return Promise.resolve(started).then(() => {
-      if (operation !== this.operation || this.destroyed) return false;
-      this.pendingPlay = false;
-      this.hasPlayed = !this.audio.paused;
+    this.playing = false;
+    return new Promise(resolve => {
+      this.attempt = { time:this.audio.currentTime, resolve };
+      // WebView 可能保留 paused=false，却停止推进音频；实际进度才表示播放成功。
+      this.progressTimeout = setTimeout(() => {
+        if (operation !== this.operation || this.destroyed || this.confirmProgress()) return;
+        this.attempt = null;
+        this.pendingPlay = false;
+        this.playing = false;
+        this.needsReload = true;
+        this.audio.pause();
+        if (!recovering && this.wantsPlayback) this.play(true).then(resolve);
+        else {
+          this.error = new Error('音乐播放已中断');
+          this.notify();
+          resolve(false);
+        }
+      }, 2200);
+      let started;
+      try { started = this.audio.play(); }
+      catch (error) { started = Promise.reject(error); }
+      Promise.resolve(started).then(() => {
+        if (operation === this.operation && !this.destroyed) this.confirmProgress();
+      }, error => {
+        if (operation !== this.operation || this.destroyed) return;
+        this.cancelAttempt();
+        this.playing = false;
+        this.nextOnPlay = false;
+        this.error = error;
+        this.notify();
+      });
       this.notify();
-      return this.hasPlayed;
-    }, error => {
-      if (operation !== this.operation || this.destroyed) return false;
-      this.pendingPlay = false;
-      this.nextOnPlay = false;
-      this.error = error;
-      this.notify();
-      return false;
     });
   }
 
+  confirmProgress() {
+    if (!this.attempt || this.audio.paused || this.audio.seeking || this.audio.currentTime <= this.attempt.time + .02) return false;
+    const { resolve } = this.attempt;
+    this.attempt = null;
+    clearTimeout(this.progressTimeout);
+    this.hasPlayed = true;
+    this.playing = true;
+    this.pendingPlay = false;
+    this.error = null;
+    this.notify();
+    resolve(true);
+    return true;
+  }
+
+  cancelAttempt() {
+    this.operation++;
+    clearTimeout(this.progressTimeout);
+    this.attempt?.resolve(false);
+    this.attempt = null;
+    this.pendingPlay = false;
+  }
+
+  interrupt() {
+    if (!this.prepared || this.destroyed) return;
+    this.cancelAttempt();
+    this.playing = false;
+    this.needsReload = true;
+    this.audio.pause();
+    this.notify();
+  }
+
+  reload() {
+    const time = this.audio.currentTime || 0, track = this.tracks[this.index];
+    this.audio.pause();
+    if (track.blob) {
+      URL.revokeObjectURL(track.objectUrl);
+      track.objectUrl = URL.createObjectURL(track.blob);
+    }
+    this.audio.src = track.objectUrl;
+    this.audio.load();
+    this.seek(time);
+    this.needsReload = false;
+  }
+
+  seek(time) {
+    this.seekTime = time;
+    try { this.audio.currentTime = time; if (this.attempt) this.attempt.time = time; this.seekTime = undefined; }
+    catch { /* iOS 可能要等 loadedmetadata 后才能定位，播放调用仍保留在当前手势内。 */ }
+  }
+
   select(index) {
+    this.cancelAttempt();
     this.index = index;
     this.hasPlayed = false;
+    this.playing = false;
     this.nextOnPlay = false;
+    this.needsReload = false;
+    this.seekTime = undefined;
     this.audio.src = this.tracks[index].objectUrl;
     this.audio.dataset.trackIndex = String(index);
     this.audio.dataset.trackTitle = this.tracks[index].title;
@@ -115,7 +189,7 @@ export class WeddingMusic {
   }
 
   resume() {
-    if (!this.wantsPlayback || this.pendingPlay || !this.audio.paused) return Promise.resolve(false);
+    if (!this.wantsPlayback || this.pendingPlay || this.playing) return Promise.resolve(false);
     this.nextOnPlay = false;
     return this.play();
   }
@@ -128,7 +202,7 @@ export class WeddingMusic {
     if (!state || !this.prepared) return this.play();
     if (Number.isInteger(state.index) && this.tracks[state.index]) this.select(state.index);
     if (Number.isFinite(state.time) && state.time >= 0) {
-      try { this.audio.currentTime = state.time; } catch { /* 音频尚未可定位时，从本曲开头恢复。 */ }
+      this.seek(state.time);
     }
     this.wantsPlayback = state.playing === true;
     this.nextOnPlay = state.nextOnPlay === true;
@@ -138,7 +212,7 @@ export class WeddingMusic {
 
   destroy() {
     this.destroyed = true;
-    this.operation++;
+    this.cancelAttempt();
     for (const [event, listener] of Object.entries(this.listeners)) this.audio.removeEventListener(event, listener);
     this.audio.pause();
     this.audio.removeAttribute('src');
@@ -149,7 +223,7 @@ export class WeddingMusic {
 
   notify() {
     if (!this.destroyed) this.onChange({
-      playing: !this.audio.paused, pending: this.pendingPlay, error: this.error,
+      playing: this.playing, pending: this.pendingPlay, error: this.error,
       title: this.tracks[this.index]?.title || '', nextOnPlay: this.nextOnPlay,
       prepared: this.prepared, index: this.index, tracks: this.tracks.map(({ title }, index) => ({ index, title })),
     });
