@@ -1,10 +1,11 @@
 import { publicAssetUrl } from './static-assets.js';
+import { advancePetal, fallingDirection, PETAL_MARGIN, seekPetal } from './petal-motion.js';
 const rosePetalsUrl = publicAssetUrl('./assets/shared/rose-petals.webp');
 const peonyPetalsUrl = publicAssetUrl('./assets/chinese/peony-petals.webp');
 
 /** 花瓣图集为三列两行；每列对应白、粉、红，每行对应一种卷曲姿态。 */
 export class FallingPetals {
-  constructor(canvas, { theme = 'classic' } = {}) {
+  constructor(canvas, { theme = 'classic', tilt } = {}) {
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
     this.motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -19,6 +20,8 @@ export class FallingPetals {
     this.width = 0;
     this.height = 0;
     this.petals = [];
+    this.direction = fallingDirection(null);
+    this.unsubscribeTilt = tilt?.subscribe(sample => this.setOrientation(sample));
     this.onVisibility = () => this.syncPlayback();
     this.onFrame = (time) => this.tick(time);
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -48,12 +51,21 @@ export class FallingPetals {
     if (!this.context) return;
     const { clientWidth: width, clientHeight: height } = this.canvas.parentElement;
     if (width === this.width && height === this.height) return;
+    const previousWidth = this.width, previousHeight = this.height;
     this.width = width;
     this.height = height;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.canvas.width = Math.round(width * dpr);
     this.canvas.height = Math.round(height * dpr);
     this.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (this.petals.length) {
+      for (const petal of this.petals) {
+        petal.x = (petal.x + PETAL_MARGIN) / (previousWidth + PETAL_MARGIN * 2) * (width + PETAL_MARGIN * 2) - PETAL_MARGIN;
+        petal.y = (petal.y + PETAL_MARGIN) / (previousHeight + PETAL_MARGIN * 2) * (height + PETAL_MARGIN * 2) - PETAL_MARGIN;
+      }
+      this.render(this.elapsed);
+      return;
+    }
     // 固定种子使同一时刻的画面可复核；轨迹按秒计算，不依赖屏幕刷新率。
     let seed = 171026;
     const random = () => {
@@ -64,10 +76,10 @@ export class FallingPetals {
     this.petals = Array.from({ length: count }, (_, index) => {
       const depth = random();
       const isLightPetal = index % 3 !== 2;
-      return {
+      const petal = {
         sprite: index % 6,
-        x: random() * (width + 60),
-        y: random() * (height + 100),
+        originX: random() * (width + PETAL_MARGIN * 2) - PETAL_MARGIN,
+        originY: random() * (height + PETAL_MARGIN * 2) - PETAL_MARGIN,
         size: 19 + depth * 26,
         speed: 23 + depth * 36,
         drift: 5 + random() * 10,
@@ -77,7 +89,10 @@ export class FallingPetals {
         flutter: 0.7 + random() * 0.9,
         opacity: isLightPetal ? 0.94 + depth * 0.06 : 0.52 + depth * 0.4,
         readingFade: isLightPetal ? 0.12 : 0.62,
+        response: .32 + depth * .28,
       };
+      seekPetal(petal, this.elapsed, width, height);
+      return petal;
     }).sort((a, b) => a.size - b.size);
     this.render(this.elapsed);
   }
@@ -91,12 +106,11 @@ export class FallingPetals {
     const cellHeight = this.image.naturalHeight / 2;
     for (const petal of this.petals) {
       const phase = petal.phase + seconds * petal.flutter;
-      const x = (petal.x + seconds * petal.drift) % (this.width + 100) - 50
-        + Math.sin(phase * 0.67) * petal.sway;
-      const y = (petal.y + seconds * petal.speed) % (this.height + 120) - 60;
+      const x = petal.x + Math.sin(phase * 0.67) * petal.sway;
+      const y = petal.y;
       // 浅色花瓣保留纹理；酒红花瓣在阅读区淡化，避免遮挡文字。
       const center = Math.max(0, 1 - Math.abs(x - this.width / 2) / (this.width * 0.34));
-      const edgeFade = Math.min(1, Math.max(0, (y + 30) / 60), Math.max(0, (this.height + 40 - y) / 65));
+      const edgeFade = Math.max(0, Math.min(1, (y + 30) / 60, (this.height + 40 - y) / 65, (x + 40) / 60, (this.width + 40 - x) / 60));
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(petal.phase + seconds * petal.turn + Math.sin(phase) * 0.25);
@@ -110,7 +124,11 @@ export class FallingPetals {
 
   tick(time) {
     this.frame = null;
-    if (this.lastTime !== null) this.elapsed += Math.min((time - this.lastTime) / 1000, 0.05);
+    if (this.lastTime !== null) {
+      const seconds = Math.min((time - this.lastTime) / 1000, 0.05);
+      this.elapsed += seconds;
+      for (const petal of this.petals) advancePetal(petal, seconds, this.direction, this.width, this.height);
+    }
     this.lastTime = time;
     this.render(this.elapsed);
     this.frame = requestAnimationFrame(this.onFrame);
@@ -129,9 +147,14 @@ export class FallingPetals {
   /** 验证端可固定花瓣时钟；传入 null 恢复播放。 */
   hold(seconds) {
     this.held = seconds !== null;
-    if (seconds !== null) this.elapsed = seconds;
+    if (seconds !== null && seconds !== this.elapsed) {
+      this.elapsed = seconds;
+      for (const petal of this.petals) seekPetal(petal, seconds, this.width, this.height);
+    }
     this.syncPlayback();
   }
+
+  setOrientation(sample) { this.direction = fallingDirection(sample); }
 
   destroy() {
     this.disposed = true;
@@ -139,6 +162,7 @@ export class FallingPetals {
     this.resizeObserver.disconnect();
     document.removeEventListener('visibilitychange', this.onVisibility);
     this.motionPreference.removeEventListener('change', this.onVisibility);
+    this.unsubscribeTilt?.();
     this.context?.clearRect(0, 0, this.width, this.height);
   }
 }

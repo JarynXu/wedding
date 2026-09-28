@@ -3,8 +3,10 @@ import './game-layer.css';
 
 /** 请柬拥有活动窗口和浏览器返回记录；子页面保留登录与聊天状态，音乐留在请柬内。 */
 export class InvitationGame {
-  constructor({ entry, sealEntry, app }) {
+  constructor({ entry, sealEntry, app, tilt }) {
     this.entry = entry; this.app = app; this.events = new AbortController();
+    this.tilt = tilt;
+    this.unsubscribeTilt = tilt?.subscribe(sample => this.sendTilt(sample));
     const options = { signal: this.events.signal };
     const activate = event => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
@@ -57,7 +59,13 @@ export class InvitationGame {
     else this.hide();
   }
   hide() { this.dialog?.close(); this.notify(); this.entry.focus({ preventScroll: true }); refreshRegisteredGuest(); }
-  notify() { this.frame?.contentWindow?.postMessage({ type: 'wedding-game-visibility', visible: Boolean(this.dialog?.open) }, location.origin); }
+  notify() {
+    this.frame?.contentWindow?.postMessage({ type: 'wedding-game-visibility', visible: Boolean(this.dialog?.open) }, location.origin);
+    this.sendTilt(this.tilt?.sample ?? null);
+  }
+  sendTilt(sample) {
+    if (this.dialog?.open) this.frame?.contentWindow?.postMessage({ type: 'wedding-tilt', sample }, location.origin);
+  }
   fit() {
     if (!this.dialog?.open) return;
     const rect = this.app.getBoundingClientRect(), viewport = window.visualViewport;
@@ -70,5 +78,5 @@ export class InvitationGame {
     const bottom = Math.min(rect.bottom, (viewport?.offsetTop || 0) + (viewport?.height || innerHeight));
     Object.assign(this.dialog.style, { left: rect.left + 'px', top: top + 'px', width: rect.width + 'px', height: Math.max(180, bottom - top) + 'px' });
   }
-  destroy() { this.events.abort(); clearTimeout(this.timeout); this.dialog?.remove(); }
+  destroy() { this.events.abort(); this.unsubscribeTilt?.(); clearTimeout(this.timeout); this.dialog?.remove(); }
 }

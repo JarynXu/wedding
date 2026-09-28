@@ -1,4 +1,5 @@
 import './foil.css';
+import { screenVector } from './device-tilt.js';
 
 const lettering = [
   '.cover-kicker', '.cover-names', '.cover-dedication', '.cover-together',
@@ -15,7 +16,7 @@ const difference = (value, base) => ((value - base + 540) % 360) - 180;
 
 /** 同一束斜光投到当前页文字上；只改变字面反射，不挪动文字或复制可访问内容。 */
 export class InvitationFoil {
-  constructor(app) {
+  constructor(app, { tilt } = {}) {
     this.app = app;
     this.events = new AbortController();
     this.motion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -31,7 +32,19 @@ export class InvitationFoil {
     }
     this.supported = true;
     const options = { signal: this.events.signal };
-    this.needsPermission = typeof window.DeviceOrientationEvent?.requestPermission === 'function';
+    this.unsubscribeTilt = tilt?.subscribe(sample => {
+      if (!this.running) return;
+      if (!sample) {
+        this.baseline = null;
+        if (this.mode === 'orientation') { this.mode = 'ambient'; this.refresh(); }
+        return;
+      }
+      if (this.baseline?.angle !== sample.angle) this.baseline = sample;
+      const vector = screenVector(difference(sample.gamma, this.baseline.gamma), difference(sample.beta, this.baseline.beta), sample.angle);
+      this.mode = 'orientation';
+      this.target = clamp(.5 + vector.x / 55 + vector.y / 85);
+      this.wake();
+    });
     this.motion.addEventListener('change', () => this.refresh(), options);
     document.addEventListener('visibilitychange', () => this.refresh(), options);
     window.addEventListener('pageshow', () => this.refresh(), options);
@@ -56,8 +69,6 @@ export class InvitationFoil {
   enter() {
     this.entered = true;
     this.refresh();
-    // iOS 授权必须来自宾客点击；自动恢复请柬时不弹出系统窗口。
-    if (navigator.userActivation?.isActive && !this.motion.matches) this.requestOrientation();
   }
 
   refresh() {
@@ -66,36 +77,9 @@ export class InvitationFoil {
     this.running = this.entered && !this.motion.matches && !document.hidden;
     this.app.classList.toggle('foil-enabled', this.running);
     if (!this.running) return;
-    if (!this.needsPermission || this.permissionGranted) this.listenOrientation();
     this.visible = this.elements.filter(element => !element.closest('[hidden]') && element.closest('.page.active, .cover-footer[data-state="active"]'));
     if (this.mode === 'ambient') { this.position = -.25; this.sweepStart = performance.now() + 1800; }
     this.wake();
-  }
-
-  listenOrientation() {
-    if (!this.running || this.sensorEvents) return;
-    this.sensorEvents = new AbortController();
-    window.addEventListener('deviceorientation', event => {
-      if (!this.running || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
-      this.baseline ??= { beta:event.beta, gamma:event.gamma };
-      const x = difference(event.gamma, this.baseline.gamma), y = difference(event.beta, this.baseline.beta);
-      const angle = (screen.orientation?.angle ?? window.orientation ?? 0) * Math.PI / 180;
-      const horizontal = x * Math.cos(angle) + y * Math.sin(angle);
-      const vertical = y * Math.cos(angle) - x * Math.sin(angle);
-      this.mode = 'orientation';
-      this.target = clamp(.5 + horizontal / 55 + vertical / 85);
-      this.wake();
-    }, { signal:this.sensorEvents.signal, passive:true });
-  }
-
-  async requestOrientation() {
-    if (!this.supported || !this.needsPermission || this.permissionRequested || this.destroyed || !window.isSecureContext) return;
-    this.permissionRequested = true;
-    try {
-      const granted = await window.DeviceOrientationEvent.requestPermission();
-      if (this.destroyed) return;
-      if (granted === 'granted') { this.permissionGranted = true; this.listenOrientation(); }
-    } catch { /* 无传感器权限时保留自动扫光，不中断请柬。 */ }
   }
 
   wake() {
@@ -128,12 +112,12 @@ export class InvitationFoil {
   stop() {
     this.running = false;
     cancelAnimationFrame(this.frame); this.frame = 0; clearTimeout(this.timer);
-    this.sensorEvents?.abort(); this.sensorEvents = null;
   }
   destroy() {
     this.destroyed = true;
     this.stop();
     this.events.abort();
+    this.unsubscribeTilt?.();
     this.observer?.disconnect();
     this.resize?.disconnect();
     this.app.classList.remove('foil-enabled');

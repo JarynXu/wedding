@@ -10,6 +10,7 @@ import { WeddingPreloader } from './preloader.js';
 import { WeddingMusic } from './music.js';
 import { MusicContinuity } from './music-continuity.js';
 import { InvitationFoil } from './foil.js';
+import { DeviceTilt } from './device-tilt.js';
 import { InvitationCalendar } from './calendar-layer.js';
 import { MusicPlayer } from './music-player.js';
 import { WEDDING_CONFIG } from './config.js';
@@ -392,11 +393,12 @@ function initializeInvitation() {
     // ==========================================
     renderConfigData();
     if (invitationTheme === 'chinese') applyChineseTheme();
-    const foil = new InvitationFoil(document.getElementById('app'));
+    const tilt = new DeviceTilt();
+    const foil = new InvitationFoil(document.getElementById('app'), { tilt });
 
-    const petals = new FallingPetals(document.getElementById('petalsCanvas'), { theme: invitationTheme });
+    const petals = new FallingPetals(document.getElementById('petalsCanvas'), { theme: invitationTheme, tilt });
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
-    const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), sealEntry: document.getElementById('gameSeal'), app: document.getElementById('app') });
+    const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), sealEntry: document.getElementById('gameSeal'), app: document.getElementById('app'), tilt });
     const weddingPreloader = new WeddingPreloader({
       music,
       petals,
@@ -417,6 +419,7 @@ function initializeInvitation() {
         if (returning) music.restore(history.state?.invitation?.music);
         else music.play();
         foil.enter();
+        tilt.enter();
       }
     });
     weddingPreloader.init();
@@ -451,6 +454,7 @@ function initializeInvitation() {
       musicContinuity.destroy();
       invitationCalendar.destroy();
       foil.destroy();
+      tilt.destroy();
       music.destroy();
       invitationGame.destroy();
       petals.destroy();
