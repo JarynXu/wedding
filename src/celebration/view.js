@@ -4,6 +4,7 @@ import { giftsForTheme, findGift, BLESSING_LIMITS } from './catalog.js';
 import { BlessingsClient } from './client.js';
 import { GiftEffects } from './gift-effects.js';
 import { BlessingHistory } from './history.js';
+import { BlessingPlayback } from './playback.js';
 import { QuickGifts } from './quick-gifts.js';
 import { guestName, registeredGuestName, rememberGuestName, watchGuestName, refreshRegisteredGuest } from '../guest-name.js';
 import { InvitationDialogs } from '../dialog.js';
@@ -32,15 +33,14 @@ function giftIcon(id) {
   return icon;
 }
 
-/** 页面只拥有一个祝福入口；翻页不创建连接，也不重播队列。 */
+/** 页面只拥有一个祝福入口；翻页沿用同一连接和祝福轮播。 */
 export class Celebration {
   constructor({ app, theme, openModal, closeModal }) {
     this.app = app; this.theme = theme; this.openModal = openModal; this.closeModal = closeModal;
     this.events = new AbortController();bindHapticControls(document,this.events.signal);
     this.messageVersion = 0;
     this.seen = new Set();
-    this.queue = [];
-    this.lastBubble = 0;
+    this.playback = new BlessingPlayback();
     this.bubbleTimers = new Set();
     this.clientId = memory.read('clientId') || uuid();
     memory.write('clientId', this.clientId);
@@ -67,12 +67,14 @@ export class Celebration {
     watchGuestName(name => { if (!this.pending) { this.nameInput.value=name;this.updateSignature(); } }, this.events.signal);
     document.addEventListener('visibilitychange', () => {
       if (document.hidden) { this.client.pause(); this.clearVisuals(); }
-      else if (this.enabled && this.entered) this.client.connect();
+      else if (this.enabled && this.entered) { this.client.connect(); this.flushBubble(); }
     }, { signal: this.events.signal });
-    window.addEventListener('pagehide', () => this.client.pause(), { signal: this.events.signal });
+    window.addEventListener('pagehide', () => { this.pageHidden = true; this.client.pause(); this.clearVisuals(); }, { signal: this.events.signal });
     window.addEventListener('pageshow', event => {
+      this.pageHidden = false;
       if (this.enabled && this.entered) {
         this.client.connect();
+        this.flushBubble();
         if (event.persisted) refreshRegisteredGuest();
       }
     }, { signal: this.events.signal });
@@ -187,6 +189,7 @@ export class Celebration {
       this.entry.hidden = false;
       this.dock.hidden = false; this.app.dataset.celebration = 'enabled';
       this.client.connect();
+      this.loadReplayHistory();
     } catch {
       if (this.destroyed) return;
       this.entry.hidden = false;
@@ -195,6 +198,7 @@ export class Celebration {
       // 配置请求失败不等于未开放；保留发送与重试入口。
       this.enabled = true;
       this.client.connect();
+      this.loadReplayHistory();
     }
   }
   connectionState(state) {
@@ -203,9 +207,22 @@ export class Celebration {
   sync(snapshot) {
     this.messageVersion++;
     snapshot.messages.forEach(message => this.remember(message.id));
-    if (!this.hadSnapshot) this.queue.push(...snapshot.messages.slice(-3).map(message => ({ message, historical: true })));
-    this.hadSnapshot = true;
+    this.playback.seed(snapshot.messages);
     snapshot.messages.forEach(message => this.history.receive(message));
+    this.flushBubble();
+    this.loadReplayHistory();
+  }
+  async loadReplayHistory() {
+    if (this.replayLoaded || this.replayLoading) return;
+    this.replayLoading = true;
+    try {
+      const snapshot = await this.client.history();
+      if (this.destroyed) return;
+      this.playback.seed(snapshot.messages);
+      this.replayLoaded = true;
+      this.flushBubble();
+    } catch { /* 历史列表暂不可用时，继续轮播已收到的祝福。 */ }
+    finally { this.replayLoading = false; }
   }
   remember(id) {
     if (this.seen.has(id)) return false;
@@ -217,26 +234,30 @@ export class Celebration {
     this.messageVersion++;
     const fresh = this.remember(message.id);
     this.history.receive(message);
-    if (!fresh || document.hidden || this.quick.hasPlayed(message.requestId)) return;
-    this.queue.push({ message, historical: false, own:own||message.requestId===this.pending?.requestId });
-    if (this.queue.length > 12) this.queue.splice(0, this.queue.length - 12);
+    this.playback.seed([message]);
+    if (!fresh || document.hidden || this.pageHidden || this.quick.hasPlayed(message.requestId)) return;
+    this.playback.enqueue(message, own || message.requestId === this.pending?.requestId);
     this.flushBubble();
   }
   flushBubble() {
-    if (!this.enabled || !this.entered || document.hidden || !this.queue.length || this.lane.children.length >= 2 || Date.now() - this.lastBubble < 3200 || document.querySelector('.modal-backdrop.open,dialog[open]')) return;
-    const { message, historical, own } = this.queue.shift();
-    this.lastBubble = Date.now();
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (this.destroyed || !this.enabled || !this.entered || document.hidden || this.pageHidden || this.lane.children.length >= (reduced ? 1 : 2) || document.querySelector('.modal-backdrop.open,dialog[open]')) return;
+    const next = this.playback.take(Date.now(), [...this.lane.children].map(bubble => bubble.dataset.messageId));
+    if (!next) return;
+    const { message, historical, own } = next;
     const bubble = document.createElement('div'); bubble.className = 'blessing-bubble'; bubble.dataset.messageId = message.id;
     if (message.gift) bubble.append(giftIcon(message.gift));
     const content = document.createElement('div');
     content.append(textNode('span', 'blessing-bubble-name', message.name), textNode('span', 'blessing-bubble-text', message.text || giftLabel(message)));
     bubble.classList.toggle('has-gift', Boolean(message.gift));
     bubble.append(content); this.lane.append(bubble);
-    const timeout = setTimeout(() => { bubble.remove(); this.bubbleTimers.delete(timeout); }, 7200);
+    const remove = () => { bubble.remove(); clearTimeout(timeout); this.bubbleTimers.delete(timeout); };
+    const timeout = setTimeout(remove, reduced ? 5000 : 7200);
+    bubble.addEventListener('animationend', remove, { once: true });
     this.bubbleTimers.add(timeout);
     if (!historical && message.gift) this.effects.play(message.gift,{local:Boolean(own)});
   }
-  clearVisuals() { this.queue = []; this.lane.replaceChildren(); this.effects.clear(); for (const timer of this.bubbleTimers) clearTimeout(timer); this.bubbleTimers.clear(); }
+  clearVisuals() { this.playback.pause(); this.lane.replaceChildren(); this.effects.clear(); for (const timer of this.bubbleTimers) clearTimeout(timer); this.bubbleTimers.clear(); }
   selectTab(tab) {
     const changed = this.selectedTab && this.selectedTab !== tab;
     this.selectedTab = tab;
