@@ -9,14 +9,15 @@ import { ConversationView } from './conversation.js';
 import { gameRules, gameIntroduction } from './rules.js';
 import { resolveInvitationTheme } from '../invitation-theme.js';
 import { getCaptchaProof } from './captcha.js';
-import { RosePetals } from '../petals.js';
+import { FallingPetals } from '../petals.js';
 
-document.documentElement.dataset.theme = resolveInvitationTheme(location.search);
+const invitationTheme = resolveInvitationTheme(location.search);
+document.documentElement.dataset.theme = invitationTheme;
 const embedded = window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1';
 let active = true;
 const atmosphere=document.createElement('div');atmosphere.className='game-atmosphere';atmosphere.setAttribute('aria-hidden','true');
 const petalsCanvas=document.createElement('canvas');atmosphere.append(petalsCanvas);document.body.prepend(atmosphere);
-const petals=new RosePetals(petalsCanvas);petals.start().catch(()=>{petalsCanvas.dataset.state='unavailable';});
+const petals=new FallingPetals(petalsCanvas,{theme:invitationTheme});petals.start().catch(()=>{petalsCanvas.dataset.state='unavailable';});
 window.addEventListener('pagehide',event=>{if(!event.persisted)petals.destroy();});
 const app = document.getElementById('gameApp');
 const view = document.getElementById('gameContent');

@@ -1,0 +1,20 @@
+{
+  "tool": "image_gen (built-in)",
+  "asset": "public/assets/chinese/peony-petals.webp",
+  "prompt": "Use case: stylized-concept. Asset type: transparent photographic sprite atlas for gently falling petals in a Chinese wedding invitation. Create exactly SIX separate SINGLE tree-peony (牡丹) petals, no whole flowers. Each petal has a broad, soft fan-shaped silhouette, several irregular shallow scallops and fine delicate ruffles at the wide upper rim, a slightly narrowed base, subtle radial veins, translucent silky thin tissue, and natural asymmetric undulations. Make them recognizably lush peony petals rather than smooth, thick, cupped rose petals. Keep the shapes legible when displayed at only 20–45 pixels wide. Composition: square canvas, exactly three equal columns and two equal rows, one centered isolated petal per cell. Column 1 ivory with a very faint blush at the base; column 2 soft warm pink; column 3 rich Chinese crimson with a lighter red ruffled rim. Top row: mostly open fan-shaped petals in varied natural orientations. Bottom row: the same three colors with gentle curled and folded edges in differing three-quarter views, still individual petals. Each sprite has ample transparent padding, fits wholly within its own cell, never crosses a cell boundary, and has similar apparent scale. Consistent soft diffuse photographic lighting and realistic fine botanical texture; depth comes from each petal's own shading. Genuine alpha-transparent background everywhere outside the six petals, clean antialiased edges. No cast shadows, backdrop, checkerboard, grid lines, labels, text, stems, leaves, stamens, flowers, bouquet, sparkles, or other objects.",
+  "source": "exec-15e8eb39-4d17-440a-b313-b46905af4d4d.png",
+  "atlas": {
+    "columns": 3,
+    "rows": 2,
+    "colors": [
+      "ivory",
+      "pink",
+      "crimson"
+    ],
+    "poses": [
+      "open",
+      "curled"
+    ]
+  },
+  "processing": "Uniform resize to 768 × 768; WebP quality 94, alpha quality 100. Original transparent background preserved."
+}

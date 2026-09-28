@@ -5,7 +5,7 @@ import './glass.css';
 import './style.css';
 import './motion.css';
 import './themes/chinese.css';
-import { RosePetals } from './petals.js';
+import { FallingPetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WeddingMusic } from './music.js';
 import { MusicContinuity } from './music-continuity.js';
@@ -394,12 +394,12 @@ function initializeInvitation() {
     if (invitationTheme === 'chinese') applyChineseTheme();
     const foil = new InvitationFoil(document.getElementById('app'));
 
-    const rosePetals = new RosePetals(document.getElementById('petalsCanvas'));
+    const petals = new FallingPetals(document.getElementById('petalsCanvas'), { theme: invitationTheme });
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
     const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), sealEntry: document.getElementById('gameSeal'), app: document.getElementById('app') });
     const weddingPreloader = new WeddingPreloader({
       music,
-      petals: rosePetals,
+      petals,
       returning,
       onEnter: () => {
         document.body.classList.remove('invitation-loading');
@@ -439,10 +439,10 @@ function initializeInvitation() {
     }
 
     // ==========================================
-    // 浪漫玫瑰花瓣飘落 Canvas 特效
+    // 主题花瓣飘落 Canvas 特效
     // ==========================================
     if (import.meta.env.DEV) {
-      window.__petals = rosePetals;
+      window.__petals = petals;
       window.__preloader = weddingPreloader;
     }
     if (import.meta.hot) import.meta.hot.dispose(() => {
@@ -453,7 +453,7 @@ function initializeInvitation() {
       foil.destroy();
       music.destroy();
       invitationGame.destroy();
-      rosePetals.destroy();
+      petals.destroy();
       celebration.destroy();
     });
     document.addEventListener('visibilitychange', () => {

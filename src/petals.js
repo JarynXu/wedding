@@ -1,13 +1,15 @@
 import { publicAssetUrl } from './static-assets.js';
-const atlasUrl = publicAssetUrl('./assets/shared/rose-petals.webp');
+const rosePetalsUrl = publicAssetUrl('./assets/shared/rose-petals.webp');
+const peonyPetalsUrl = publicAssetUrl('./assets/chinese/peony-petals.webp');
 
 /** 花瓣图集为三列两行；每列对应白、粉、红，每行对应一种卷曲姿态。 */
-export class RosePetals {
-  constructor(canvas) {
+export class FallingPetals {
+  constructor(canvas, { theme = 'classic' } = {}) {
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
     this.motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     this.image = new Image();
+    this.atlasUrl = theme === 'chinese' ? peonyPetalsUrl : rosePetalsUrl;
     this.frame = null;
     this.lastTime = null;
     this.elapsed = 0;
@@ -27,7 +29,7 @@ export class RosePetals {
 
   async start() {
     if (!this.context) return;
-    this.image.src = atlasUrl;
+    this.image.src = this.atlasUrl;
     try {
       await this.image.decode();
       if (this.disposed) return;
@@ -37,7 +39,7 @@ export class RosePetals {
       this.syncPlayback();
     } catch (error) {
       this.canvas.dataset.state = 'unavailable';
-      console.error('玫瑰花瓣图集加载失败', error);
+      console.error('花瓣图集加载失败', error);
       throw error;
     }
   }
@@ -141,4 +143,4 @@ export class RosePetals {
   }
 }
 
-export { atlasUrl as rosePetalsUrl };
+export { rosePetalsUrl };
