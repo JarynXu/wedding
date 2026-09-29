@@ -45,7 +45,10 @@ const orient = (page, beta, gamma) => page.evaluate(({ beta, gamma }) => {
 
 test('倾斜连续改变实际花瓣方向，活动沿用授权，拒绝授权仍能飘落', { timeout: 60000 }, async suite => {
   const app = express();
-  app.get('/api/game/config', (_req, res) => res.json({ enabled: true, phase: 'open', questions: [], requiredCorrect: 6, participationLimit: 200, closesAt: '2026-10-17T03:00:00.000Z' }));
+  app.get('/api/game/config', (_req, res) => res.json({ enabled: true, phase: 'open', version: 1,
+    questions: Array.from({ length: 6 }, (_, i) => ({ id: `q${i + 1}`, title: '', opening: '' })),
+    requiredCorrect: 6, participationLimit: 200, closesAt: '2026-10-17T03:00:00.000Z',
+    prizes: { first: '大玩偶', second: '玩偶', third: '小玩偶', participation: '小红包' } }));
   app.get('/api/blessings/config', (_req, res) => res.json({ enabled: false }));
   app.use('/api', (_req, res) => res.status(503).json({ error: { message: '测试服务未启用' } }));
   app.use(express.static('dist'));
