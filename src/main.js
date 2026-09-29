@@ -21,6 +21,9 @@ import { getShareMetadata } from './share-metadata.js';
 import { configureWechatShare } from './wechat-share.js';
 import { InvitationGame } from './game-layer.js';
 import { Celebration } from './celebration/view.js';
+import { trackInvitationVisit } from './visit-tracking.js';
+
+trackInvitationVisit(resolveInvitationTheme(location.search)).catch(() => {});
 
 // 分享配置独立于请柬素材加载，不阻塞开场或音乐。
 configureWechatShare(getShareMetadata(WEDDING_CONFIG, location.search), WEDDING_CONFIG.share.wechatSignatureEndpoint).then(state => {

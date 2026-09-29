@@ -11,7 +11,7 @@ import { GameError } from '../game/model.js';
 
 const ADMIN_DIR = fileURLToPath(new URL('./', import.meta.url));
 
-export function adminRouter({ config = null, blessings = null, game = null, startedAt = new Date(), buildInfo, clock } = {}) {
+export function adminRouter({ config = null, blessings = null, game = null, visits = null, startedAt = new Date(), buildInfo, clock } = {}) {
   const router = express.Router();
   const pool=game?.store?.pool||blessings?.store?.pool;
   const auth = config ? new AdminAuth(config, { ...(clock ? { clock } : {}),store:pool?new AdminSecurityStore(pool,config):null }) : null;
@@ -53,6 +53,7 @@ export function adminRouter({ config = null, blessings = null, game = null, star
   });
 
   router.get('/api/status', requireSession(auth), async (_request, response) => response.status(200).json(await status.snapshot()));
+  router.get('/api/visits', requireSession(auth), async (_request, response) => response.json(visits ? await visits.store.snapshot() : { state: 'not_configured' }));
   router.use('/api/game', requireSession(auth), gameAdminRouter(game, config?.username));
   router.get('/api/operations',requireSession(auth),async(_request,response)=>response.json(operations?{enabled:true,...await operations.snapshot()}:{enabled:false}));
   router.post('/api/operations/:action',requireSession(auth),(request,response,next)=>{if(!request.is('application/json')||request.get('Origin')!==blessings?.config.origin)return response.status(403).json({message:'请从后台页面操作'});next();},express.json({limit:'6kb',strict:true}),async(request,response)=>{
@@ -68,6 +69,7 @@ export function adminRouter({ config = null, blessings = null, game = null, star
   router.get('/admin.js', sendStatic('admin.js'));
   router.get('/knowledge.js', sendStatic('knowledge.js'));
   router.get('/operations.js', sendStatic('operations.js'));
+  router.get('/visits.js', sendStatic('visits.js'));
   router.get('/admin.css', sendStatic('admin.css'));
   router.use((error, _request, response, next) => {
     if (response.headersSent) return next(error);

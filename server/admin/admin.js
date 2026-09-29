@@ -1,7 +1,9 @@
 import { OperationsPanel } from './operations.js';
 import { KnowledgeEditor } from './knowledge.js';
+import { VisitsPanel } from './visits.js';
 const operationsPanel=new OperationsPanel({root:document.querySelector('#roomOperationsPanel'),request,onChange:()=>loadGame()});
 const knowledgeEditor=new KnowledgeEditor({root:document.querySelector('#gameKnowledgeEditor'),request,onAuthError:handleAuthError});
+const visitsPanel=new VisitsPanel({root:document.querySelector('#visitsPanel'),request,onAuthError:handleAuthError});
 const BEIJING_OFFSET_MS = 8 * 60 * 60 * 1000;
 const $ = selector => document.querySelector(selector);
 
@@ -122,6 +124,7 @@ async function restoreSession() {
     const data = await request('/admin/api/status');
     showDashboard();
     renderRuntimeStatus(data);
+    visitsPanel.load();
     startRefreshTimer();
   } catch (error) {
     if (error.status === 503) showLoginError(error.message);
@@ -183,7 +186,8 @@ async function refreshStatus(manual = false) {
   if (manual) setBusy(refreshButton, true, '刷新中…');
   clearNotice(dashboardError);
   try {
-    renderRuntimeStatus(await request('/admin/api/status'));
+    const [data] = await Promise.all([request('/admin/api/status'), visitsPanel.load()]);
+    renderRuntimeStatus(data);
   } catch (error) {
     if (handleAuthError(error)) return;
     showDashboardError(error.message);
@@ -891,6 +895,7 @@ function showDashboard() {
 }
 
 function showLogin() {
+  visitsPanel.reset();
   loginView.hidden = false;
   dashboardView.hidden = true;
 }

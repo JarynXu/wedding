@@ -44,6 +44,29 @@
         <section id="runtimeView" class="admin-view" aria-labelledby="dashboardTitle">
           <p id="dashboardError" class="notice error-notice" role="alert" hidden></p>
 
+          <section id="visitsPanel" class="visits-panel metric-card" aria-labelledby="visitsTitle">
+            <div class="card-heading"><h2 id="visitsTitle">请柬访问</h2><span class="visit-refresh" data-visits-status>正在读取访问统计…</span></div>
+            <dl class="visit-metrics">
+              <div><dt>累计访客</dt><dd data-visit-stat="visitors">—</dd><small>同一浏览器去重</small></div>
+              <div><dt>今日访客</dt><dd data-visit-stat="todayVisitors">—</dd><small>北京时间</small></div>
+              <div><dt>打开次数</dt><dd data-visit-stat="opens">—</dd><small>今日 <span data-visit-stat="todayOpens">—</span> 次</small></div>
+              <div><dt>最近活跃</dt><dd data-visit-stat="active">—</dd><small>近 2 分钟内浏览</small></div>
+            </dl>
+            <div class="visit-details" data-visits-details hidden>
+              <section class="visit-trend" aria-labelledby="visitTrendTitle">
+                <h3 id="visitTrendTitle">近 7 天访客</h3>
+                <ol class="visit-days" data-visit-trend></ol>
+                <p class="visit-day-summary" data-visit-day-summary></p>
+              </section>
+              <section class="visit-sources" aria-labelledby="visitSourcesTitle">
+                <h3 id="visitSourcesTitle">打开来源</h3><ul data-visit-browsers></ul>
+                <h3>使用设备</h3><ul data-visit-devices></ul>
+              </section>
+            </div>
+            <p class="visit-since" data-visits-since></p>
+            <p class="scope-note">访客按浏览器中的匿名编号区分。换设备、换浏览器或清除网站存储后，可能会重复计数。来源和设备按打开次数统计。</p>
+          </section>
+
           <div class="metrics-grid">
             <article class="metric-card">
               <div class="card-heading"><h2>应用版本</h2><span class="card-mark">01</span></div>

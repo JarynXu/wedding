@@ -11,6 +11,7 @@ import { createGameService } from './game/service.js';
 import { BlessingWriter } from './blessings/writing.js';
 import { readStaticAssetBase } from './static-assets.js';
 import { logOptions } from './log-format.js';
+import { VisitStore } from './visits/store.js';
 
 const port = Number(process.env.PORT || 8080);
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PORT 须为 1–65535 的端口号');
@@ -22,7 +23,8 @@ logOptions(process.env, process.stdout);
 
 const game = createGameService({ database: blessingsConfig?.database, room: blessingsConfig?.room, runtime: gameRuntime, wedding: publicWeddingFacts(WEDDING_CONFIG) });
 const blessings = createBlessingsService(blessingsConfig, { writing: new BlessingWriter(gameRuntime?.ai,game?.modelClient) });
-const server = createInvitationApp({ blessings, admin, game, gameOrigin: blessingsConfig?.origin, staticAssetBase }).listen(port, process.env.HOST || '0.0.0.0', () => {
+const visits = blessings ? { config: blessingsConfig, store: new VisitStore(blessings.store.pool, blessingsConfig.room) } : null;
+const server = createInvitationApp({ blessings, admin, game, visits, gameOrigin: blessingsConfig?.origin, staticAssetBase }).listen(port, process.env.HOST || '0.0.0.0', () => {
   const build=readBuildInfo();
   log('service.started',{status:'listening',build_id:build.build,commit:build.commit,counts:blessingsConfig?{pool_size:blessingsConfig.database.max,max_instances:blessingsConfig.maxInstances,connection_budget:blessingsConfig.connectionBudget,max_connections:blessingsConfig.maxInstances*(2*blessingsConfig.database.max+1)}:undefined});
 });
