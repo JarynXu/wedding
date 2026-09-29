@@ -1,19 +1,36 @@
-/* 宽光带按页面坐标连续掠过文字，柔和肩部避免出现细线般的反射。 */
+/* 小字保留墨色，较大的字面才增加反射；共用宽光带保持整页光线连续。 */
 @supports (background-clip:text) and (color:color-mix(in srgb, black, white)) {
   :root #app.foil-enabled .foil-text {
+    --foil-reflection: #e7bd79;
+    --foil-edge-ink: 97%;
+    --foil-shoulder-ink: 93%;
+    --foil-peak-ink: 84%;
     background-image:linear-gradient(115deg,
       var(--foil-ink) calc(var(--foil-position, -100px) - var(--foil-band)),
-      color-mix(in srgb,var(--foil-ink) 92%,#fff0c5) calc(var(--foil-position, -100px) - var(--foil-band) * .8),
-      color-mix(in srgb,var(--foil-ink) 64%,#fff0c5) calc(var(--foil-position, -100px) - var(--foil-band) * .5),
-      color-mix(in srgb,var(--foil-ink) 22%,#fff0c5) calc(var(--foil-position, -100px) - var(--foil-band) * .14),
-      color-mix(in srgb,var(--foil-ink) 22%,#fff0c5) calc(var(--foil-position, -100px) + var(--foil-band) * .14),
-      color-mix(in srgb,var(--foil-ink) 64%,#fff0c5) calc(var(--foil-position, -100px) + var(--foil-band) * .5),
-      color-mix(in srgb,var(--foil-ink) 92%,#fff0c5) calc(var(--foil-position, -100px) + var(--foil-band) * .8),
+      color-mix(in srgb,var(--foil-ink) var(--foil-edge-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) - var(--foil-band) * .8),
+      color-mix(in srgb,var(--foil-ink) var(--foil-shoulder-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) - var(--foil-band) * .5),
+      color-mix(in srgb,var(--foil-ink) var(--foil-peak-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) - var(--foil-band) * .14),
+      color-mix(in srgb,var(--foil-ink) var(--foil-peak-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) + var(--foil-band) * .14),
+      color-mix(in srgb,var(--foil-ink) var(--foil-shoulder-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) + var(--foil-band) * .5),
+      color-mix(in srgb,var(--foil-ink) var(--foil-edge-ink),var(--foil-reflection)) calc(var(--foil-position, -100px) + var(--foil-band) * .8),
       var(--foil-ink) calc(var(--foil-position, -100px) + var(--foil-band)));
     background-clip:text;
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
-    text-shadow:none;
+    text-shadow:var(--foil-text-shadow, none);
     background-repeat:no-repeat;
+  }
+
+  :root #app.foil-enabled :is(.cover-names, .chinese-cover-title > div, .p2-day, .p3-hotel-name, .p4-inviters).foil-text {
+    --foil-shoulder-ink: 86%;
+    --foil-peak-ink: 70%;
+  }
+
+  /* 法式抬檐标题已有深色浮雕阴影，可保留较明亮的金属反射。 */
+  :root:not([data-theme='chinese']) #app.foil-enabled :is(.p2-title-en, .p3-title-en).foil-text {
+    --foil-reflection: #fff0c5;
+    --foil-edge-ink: 92%;
+    --foil-shoulder-ink: 64%;
+    --foil-peak-ink: 22%;
   }
 }
