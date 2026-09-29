@@ -12,7 +12,7 @@ test('开场先说明活动资格，不把达标说成人人获奖，不公开�
   const config=initialGameConfig();config.requiredCorrect=3;config.participationLimit=15;config.prizes.participation='纪念熊';
   const invitation=gameOpeningInvitation(config),host=new ShowHost(null);
   const reply=host.render({...context,scene:'welcome',shouldAsk:true,invitation},{messages:['咱们不紧不慢地聊，我会用轻松的方式陪你。','{{question}}'],help:'none',quickReplies:['我负责活跃气氛','慢慢聊聊吧']},'ai');
-  assert.match(reply.messages.join(''),/答对 3 题.*另有 15 份.*纪念熊/s);
+  assert.match(reply.messages.join(''),/另有 15 份纪念熊.*答对 3 题/s);
   assert.ok(reply.messages.indexOf(invitation)<reply.messages.indexOf(reply.questionText));
   assert.doesNotMatch(reply.messages.join(''),/不紧不慢|我会用|轻松的方式|我负责/);assert.equal(reply.quickReplies.length,2);assert.ok(reply.quickReplies.every(value=>!/我负责|慢慢聊/.test(value)));
 });
@@ -20,7 +20,7 @@ test('主持人公开资料包含完整规则和婚礼日程，不包含答案�
   const config=initialGameConfig();config.questions[0].answer='私有答案';config.judgeInstructions='私有评分说明';
   const rules=publicGameRules(config),wedding=publicWeddingFacts(WEDDING_CONFIG),text=JSON.stringify({rules,wedding});
   assert.doesNotMatch(text,/私有答案|私有评分说明|13800000000|13900000000|assets|captcha|key/);
-  for(const value of ['20','钥匙扣小玩偶','一次','2026年10月16日 24:00','嘉臣','11:30','12:08','三楼'])assert.ok(text.includes(value),value);
+  for(const value of ['20',config.prizes.participation,'一次','2026年10月16日 24:00','嘉臣','11:30','12:08','三楼'])assert.ok(text.includes(value),value);
   assert.doesNotMatch(text,/11:58|12:28|喜宴开席/);
 });
 test('主持人保留自然接话，成绩与线索标记不会泄漏或重复拼接',()=>{

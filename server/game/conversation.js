@@ -70,9 +70,9 @@ export class GameConversation {
     let standing='';
     if(scene==='standing'){
       const ranking=await this.game.ranking();
-      standing=me.claim?`你的这份礼物是${me.claim.prize}，${me.claim.redeemedAt?'已经领取了。':'婚礼现场出示领礼凭证就能核对领取。'}`:event.settled_at?'本次获奖名单已经确定，感谢你带着心意来参加。':me.participant.score<event.config.requiredCorrect?`本场要答对 ${event.config.requiredCorrect} 题才能达标，你目前答对 ${me.participant.score} 题。`:ranking.candidates.some(person=>person.id===turn.participant_id)?'你已经达标，目前在礼物名额内。前三名要六题全对，按完成时间排定；最终名单在活动结束后公布。':'你已经达标，不过目前礼物名额内的来宾都比你先达标。谢谢你留下这份默契。';
+      standing=me.claim?`你的这份礼物是${me.claim.prize}，${me.claim.redeemedAt?'已经领取了。':'婚礼现场出示领礼凭证就能核对领取。'}`:event.settled_at?'本次获奖名单已经确定，感谢你带着心意来参加。':me.participant.score<event.config.requiredCorrect?`本场要答对 ${event.config.requiredCorrect} 题才能达标，你目前答对 ${me.participant.score} 题。`:ranking.candidates.some(person=>person.id===turn.participant_id)?'你已经达标，目前在奖品名额内。前三名要全部答对，按完成时间排序；最终名单会在答题结束后公布。':'你已经达标，不过目前奖品名额内的来宾都比你先达标。谢谢你来参加。';
     }
-    const publicRules = publicGameRules(event.config);
+    const publicRules = publicGameRules({...event.config,phase:gamePhase(event,event.now.getTime())});
     const rules = publicRules.flatMap(section => section.paragraphs).join('\n');
     const returnToQuestion=scene==='chat'&&Boolean(deck)&&original.offTopicTurns>=1;
     if(returnToQuestion)shouldAsk=true;

@@ -118,6 +118,5 @@ input:focus,textarea:focus { outline:none; border-color:#a77452; box-shadow:inse
 
 #gameApp[data-view=introduction] .game-paper { visibility:hidden; }
 .game-introduction-lead { display:flex; align-items:center; gap:14px; margin:0 0 18px; }
-.game-introduction-lead .game-prize-art { width:48px; height:68px; }
 .game-introduction-lead p { font-size:15px; color:var(--game-ink); }
 .game-introduction-note { font-size:11px; color:#7c654f; margin-top:20px !important; }

@@ -97,9 +97,14 @@ function render() {
   view.replaceChildren();
   if (!state.config?.enabled) { view.append(el('p', 'game-empty', '默契挑战正在准备中。')); return; }
   if (state.tab === 'board') { renderBoard(); return; }
-  if (state.tab === 'rules') { const content=gameRules(state.config);content.classList.add('game-rules-page');view.append(content);return; }
+  if (state.tab === 'rules') { renderRules();return; }
   if (!state.me) { renderLogin(); return; }
   renderPlay();
+}
+function renderRules() {
+  const scrollTop=view.querySelector('.game-rules-page')?.scrollTop||0;
+  const content=gameRules(state.config);content.classList.add('game-rules-page');
+  view.replaceChildren(content);content.scrollTop=scrollTop;
 }
 function renderLogin() {
   const form = document.createElement('form'); form.id = 'gameLogin'; form.noValidate=true;
@@ -140,7 +145,7 @@ function renderLogin() {
   },'game-code-button');getCode.id='getGameCode';row.append(getCode);form.append(row);
   const consent=el('label','game-consent'),checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.name='consent';checkbox.checked=state.consent;checkbox.onchange=()=>{state.consent=checkbox.checked;};
   consent.append(checkbox,document.createTextNode('我已阅读并同意'));
-  const privacy=button('参与说明',showRules,'game-text-button');consent.append(privacy);form.append(consent);
+  const rules=button('游戏规则',showRules,'game-text-button');consent.append(rules);form.append(consent);
   const submit=el('button','game-button',state.config.phase==='open'?'请喜宴司仪开场':'和喜宴司仪聊聊');submit.type='submit';form.append(submit);
   form.oninput=()=>{state.phone=form.elements.phone.value;state.name=form.elements.name.value;};
   form.onsubmit=async event=>{
@@ -201,6 +206,7 @@ async function refresh() {
     if(identity!==state.identityGeneration)return;
     state.config = config;
     if (!config.enabled) { render(); return; }
+    if(changedConfig&&state.tab==='rules')renderRules();
     if (state.me) {
       const me = await request('/me'), changed = JSON.stringify(me) !== JSON.stringify(state.me);
       if(identity!==state.identityGeneration)return;
