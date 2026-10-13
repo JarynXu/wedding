@@ -15,16 +15,12 @@ export function getShareMetadata(config, search = '', staticAssetBase = globalTh
   const family = getFamilyInvitation(config, search);
   const event = getInvitationEvent(config, search);
   if (event.id !== 'wedding') url.searchParams.set('event', event.id);
-  let description = config.share.description;
+  let description = event.id === 'huimen' ? '诚邀您参加我们的回门宴。' : config.share.description;
   if (family) {
     url.searchParams.set('side', family.side);
     url.searchParams.set('parents', family.parents);
     const children = `${family.child.role}与${family.partner.role}`;
     description = `${family.parents}敬邀亲朋参加${children}的${event.name}，共享良辰喜悦。`;
-  }
-  if (event.id === 'huimen') {
-    const venues = event.sessions.map(session => `${session.label}·${session.venue.shortName || session.venue.name}`).join('，');
-    description = `${family ? description : '诚邀您参加我们的回门宴。'}${venues}。`;
   }
   return {
     theme,
