@@ -16,9 +16,12 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY server ./server
-COPY src/config.js src/share-metadata.js src/share-html.js src/family-invitation.js src/invitation-theme.js src/game-voice.js src/game-rules.js src/static-assets.js ./src/
+COPY src/config.js src/share-metadata.js src/share-html.js src/family-invitation.js src/invitation-theme.js src/invitation-event.js src/game-voice.js src/game-rules.js src/static-assets.js ./src/
 COPY src/celebration/catalog.js ./src/celebration/
 USER node
+
+# 在最终镜像内加载应用，检查运行依赖与构建产物是否齐全。
+RUN node --input-type=module -e "import { createInvitationApp } from './server/app.js'; createInvitationApp();"
 
 EXPOSE 8080
 
