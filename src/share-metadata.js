@@ -24,7 +24,7 @@ export function getShareMetadata(config, search = '', staticAssetBase = globalTh
   }
   if (event.id === 'huimen') {
     const venues = event.sessions.map(session => `${session.label}·${session.venue.shortName || session.venue.name}`).join('，');
-    description = `${event.date.formattedFullZh}，扬州回门宴。${family ? description : '诚邀您参加我们的回门宴。'}${venues}。`;
+    description = `${family ? description : '诚邀您参加我们的回门宴。'}${venues}。`;
   }
   return {
     theme,

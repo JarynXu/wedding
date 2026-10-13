@@ -22,7 +22,7 @@ test('宴会选择、女方署名与分享链接保留各自语义', () => {
   assert.equal(event.sessions[1].venue.amapUrl, 'https://surl.amap.com/1j9hnBx4jdeE');
   const share = getShareMetadata(WEDDING_CONFIG, '?event=huimen&theme=chinese&side=bride&parents=赵先生、李女士&page=2&open=1');
   assert.match(share.title, /回门宴/);
-  assert.match(share.description, /2026年10月25日.*赵先生、李女士.*爱女与女婿的回门宴/);
+  assert.equal(share.description, '赵先生、李女士敬邀亲朋参加爱女与女婿的回门宴，共享良辰喜悦。午宴·鑫华酒店，晚宴·海德禧顺。');
   const params = new URL(share.url).searchParams;
   assert.deepEqual(Object.fromEntries(params), { theme: 'chinese', event: 'huimen', side: 'bride', parents: '赵先生、李女士' });
   assert.equal(new URL(getShareMetadata(WEDDING_CONFIG, '?event=wedding').url).search, '');
@@ -82,7 +82,7 @@ for (const mode of ['dev', 'preview', 'production']) test(`${mode} 提供回门�
     assert.equal(home.status, 200);
     const html = await home.text();
     assert.match(html, /property="og:title" content="[^"]*回门宴/);
-    assert.match(html, /property="og:description" content="[^"]*2026年10月25日/);
+    assert.match(html, /property="og:description" content="诚邀您参加我们的回门宴。午宴·鑫华酒店，晚宴·海德禧顺。"/);
     assert.match(html, /property="og:url" content="[^"]*event=huimen/);
     for (const query of ['event=nope', 'event=huimen&event=wedding']) {
       const invalid = await fetch(origin + '/?' + query);
