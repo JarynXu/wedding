@@ -4,9 +4,7 @@
 :root[data-event='huimen'] .p2-agenda-event { letter-spacing: .08em; }
 .event-countdown { margin: 0; color: #634339; font-size: 11px; line-height: 1.5; letter-spacing: .08em; }
 :root[data-event='huimen'] .p2-calendar-wrap { margin-top: 2px; }
-:root[data-event='huimen'] .p3-castle-wrap { top: 32%; }
-:root[data-event='huimen'] .p3-castle-img { width: 94px; }
-.event-venues { position: absolute; top: 45%; bottom: max(13%, calc(var(--page-next-bottom) + var(--page-next-size) + 56px)); left: 14%; width: 72%; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; text-align: center; color: var(--burgundy-deep); }
+.event-venues { position: absolute; top: 36%; bottom: max(13%, calc(var(--page-next-bottom) + var(--page-next-size) + 56px)); left: 14%; width: 72%; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; text-align: center; color: var(--burgundy-deep); }
 .event-venue { flex: none; }
 .event-venue + .event-venue { border-top: 1px solid rgba(140, 103, 56, .35); padding-top: 18px; }
 .event-venue-label { color: #805927; font-size: 12px; letter-spacing: .24em; margin: 0 0 5px; }
@@ -19,27 +17,21 @@
 :root[data-event='huimen'] .calendar-event-location dt { display: inline; margin-right: 10px; }
 :root[data-event='huimen'] .calendar-event-location dd { display: inline; }
 :root[data-event='huimen'] .calendar-venue-address { display: block; margin-top: 3px; }
-:root[data-theme='chinese'][data-event='huimen'] .p3-castle-wrap { top: 27%; }
-:root[data-theme='chinese'][data-event='huimen'] .p3-castle-img { width: 64px; }
-:root[data-theme='chinese'][data-event='huimen'] .event-venues { top: 35%; bottom: 28%; gap: 12px; }
+:root[data-theme='chinese'][data-event='huimen'] .event-venues { top: 30%; bottom: 28%; gap: 12px; }
 :root[data-theme='chinese'][data-event='huimen'] .event-venue-label { display: inline; margin-right: 8px; }
 :root[data-theme='chinese'][data-event='huimen'] .event-venue h2 { display: inline; }
 :root[data-theme='chinese'][data-event='huimen'] .event-venue .p3-map-btn { min-width: 0; min-height: 52px; }
 :root[data-theme='chinese'][data-event='huimen'] .event-venue-address { padding: 2px 4px; color: #422418; background: linear-gradient(90deg, transparent, #fff4dfee 10%, #fff4dfee 90%, transparent); text-shadow: none; }
 :root[data-theme='chinese'][data-event='huimen'] .event-venue h2 { text-shadow: 0 1px 2px #fff4df, 0 0 6px #fff4df; }
 @media (max-height: 680px) {
-  :root[data-event='huimen'] .p3-castle-wrap { top: 32%; }
-  :root[data-event='huimen'] .p3-castle-img { width: 50px; }
-  .event-venues { top: 42%; gap: 10px; }
+  .event-venues { gap: 10px; }
   .event-venue + .event-venue { padding-top: 9px; }
   .event-venue-label { display: inline; margin-right: 8px; }
   .event-venue-address { margin: 3px 0 6px; }
   .event-venue h2 { display: inline; font-size: 19px; }
   .event-venue .p3-map-btn { min-height: 44px; padding-block: 7px; }
   :root[data-event='huimen'] .p2-agenda { gap: 7px; }
-  :root[data-theme='chinese'][data-event='huimen'] .p3-castle-wrap { top: 27%; }
-  :root[data-theme='chinese'][data-event='huimen'] .p3-castle-img { width: 52px; }
-  :root[data-theme='chinese'][data-event='huimen'] .event-venues { top: 35%; bottom: 25%; }
+  :root[data-theme='chinese'][data-event='huimen'] .event-venues { bottom: 25%; }
   :root[data-theme='chinese'][data-event='huimen'] .event-venue .p3-map-btn { min-height: 44px; }
   :root[data-theme='chinese'][data-event='huimen'] .event-venue-address { margin: 5px 0 8px; }
 }

@@ -31,8 +31,7 @@ export function renderInvitationEvent(config, event, search) {
   agenda.append(calendarAction);
 
   if (multiVenue) {
-    for (const selector of ['#p3HotelName', '#p3HotelEn', '#p3Address', '.p3-map-btn-wrap']) document.querySelector(selector).remove();
-    document.querySelector('.p3-castle-img').alt = '';
+    for (const selector of ['.p3-castle-wrap', '#p3HotelName', '#p3HotelEn', '#p3Address', '.p3-map-btn-wrap']) document.querySelector(selector).remove();
     const venues = document.createElement('div'); venues.className = 'event-venues';
     for (const session of event.sessions) {
       const section = document.createElement('section'); section.className = 'event-venue';

@@ -28,9 +28,14 @@ async function fixture() {
   };
 }
 
-async function enter(page, url) {
+async function enter(page, url, screenshotPath) {
   await page.goto(url);
   await page.locator('#preloaderOverlay[data-state=ready]').waitFor();
+  const heading = page.locator('.welcome-script .huimen-copy');
+  assert.equal(await heading.textContent(), 'Homecoming Banquet');
+  await assertBounds(page, '.preloader-content, .btn-enter-invitation');
+  if (await heading.isVisible()) await assertBounds(page, '.preloader-title-box, .welcome-script');
+  if (screenshotPath) await page.screenshot({ path: screenshotPath });
   await page.locator('#btnEnterInvitation').click();
   await page.locator('#preloaderOverlay').waitFor({ state: 'hidden' });
 }
@@ -65,7 +70,7 @@ test('回门宴两套主题、双场地导航、父母署名与祝福入口', { 
         try {
           const params = new URLSearchParams({ event: 'huimen', theme });
           if (parents) { params.set('side', 'bride'); params.set('parents', parents); }
-          await enter(page, f.origin + '/?' + params);
+          await enter(page, f.origin + '/?' + params, `.temp/huimen-qa/${theme}-${size.width}-welcome.png`);
           await page.locator('#blessingEntry').waitFor({ state: 'visible' });
           assert.match(await page.title(), /回门宴/);
           await navigate(page, 1);
@@ -110,17 +115,15 @@ test('回门宴两套主题、双场地导航、父母署名与祝福入口', { 
           assert.doesNotMatch(await page.evaluate(() => window.copied), /嘉臣|12:08|婚礼|待定/);
           await page.locator('[data-close-modal=calendarModal]').click();
           await navigate(page, 2);
-          await assertBounds(page, '.p3-castle-img, .event-venues, .event-venue, .event-venue button');
+          assert.equal(await page.locator('.p3-castle-wrap').count(), 0, '回门宴地点页不展示酒店图标');
+          await assertBounds(page, '.event-venues, .event-venue, .event-venue button');
           const venueLayout = await page.locator('.p3-content').evaluate(content => {
-            const image = content.querySelector('.p3-castle-img');
-            const art = image.getBoundingClientRect();
             const header = content.querySelector('.p3-header-pediment').getBoundingClientRect();
             const [lunch, dinner] = [...content.querySelectorAll('.event-venue')].map(venue => venue.getBoundingClientRect());
             const footer = document.querySelector('.blessing-hold-hint').getBoundingClientRect();
-            return image.complete && image.naturalWidth > 0 && header.bottom <= art.top
-              && art.bottom <= lunch.top && lunch.bottom < dinner.top && dinner.bottom < footer.top;
+            return header.bottom < lunch.top && lunch.bottom < dinner.top && dinner.bottom < footer.top;
           });
-          assert.equal(venueLayout, true, '标题、插画和两场宴席有序排列，导航按钮避开底部祝福提示');
+          assert.equal(venueLayout, true, '标题和两场宴席有序排列，导航按钮避开底部祝福提示');
           await page.locator('#copyToast.show').waitFor({ state: 'hidden' });
           await page.screenshot({ path: `.temp/huimen-qa/${theme}-${size.width}-venues.png` });
           for (const [id, name, link, address] of [
