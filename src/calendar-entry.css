@@ -15,7 +15,7 @@ h1 { margin: 0; color: #7a1f2b; font-size: 24px; font-weight: 400; letter-spacin
 .event-details { margin: 0; padding: 0 0 18px; border-bottom: 1px solid #ded0bb; font-size: 13px; line-height: 1.8; text-align: left; }
 .event-details > div { display: grid; grid-template-columns: 2.5em 1fr; gap: 12px; margin: 9px 0; }
 dt { color: #90754f; }
-dd { margin: 0; overflow-wrap: anywhere; }
+dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
 .calendar-status { margin: 18px 0 14px; font-size: 12px; line-height: 1.9; }
 .primary-action { display: flex; min-height: 48px; width: 100%; align-items: center; justify-content: center; padding: 12px 8px; background: #7a1f2b; border: 1px solid #9d7444; color: #fff4df; outline: 1px solid rgba(237, 204, 154, 0.4); outline-offset: -4px; text-decoration: none; font-size: 15px; letter-spacing: 0.08em; }
 .primary-action:active { background: #591421; }
@@ -31,6 +31,7 @@ dd { margin: 0; overflow-wrap: anywhere; }
 .guide-arrow { position: absolute; right: 6px; top: 5px; width: 18px; height: 21px; }
 [data-calendar-env="browser"] [data-wechat-only], [data-calendar-env="wechat"] [data-browser-only] { display: none; }
 [data-calendar-script="pending"] button { display: none; }
+[data-event-pending][data-calendar-script="pending"] :is(h1, .event-details, #calendarOpen, .calendar-status) { visibility: hidden; }
 [data-calendar-env="wechat"] .primary-action { margin-top: 20px; }
 /* 顶部装饰为悬浮指引让出位置，正文和按钮保持原有排布。 */
 [data-calendar-env="wechat"] .eyebrow { visibility: hidden; }

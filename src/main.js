@@ -5,6 +5,7 @@ import './glass.css';
 import './style.css';
 import './motion.css';
 import './themes/chinese.css';
+import './invitation-event.css';
 import { FallingPetals } from './petals.js';
 import { WeddingPreloader } from './preloader.js';
 import { WeddingMusic } from './music.js';
@@ -14,7 +15,9 @@ import { DeviceTilt } from './device-tilt.js';
 import { InvitationCalendar } from './calendar-layer.js';
 import { MusicPlayer } from './music-player.js';
 import { WEDDING_CONFIG } from './config.js';
-import { getFamilyInvitation } from './family-invitation.js';
+import { getInvitationEvent, daysUntilEvent } from './invitation-event.js';
+import { renderInvitationEvent } from './invitation-event-view.js';
+import { getCalendarDetails } from './invitation-calendar.js';
 import { resolveInvitationTheme } from './invitation-theme.js';
 import { applyChineseTheme } from './themes/chinese.js';
 import { getShareMetadata } from './share-metadata.js';
@@ -54,7 +57,8 @@ const coverOption2Url = publicAssetUrl('./assets/classic/alternatives/burgundy-v
 const defaultCoverUrl = publicAssetUrl('./assets/classic/portrait.webp');
 const defaultHotelIconUrl = publicAssetUrl('./assets/classic/hotel.svg');
 const invitationTheme = resolveInvitationTheme(location.search);
-const weddingCalendarUrl = `${import.meta.env.BASE_URL}wedding.ics`;
+const invitationEvent = getInvitationEvent(WEDDING_CONFIG, location.search);
+const calendarUrl = `${import.meta.env.BASE_URL}${invitationEvent.calendarFile}`;
 
 function initializeInvitation() {
 // ==========================================
@@ -95,121 +99,6 @@ function initializeInvitation() {
         document.querySelector('.p3-castle-img').src = defaultHotelIconUrl;
       }
 
-      // Page 2
-      const p2Year = document.getElementById('p2Year');
-      if (p2Year && config.date?.year) p2Year.textContent = config.date.year;
-      const p2Day = document.getElementById('p2Day');
-      if (p2Day && config.date?.month && config.date?.day) p2Day.textContent = `${config.date.month}/${config.date.day}`;
-      const p2Week = document.getElementById('p2Week');
-      if (p2Week && config.date) {
-        const zh = config.date.dayOfWeekZh || '星期六';
-        const en = config.date.dayOfWeekEn || 'SATURDAY';
-        p2Week.textContent = `${zh} ${en}`;
-      }
-
-      // Page 2 流程日程动态渲染
-      const p2Agenda = document.getElementById('p2Agenda');
-      if (p2Agenda && Array.isArray(config.schedule)) {
-        const calendarAction = p2Agenda.querySelector('.p2-calendar-wrap');
-        p2Agenda.innerHTML = config.schedule.map((item, index) => `
-          <div class="p2-agenda-row" style="--item-index: ${index}">
-            <span class="p2-agenda-time">${item.time}</span>
-            <span class="p2-agenda-event">${item.title || item.event}</span>
-          </div>
-        `).join('');
-        if (calendarAction) p2Agenda.append(calendarAction);
-      }
-
-      // Page 3
-      const p3HotelName = document.getElementById('p3HotelName');
-      if (p3HotelName && config.venue?.name) p3HotelName.textContent = config.venue.name;
-      const p3HotelEn = document.getElementById('p3HotelEn');
-      if (p3HotelEn && config.venue?.nameEn) p3HotelEn.textContent = config.venue.nameEn;
-      const p3Address = document.getElementById('p3Address');
-      if (p3Address && config.venue?.shortAddress) p3Address.textContent = config.venue.shortAddress;
-
-      // Page 4
-      const family = getFamilyInvitation(config, location.search);
-      const p4Invitation = document.querySelector('.p4-invitation');
-      p4Invitation.classList.toggle('p4-family', Boolean(family));
-      p4Invitation.classList.toggle('p4-long-signature', Boolean(family && [...family.parents].length > 16));
-      document.getElementById('p4Inviters').textContent = family ? family.parents : config.coupleNamesZh;
-      document.getElementById('p4InvitationBadge').textContent = family ? config.texts.familyInvitation.badge : config.texts.invitationBadge;
-      document.getElementById('p4InvitationIntro').hidden = Boolean(family);
-      document.getElementById('p4InvitationIntro').textContent = family ? '' : config.texts.invitationIntro;
-      document.getElementById('p4InvitationWish').textContent = family ? config.texts.familyInvitation.wish : config.texts.invitationWish;
-      document.getElementById('p4Footnote').textContent = `✦ ${family ? config.texts.familyInvitation.footnote : config.texts.footnote} ✦`;
-      document.getElementById('p4FamilyWedding').hidden = !family;
-      if (family) {
-        document.getElementById('p4ChildRole').textContent = family.child.role;
-        document.getElementById('p4ChildName').textContent = family.child.name;
-        document.getElementById('p4PartnerRole').textContent = family.partner.role;
-        document.getElementById('p4PartnerName').textContent = family.partner.name;
-        document.getElementById('p4FamilyOccasion').textContent = config.texts.familyInvitation.occasion;
-      }
-      const p4PoemTime = document.getElementById('p4PoemTime');
-      if (p4PoemTime && config.date) {
-        const dText = config.date.formattedFullZh || '2026年10月17日';
-        const tText = config.date.ceremonyTime || '12:08';
-        p4PoemTime.textContent = `${dText} ${tText}`;
-      }
-      const p4PoemVenue = document.getElementById('p4PoemVenue');
-      if (p4PoemVenue && config.venue?.name) p4PoemVenue.textContent = config.venue.name;
-      const p4PoemAddress = document.getElementById('p4PoemAddress');
-      if (p4PoemAddress && config.venue) {
-        const addr = config.venue.shortAddress || config.venue.address || '';
-        const hall = config.venue.hall || '';
-        p4PoemAddress.textContent = `（${addr}${hall ? ' · ' + hall : ''}）`;
-      }
-
-      // Map Modal
-      const mapHotelVal = document.getElementById('mapHotelVal');
-      if (mapHotelVal && config.venue?.name) {
-        mapHotelVal.textContent = config.venue.name;
-      }
-      const mapHotelEn = document.getElementById('mapHotelEn');
-      if (mapHotelEn && config.venue?.nameEn) {
-        mapHotelEn.textContent = config.venue.nameEn;
-      }
-      const hotelAddressText = document.getElementById('hotelAddressText');
-      if (hotelAddressText && config.venue?.address) {
-        hotelAddressText.textContent = config.venue.address;
-      }
-
-      // 地图 App 外链 (经纬度精准直达)
-      if (config.venue) {
-        const v = config.venue;
-        const nameEnc = encodeURIComponent(v.name || '');
-        const addrEnc = encodeURIComponent(v.address || '');
-        const lat = v.latitude;
-        const lng = v.longitude;
-
-        const amap = document.getElementById('mapAmapLink');
-        if (amap) {
-          amap.href = (lat && lng)
-            ? `https://uri.amap.com/marker?position=${lng},${lat}&name=${nameEnc}`
-            : `https://uri.amap.com/search?keyword=${nameEnc}`;
-        }
-        const tencent = document.getElementById('mapTencentLink');
-        if (tencent) {
-          tencent.href = (lat && lng)
-            ? `https://apis.map.qq.com/uri/v1/marker?marker=coord:${lat},${lng};title:${nameEnc};addr:${addrEnc}`
-            : `https://apis.map.qq.com/uri/v1/search?keyword=${nameEnc}`;
-        }
-        const baidu = document.getElementById('mapBaiduLink');
-        if (baidu) {
-          baidu.href = (lat && lng)
-            ? `https://api.map.baidu.com/marker?location=${lat},${lng}&title=${nameEnc}&content=${addrEnc}&output=html`
-            : `https://api.map.baidu.com/geocoder?address=${addrEnc}&output=html`;
-        }
-        const apple = document.getElementById('mapAppleLink');
-        if (apple) {
-          apple.href = (lat && lng)
-            ? `https://maps.apple.com/?ll=${lat},${lng}&q=${nameEnc}`
-            : `http://maps.apple.com/?q=${nameEnc},${addrEnc}`;
-        }
-      }
-
       // Contact Modal
       if (config.groom) {
         const gName = document.getElementById('contactGroomVal');
@@ -223,15 +112,6 @@ function initializeInvitation() {
         const bTel = document.getElementById('contactBrideTel');
         if (bTel && config.bride.phone) bTel.href = `tel:${config.bride.phone}`;
       }
-
-      // Calendar Modal
-      const calTitle = document.getElementById('calEventTitle');
-      if (calTitle && config.coupleNamesZh) calTitle.textContent = `${config.coupleNamesZh} 婚礼午宴`;
-      const calTime = document.getElementById('calEventTime');
-      if (calTime && config.date) calTime.textContent = `${config.date.formattedFullZh} · ${config.schedule.map(item => `${item.time} ${item.title}`).join(' · ')}`;
-      const calLoc = document.getElementById('calEventLoc');
-      if (calLoc && config.venue) calLoc.textContent = `${config.venue.name} · ${config.venue.hall || '国际厅(三楼)'}`;
-
     }
 
     // ==========================================
@@ -396,12 +276,13 @@ function initializeInvitation() {
     // ==========================================
     renderConfigData();
     if (invitationTheme === 'chinese') applyChineseTheme();
+    const eventView = renderInvitationEvent(config, invitationEvent, location.search);
     const tilt = new DeviceTilt();
     const foil = new InvitationFoil(document.getElementById('app'), { tilt });
 
     const petals = new FallingPetals(document.getElementById('petalsCanvas'), { theme: invitationTheme, tilt });
     const celebration = new Celebration({ app: document.getElementById('app'), theme: invitationTheme, openModal, closeModal });
-    const invitationGame = new InvitationGame({ entry: document.getElementById('gameEntry'), sealEntry: document.getElementById('gameSeal'), app: document.getElementById('app'), tilt });
+    const invitationGame = invitationEvent.allowGames ? new InvitationGame({ entry: document.getElementById('gameEntry'), sealEntry: document.getElementById('gameSeal'), app: document.getElementById('app'), tilt }) : null;
     const weddingPreloader = new WeddingPreloader({
       music,
       petals,
@@ -427,6 +308,7 @@ function initializeInvitation() {
     });
     weddingPreloader.init();
     async function prepareGameEntry() {
+      if (!invitationEvent.allowGames) return;
       const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 8000);
       try {
         const response = await fetch('/api/game/config', { cache: 'no-store', signal: controller.signal });
@@ -459,7 +341,7 @@ function initializeInvitation() {
       foil.destroy();
       tilt.destroy();
       music.destroy();
-      invitationGame.destroy();
+      invitationGame?.destroy();
       petals.destroy();
       celebration.destroy();
     });
@@ -470,33 +352,16 @@ function initializeInvitation() {
     // ==========================================
     // 婚礼倒计时计算器
     // ==========================================
-    function updateCountdown() {
-      const cdDaysEl = document.getElementById('cdDays');
-      if (!cdDaysEl) return;
-      const targetDateStr = config.date?.calendarIso || config.dateStr || '2026-10-17T12:08:00+08:00';
-      const target = new Date(targetDateStr).getTime();
-      const now = new Date().getTime();
-      let diff = target - now;
-
-      if (isNaN(diff) || diff < 0) {
-        diff = 0;
-      }
-
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-      cdDaysEl.textContent = String(days).padStart(2, '0');
-      const cdHoursEl = document.getElementById('cdHours');
-      if (cdHoursEl) cdHoursEl.textContent = String(hours).padStart(2, '0');
-      const cdMinsEl = document.getElementById('cdMins');
-      if (cdMinsEl) cdMinsEl.textContent = String(mins).padStart(2, '0');
-      const cdSecsEl = document.getElementById('cdSecs');
-      if (cdSecsEl) cdSecsEl.textContent = String(secs).padStart(2, '0');
+    if (!invitationEvent.schedule) {
+      const countdown = document.getElementById('eventCountdown');
+      const updateCountdown = () => {
+        const days = daysUntilEvent(invitationEvent);
+        countdown.textContent = days ? `距回门宴还有 ${days} 天` : '';
+      };
+      updateCountdown();
+      const timer = setInterval(updateCountdown, 60000);
+      if (import.meta.hot) import.meta.hot.dispose(() => clearInterval(timer));
     }
-    setInterval(updateCountdown, 1000);
-    updateCountdown();
 
     // ==========================================
     // 模态弹窗系统
@@ -537,6 +402,7 @@ function initializeInvitation() {
       if (!target) return;
 
       if (target.dataset.openModal) {
+        if (target.dataset.openModal === 'mapModal') eventView.showVenue(target.dataset.venue);
         openModal(target.dataset.openModal);
         return;
       }
@@ -600,68 +466,19 @@ function initializeInvitation() {
         return;
       }
       try {
-        if (window.location.protocol.startsWith('http')) window.location.assign(weddingCalendarUrl);
-        else downloadIcsBlob();
+        window.location.assign(calendarUrl);
       } catch (error) {
         console.warn('日历文件打开未完成', error);
-        showToast('日程链接未打开，请重试或复制婚礼日程');
+        showToast('日程链接未打开，请重试或复制日程');
       }
     }
 
-    function downloadIcsBlob() {
-      const icsContent =
-`BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Wedding Invitation//Xu Zhiyue & Zhao Rongrong Wedding//CN
-CALSCALE:GREGORIAN
-METHOD:PUBLISH
-X-WR-CALNAME:徐旨越 & 赵荣蓉 婚礼午宴
-X-WR-TIMEZONE:Asia/Shanghai
-BEGIN:VEVENT
-UID:wedding-20261017-xuzhiyue-zhaorongrong@wedding.com
-DTSTAMP:20260927T000000Z
-DTSTART:20261017T033000Z
-DTEND:20261017T063000Z
-SUMMARY:徐旨越 & 赵荣蓉 婚礼午宴
-DESCRIPTION:诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\\n时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}\\n地点：东海嘉臣国际大酒店 · 国际厅(三楼)\\n地址：江苏省连云港市东海县晶都大道99号\\n期待与您一同见证幸福时刻！
-LOCATION:东海嘉臣国际大酒店 · 国际厅(三楼)（江苏省连云港市东海县晶都大道99号）
-STATUS:CONFIRMED
-SEQUENCE:1
-BEGIN:VALARM
-TRIGGER:-P1D
-ACTION:DISPLAY
-DESCRIPTION:【婚礼提醒】明天是 徐旨越 & 赵荣蓉 的婚礼午宴，记得盛装出席哦！
-END:VALARM
-BEGIN:VALARM
-TRIGGER:-PT2H
-ACTION:DISPLAY
-DESCRIPTION:【婚礼提醒】徐旨越 & 赵荣蓉 婚礼午宴将在2小时后（11:30）开始，期待您的光临！
-END:VALARM
-END:VEVENT
-END:VCALENDAR`;
-
-      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.setAttribute('download', 'wedding.ics');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast('日历文件已生成，请在下载中点击打开导入日历 ✦');
-    }
-
     function copyCalendarInfo() {
-      const text =
-`【婚礼日程】
-新人：徐旨越 & 赵荣蓉
-时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}
-地点：东海嘉臣国际大酒店 · 国际厅(三楼)
-地址：江苏省连云港市东海县晶都大道99号
-诚挚期待您的莅临与祝福！`;
+      const text = getCalendarDetails(config, invitationEvent).text;
 
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(() => {
-          showToast('婚礼日程已复制！可直接在手机备忘录或日历中粘贴 ✦');
+          showToast('日程已复制！可在手机备忘录或日历中粘贴 ✦');
         }).catch(() => {
           fallbackCopyText(text);
         });
@@ -679,16 +496,7 @@ END:VCALENDAR`;
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      showToast('婚礼日程已复制！可直接在手机备忘录或日历中粘贴 ✦');
-    }
-
-    function openGoogleCalendar() {
-      const title = encodeURIComponent("徐旨越 & 赵荣蓉 婚礼午宴");
-      const dates = "20261017T033000Z/20261017T063000Z";
-      const details = encodeURIComponent(`诚挚邀请您参加 徐旨越 与 赵荣蓉 的婚礼仪式与喜宴！\n时间：${config.date.formattedFullZh} ${config.schedule.map(item => `${item.time} ${item.title}`).join('；')}\n地点：东海嘉臣国际大酒店 · 国际厅(三楼) (江苏省连云港市东海县晶都大道99号)`);
-      const location = encodeURIComponent("东海嘉臣国际大酒店 · 国际厅(三楼) (江苏省连云港市东海县晶都大道99号)");
-      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
-      window.open(url, '_blank');
+      showToast('日程已复制！可在手机备忘录或日历中粘贴 ✦');
     }
 
 }

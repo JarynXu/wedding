@@ -1422,6 +1422,10 @@
     .copy-toast.show { opacity: 1; }
 
     /* 日历提醒弹窗专属样式：纯双语高定排版 */
+    #calendarModal .modal-card {
+      max-height: calc(100vh - 40px);
+      max-height: calc(100dvh - 40px);
+    }
     .calendar-event-card {
       background: rgba(250, 246, 240, 0.95);
       border: 1px solid rgba(185, 147, 95, 0.35);
@@ -1444,23 +1448,56 @@
       color: var(--burgundy);
       letter-spacing: 0.1em;
       margin-bottom: 8px;
+      line-height: 1.6;
+      text-wrap: balance;
     }
-    .calendar-event-time-line, .calendar-event-loc-line {
+    .calendar-event-time {
       font-size: 12.5px;
       color: var(--ink);
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 8px;
-      margin-top: 4px;
-      line-height: 1.45;
+      line-height: 1.7;
+      white-space: pre-line;
+      text-wrap: balance;
     }
-    .cal-date-label {
-      font-family: "Cinzel", serif;
-      font-size: 9px;
-      letter-spacing: 0.18em;
-      color: #9e743a;
-      flex-shrink: 0;
+    .calendar-event-locations {
+      display: grid;
+      gap: 10px;
+      margin: 14px 0 0;
+      padding-top: 14px;
+      border-top: 1px solid rgba(185, 147, 95, 0.3);
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--ink);
+    }
+    .calendar-event-location {
+      display: grid;
+      grid-template-columns: 2em minmax(0, 1fr);
+      align-items: baseline;
+      column-gap: 12px;
+    }
+    .calendar-event-location dt {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      color: var(--gold-dark);
+      white-space: nowrap;
+    }
+    .calendar-event-location dd {
+      display: grid;
+      gap: 3px;
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      text-wrap: pretty;
+    }
+    .calendar-venue-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--burgundy-deep);
+    }
+    .calendar-venue-address {
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: var(--ink);
     }
 
     .calendar-action-list {
@@ -1546,6 +1583,13 @@
       color: var(--gold-dark);
       letter-spacing: 0.14em;
       margin-top: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-height: 640px) {
+      #calendarModal .modal-card { padding-block: 20px 18px; }
+      .calendar-event-card { padding-block: 12px; }
+      .calendar-footnote { margin-top: 10px; }
     }
 
     /* 联系新人弹窗样式 (纯字韵排版) */

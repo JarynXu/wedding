@@ -1,7 +1,7 @@
 import express from 'express';
 import compression from 'compression';
 import { readFileSync, existsSync } from 'node:fs';
-import { resolve, extname, relative } from 'node:path';
+import { resolve, extname, relative, basename } from 'node:path';
 import { WEDDING_CONFIG } from '../src/config.js';
 import { getShareMetadata } from '../src/share-metadata.js';
 import { InvalidInvitationLinkError } from '../src/family-invitation.js';
@@ -54,7 +54,7 @@ export function createInvitationApp({ distDir = resolve('dist'), config = WEDDIN
     setHeaders(response, file) {
       if (extname(file) === '.ics') {
         response.setHeader('Content-Type', 'text/calendar; charset=utf-8');
-        response.setHeader('Content-Disposition', 'inline; filename="wedding.ics"');
+        response.setHeader('Content-Disposition', `inline; filename="${basename(file)}"`);
       }
       const compiled = relative(distDir, file).replaceAll('\\', '/').startsWith('app/');
       response.setHeader('Cache-Control', compiled ? 'public, max-age=31536000, immutable' : 'no-cache');

@@ -5,9 +5,35 @@
   const feedback = document.getElementById('calendarFeedback');
   const calendarLink = document.getElementById('calendarOpen');
   const invitationParams = new URLSearchParams(location.search);
+  let details;
+  try {
+    const event = resolveInvitationEvent(location.search);
+    document.documentElement.dataset.event = event;
+    details = calendarEntries[event];
+  } catch (error) {
+    document.title = '日程链接无效';
+    document.querySelector('h1').textContent = '日程链接无效';
+    document.getElementById('calendarDetails').textContent = error.message;
+    document.querySelectorAll('.primary-action, .secondary-action, .calendar-status').forEach(element => element.remove());
+    document.documentElement.dataset.calendarScript = 'error';
+    return;
+  }
+  document.title = `${details.title} · ${details.couple}`;
+  document.querySelector('h1').textContent = `保存${details.title}`;
+  document.querySelector('.couple').textContent = details.couple;
+  const rows = document.getElementById('calendarDetails');
+  rows.replaceChildren();
+  for (const [label, value] of details.rows) {
+    const row = document.createElement('div');
+    const term = document.createElement('dt'); term.textContent = label;
+    const description = document.createElement('dd'); description.textContent = value;
+    row.append(term, description); rows.append(row);
+  }
+  calendarLink.href = `./${details.file}`;
+  document.getElementById('calendarCopyDetails').textContent = `复制${details.title}`;
   const embedded = window.parent !== window && invitationParams.get('embedded') === '1';
   const returnUrl = new URL('./', location.href);
-  for (const key of ['theme', 'side', 'parents']) {
+  for (const key of ['theme', 'event', 'side', 'parents']) {
     if (invitationParams.has(key)) returnUrl.searchParams.set(key, invitationParams.get(key));
   }
   const backLink = document.querySelector('.back-link');
@@ -26,7 +52,7 @@
     const previousChinese = previous.searchParams.getAll('theme').length === 1 && previous.searchParams.get('theme') === 'chinese';
     const sameInvitation = previous.origin === returnUrl.origin && invitationPath
       && previousChinese === (document.documentElement.dataset.theme === 'chinese')
-      && ['side', 'parents'].every(key => previous.searchParams.get(key) === returnUrl.searchParams.get(key));
+      && ['event', 'side', 'parents'].every(key => previous.searchParams.get(key) === returnUrl.searchParams.get(key));
     if (sameInvitation) backLink.addEventListener('click', event => {
       if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
@@ -61,9 +87,7 @@
     copy(url.href);
   });
   document.getElementById('calendarCopyDetails').addEventListener('click', () => {
-    const details = [...document.querySelectorAll('#calendarDetails > div')]
-      .map(row => `${row.querySelector('dt').textContent}：${row.querySelector('dd').textContent}`);
-    copy(`【婚礼日程】\n${document.querySelector('.couple').textContent}\n${details.join('\n')}`);
+    copy(details.text);
   });
   calendarLink.addEventListener('click', () => {
     status.textContent = '请在日历窗口中确认添加。';
